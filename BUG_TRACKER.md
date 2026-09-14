@@ -8,7 +8,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 | Versión | Total Incidencias | Críticas | Altas | Medias | Bajas | Estado |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| `0.0.1-alpha` | 7 | 2 | 4 | 1 | 0 | 100% Resueltas |
+| `0.0.1-alpha` | 8 | 2 | 5 | 1 | 0 | 100% Resueltas |
 
 ---
 
@@ -159,6 +159,36 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`.gitignore`](file:///c:/Proyectos/pc_manager/.gitignore)
   - [`ui/`](file:///c:/Proyectos/pc_manager/ui)
 - **Estado**: `RESUELTO`
+
+---
+
+### [BUG-008] Reversión de módulos de prueba no solicitados y restauración canónica de la Carcasa / Core limpio (v0.0.1-alpha)
+- **Fecha**: 2026-09-14
+- **Commit**: `pending`
+- **Versión**: `v0.0.1-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `Carcasa / Core UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, `[`index.html`](file:///c:/Proyectos/pc_manager/index.html)`)`
+- **Descripción del Fallo**: 
+  Se había inyectado un módulo simulado de telemetría de hardware dentro de la primera versión del sistema, cuando la especificación requería estrictamente que la versión 0.0.1 fuera la Carcasa Limpia (Core base sin módulos instalados) según la maqueta canónica `core_shell.html`.
+- **Causa Raíz**: 
+  Inclusión anticipada de módulos de prueba en lugar de preservar el estado limpio de fábrica del Core.
+- **Solución Implementada**: 
+  1. Se eliminó por completo el módulo de telemetría y cualquier archivo de prueba en `src/modules/` y `ui/src/`.
+  2. Se sincronizó la interfaz con la maqueta canónica [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) e [`index.html`](file:///c:/Proyectos/pc_manager/index.html), conteniendo:
+     - Dashboard 10x10 con Hero State de bienvenida y botón flotante canónico de Auto-organización (`btn-fab`).
+     - Gestor de Módulos con pestañas integradas de *Módulos del Sistema* y *Gestor de Grupos* (grupo *General* predeterminado e inborrable).
+     - Configuraciones homogéneas con 2 comboboxes de tema (Modo y Estilo) y paleta de 10 colores de acento.
+     - Directivas de integración con Windows y comandos nativos Tauri vinculados para minimizado al System Tray y parada total sin procesos huérfanos.
+  3. Se recompiló el ejecutable nativo de escritorio `pc_manager.exe`.
+- **Archivos Afectados**: 
+  - `src/modules/` (eliminado)
+  - `ui/src/` (eliminado)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`index.html`](file:///c:/Proyectos/pc_manager/index.html)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
 
 
 

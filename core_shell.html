@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Manager // Núcleo Base v1.0 (Sin Módulos)</title>
+  <title>PC Manager // Core v0.0.1-alpha (Sin Módulos)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -915,7 +915,7 @@
         </div>
         <div class="brand-info">
           <h1>PC MANAGER</h1>
-          <span>NÚCLEO BASE // V1.0</span>
+          <span>CORE // v0.0.1-alpha</span>
         </div>
       </div>
 
@@ -1657,6 +1657,11 @@
 
     function toggleTrayMinimize(isEnabled) {
       addSystemNotification('Bandeja del Sistema', isEnabled ? 'Minimizar al Tray activo (predeterminado).' : 'Minimizar al Tray desactivado.', 'info');
+      if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
+        window.__TAURI_INTERNALS__.invoke('minimize_to_tray');
+      } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+        window.__TAURI__.core.invoke('minimize_to_tray');
+      }
     }
 
     function toggleWindowsService(isEnabled) {
@@ -1666,7 +1671,13 @@
     function shutdownApplication() {
       if (confirm('¿Confirmas el cierre total de PC Manager?\n\nSe detendrán todos los servicios y colectores de fondo sin dejar procesos huérfanos.')) {
         addSystemNotification('Cierre Total del Core', 'Todos los servicios han sido detenidos limpiamente.', 'warning');
-        alert('PC Manager: Parada completa ejecutada con éxito.');
+        if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
+          window.__TAURI_INTERNALS__.invoke('quit_app');
+        } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+          window.__TAURI__.core.invoke('quit_app');
+        } else {
+          alert('PC Manager: Parada completa ejecutada con éxito (Cero procesos huérfanos).');
+        }
       }
     }
 
