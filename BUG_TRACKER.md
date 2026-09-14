@@ -455,3 +455,29 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-018] Sincronización del Interruptor de Activación en el Gestor de Módulos al Restaurar Estado Inactivo desde Disco
+- **Fecha**: 2026-09-14
+- **Severidad**: `Baja`
+- **Componente**: `Gestor de Módulos / UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  Al desactivar un módulo, cerrar la aplicación y reabrirla, el módulo se mantenía desactivado en el Dashboard y la barra lateral, pero en la lista del Gestor de Módulos el interruptor aparecía en posición activada (`checked`).
+- **Causa Raíz**: 
+  1. El elemento `<input type="checkbox">` del switch en `installModule` carecía de un identificador de control único (ej. `switch-mod-${manifest.id}`) y se insertaba con el atributo `checked` hardcodeado.
+  2. La función `toggleModuleActive` alteraba la visibilidad de los widgets y botones de navegación, pero nunca actualizaba el estado del switch ni la apariencia de la fila en el Gestor de Módulos.
+  3. `installModule` no recibía el estado `isActive` como parámetro en su llamada inicial durante `DOMContentLoaded`.
+- **Solución Implementada**: 
+  1. Se actualizó `installModule(manifest, scriptCode, isActive = true)` para aceptar el estado de activación real y configurar el switch con `${isActive ? 'checked' : ''}` e identificador `id="switch-mod-${manifest.id}"`.
+  2. Se configuró atenuación visual (`opacity: 0.65`) en la tarjeta del módulo cuando se encuentra inactivo.
+  3. Se modificó `toggleModuleActive` para sincronizar en tiempo real el elemento `switchEl.checked = isActive` y su opacidad.
+  4. Se condicionó la alerta emergente `addSystemNotification` para emitirse únicamente ante cambios de usuario (`syncDisk = true`), evitando avisos redundantes en el arranque del sistema.
+  5. Se sincronizó [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+

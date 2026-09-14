@@ -2214,13 +2214,16 @@
       }
     }
 
-    function installModule(manifest, scriptCode) {
+    function installModule(manifest, scriptCode, isActive = true) {
       const isUpdate = installedModules.has(manifest.id);
       let oldVersion = '1.0.0';
 
       if (isUpdate) {
         const prevMod = installedModules.get(manifest.id);
         oldVersion = prevMod.manifest.version || '1.0.0';
+        if (typeof prevMod.active === 'boolean') {
+          isActive = prevMod.active;
+        }
 
         // 1. Limpiar widgets anteriores
         if (prevMod.manifest.widgets) {
@@ -2249,7 +2252,7 @@
         }
       }
 
-      installedModules.set(manifest.id, { manifest, scriptCode, active: true });
+      installedModules.set(manifest.id, { manifest, scriptCode, active: isActive });
 
       // 1. Añadir o actualizar en la lista de instalados
       const list = document.getElementById('installed-modules-list');
@@ -2267,6 +2270,7 @@
         modCard.style.justifyContent = 'space-between';
         list.appendChild(modCard);
       }
+      modCard.style.opacity = isActive ? '1' : '0.65';
 
       modCard.innerHTML = `
         <div style="display: flex; gap: 14px; align-items: center;">
@@ -2285,7 +2289,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 14px;">
           <label class="switch" title="Activar / Desactivar módulo">
-            <input type="checkbox" checked onchange="toggleModuleActive('${manifest.id}', this.checked)">
+            <input type="checkbox" id="switch-mod-${manifest.id}" ${isActive ? 'checked' : ''} onchange="toggleModuleActive('${manifest.id}', this.checked)">
             <span class="slider"></span>
           </label>
           <button class="btn btn-secondary" style="color: var(--accent-danger); padding: 6px 12px; font-size: 12px;" onclick="uninstallModule('${manifest.id}')">
@@ -2439,9 +2443,13 @@
       renderDashboardCustomizationCatalog();
       renderModuleNotificationPermissions();
 
+      if (!isActive) {
+        toggleModuleActive(manifest.id, false, false);
+      }
+
       if (isUpdate) {
         addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success');
-      } else {
+      } else if (isActive) {
         addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success');
       }
     }
@@ -2451,9 +2459,17 @@
       if (!mod) return;
       mod.active = isActive;
 
+      // 1. Sincronizar control switch y opacidad en la lista del Gestor de Módulos
+      const switchEl = document.getElementById(`switch-mod-${moduleId}`);
+      if (switchEl) switchEl.checked = isActive;
+      const modCard = document.getElementById(`installed-mod-${moduleId}`);
+      if (modCard) modCard.style.opacity = isActive ? '1' : '0.65';
+
+      // 2. Visibilidad en el menú lateral
       const navBtn = document.getElementById(`nav-module-${moduleId}`);
       if (navBtn) navBtn.style.display = isActive ? 'flex' : 'none';
 
+      // 3. Visibilidad de widgets en el Dashboard
       if (mod.manifest.widgets) {
         mod.manifest.widgets.forEach(w => {
           const card = document.getElementById(w.id || `card-${moduleId}`);
@@ -2462,6 +2478,7 @@
         updateDashboardCardsCount();
       }
 
+      // 4. Visibilidad de pestaña en Configuraciones
       const settingsTab = document.getElementById(`tab-btn-settings-mod-${moduleId}`);
       if (settingsTab) settingsTab.style.display = isActive ? 'inline-flex' : 'none';
       const settingsPane = document.getElementById(`settings-tab-pane-mod-${moduleId}`);
@@ -2479,9 +2496,8 @@
         if (invokeFn) {
           invokeFn('toggle_module_active', { moduleId, active: isActive }).catch(e => console.warn(e));
         }
+        addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info');
       }
-
-      addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info');
     }
 
     function uninstallModule(moduleId) {
@@ -3152,10 +3168,7 @@
           if (installedList && installedList.length > 0) {
             console.log(`Restaurando ${installedList.length} módulo(s) persistentes desde disco.`);
             installedList.forEach(rec => {
-              installModule(rec.manifest, rec.script_code);
-              if (!rec.active) {
-                toggleModuleActive(rec.manifest.id, false, false);
-              }
+              installModule(rec.manifest, rec.script_code, rec.active);
             });
 
             // Restaurar configuraciones guardadas
