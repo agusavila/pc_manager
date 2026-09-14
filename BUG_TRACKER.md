@@ -90,7 +90,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 ### [BUG-005] Desacoplamiento e integración funcional del Core Microkernel con la UI del Shell
 - **Fecha**: 2026-09-13
-- **Commit**: `pending`
+- **Commit**: `29d9100`
 - **Versión**: `v0.0.1-alpha`
 - **Severidad**: `ALTA`
 - **Componente**: `UI Shell / Runtime Integrator (`[`index.html`](file:///c:/Proyectos/pc_manager/index.html)`, `[`src/app.js`](file:///c:/Proyectos/pc_manager/src/app.js)`)`
