@@ -517,6 +517,173 @@
       align-content: start;
     }
 
+    /* TARJETAS DEL DASHBOARD CON DRAG & DROP FLUIDO */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-surface);
+      transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.22s ease, border-color 0.2s ease, opacity 0.2s ease;
+      cursor: grab;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .card:hover {
+      border-color: var(--border-medium);
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+    }
+
+    .card.dragging {
+      opacity: 0.45;
+      transform: scale(0.98);
+      cursor: grabbing;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-primary), 0 16px 36px rgba(0, 0, 0, 0.55);
+    }
+
+    .card.drag-target {
+      border-color: var(--accent-primary) !important;
+      box-shadow: 0 0 0 2px var(--accent-primary-dim), 0 12px 28px rgba(59, 130, 246, 0.25);
+      transform: translateY(-3px);
+    }
+
+    @keyframes cardDrop {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .card.card-drop {
+      animation: cardDrop 0.28s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    @keyframes cardPulse {
+      0% { transform: scale(0.96); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    /* VARIANTES DE TAMAÑO EN CUADRÍCULA 10x10 */
+    .card-size-1x1 { grid-column: span 1; grid-row: span 1; }
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; }
+    .card-size-2x2 { grid-column: span 2; grid-row: span 2; }
+    .card-size-3x2 { grid-column: span 3; grid-row: span 2; }
+    .card-size-4x2 { grid-column: span 4; grid-row: span 2; }
+    .card-size-5x2 { grid-column: span 5; grid-row: span 2; }
+    .card-size-5x5 { grid-column: span 5; grid-row: span 5; }
+    .card-size-10x2 { grid-column: span 10; grid-row: span 2; }
+
+    /* CABECERA DE TARJETA */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    .card-title-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .card-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+      color: var(--accent-primary);
+      flex-shrink: 0;
+    }
+
+    .card-title-box h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.25;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .card-badge {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-smooth);
+    }
+    .card-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+
+    /* CUERPO DE TARJETA */
+    .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .metric-big {
+      font-size: 26px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .metric-label {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .metric-progress-bg {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-pill);
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .metric-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), #60a5fa);
+      border-radius: var(--radius-pill);
+      transition: width 0.3s ease;
+    }
+
     /* HERO VACÍO DEL DASHBOARD (SIN MÓDULOS) */
     .empty-dashboard-hero {
       grid-column: 2 / span 8;
@@ -1353,6 +1520,8 @@
               </div>
             </div>
           </div>
+          <!-- CONTENEDOR DINÁMICO DE META-OPCIONES DE MÓDULOS -->
+          <div id="dynamic-module-settings-container" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;"></div>
         </div>
       </section>
 
@@ -1577,35 +1746,150 @@
       }
     }
 
-    function installModule(manifest, scriptCode) {
-      if (installedModules.has(manifest.id)) {
-        addSystemNotification('Módulo Existente', `El módulo "${manifest.name}" ya se encuentra instalado.`, 'warning');
+    // DRAG AND DROP FLUIDO Y AUTO-ORGANIZACIÓN DEL DASHBOARD
+    let draggedCard = null;
+
+    function makeCardDraggable(card) {
+      card.setAttribute('draggable', 'true');
+
+      card.addEventListener('dragstart', (e) => {
+        draggedCard = card;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.id);
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        document.querySelectorAll('#grid-board .card').forEach(c => c.classList.remove('drag-target'));
+        draggedCard = null;
+      });
+
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (draggedCard && draggedCard !== card) {
+          card.classList.add('drag-target');
+        }
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-target');
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-target');
+        if (draggedCard && draggedCard !== card) {
+          const grid = document.getElementById('grid-board');
+          const cards = Array.from(grid.querySelectorAll('.card'));
+          const draggedIndex = cards.indexOf(draggedCard);
+          const targetIndex = cards.indexOf(card);
+
+          if (draggedIndex < targetIndex) {
+            card.after(draggedCard);
+          } else {
+            card.before(draggedCard);
+          }
+
+          draggedCard.classList.remove('card-drop');
+          void draggedCard.offsetWidth;
+          draggedCard.classList.add('card-drop');
+          setTimeout(() => draggedCard.classList.remove('card-drop'), 300);
+        }
+      });
+    }
+
+    function autoOrganizeDashboard() {
+      const grid = document.getElementById('grid-board');
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      if (cards.length === 0) {
+        addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para auto-organizar.', 'info');
         return;
+      }
+
+      cards.forEach((card) => {
+        card.classList.remove('card-drop');
+        void card.offsetWidth;
+        card.classList.add('card-drop');
+        setTimeout(() => card.classList.remove('card-drop'), 350);
+      });
+
+      addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula 10x10.`, 'success');
+    }
+
+    function dispatchModuleSetting(moduleId, optionId, value) {
+      const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');
+      const handlerName = `__SETTING_CHANGE_${cleanId}__`;
+      if (window[handlerName] && typeof window[handlerName] === 'function') {
+        window[handlerName](optionId, value);
+      }
+      addSystemNotification('Ajuste de Módulo', `Opción "${optionId}" actualizada a ${value}.`, 'info');
+    }
+
+    function installModule(manifest, scriptCode) {
+      const isUpdate = installedModules.has(manifest.id);
+      let oldVersion = '1.0.0';
+
+      if (isUpdate) {
+        const prevMod = installedModules.get(manifest.id);
+        oldVersion = prevMod.manifest.version || '1.0.0';
+
+        // 1. Limpiar widgets anteriores
+        if (prevMod.manifest.widgets) {
+          prevMod.manifest.widgets.forEach(w => {
+            const oldCard = document.getElementById(w.id || `card-${prevMod.manifest.id}`);
+            if (oldCard) oldCard.remove();
+          });
+        }
+        // 2. Limpiar vistas anteriores
+        const oldView = document.getElementById(`view-module-${prevMod.manifest.id}`);
+        if (oldView) oldView.remove();
+
+        // 3. Limpiar meta-opciones de configuración anteriores
+        const oldSettings = document.getElementById(`settings-mod-${prevMod.manifest.id}`);
+        if (oldSettings) oldSettings.remove();
+
+        // 4. Limpiar temporizadores y handlers previos
+        const cleanId = prevMod.manifest.id.replace(/[^a-zA-Z0-9_]/g, '_');
+        const cleanupKey = `__CLEANUP_${cleanId}__`;
+        if (window[cleanupKey] && typeof window[cleanupKey] === 'function') {
+          try { window[cleanupKey](); } catch(e) { console.warn('Error en cleanup:', e); }
+        }
       }
 
       installedModules.set(manifest.id, { manifest, scriptCode, active: true });
 
-      // 1. Añadir a la lista de instalados
+      // 1. Añadir o actualizar en la lista de instalados
       const list = document.getElementById('installed-modules-list');
       const emptyNotice = document.getElementById('empty-installed-notice');
       if (emptyNotice) emptyNotice.style.display = 'none';
 
-      const modCard = document.createElement('div');
-      modCard.className = 'settings-card';
-      modCard.id = `installed-mod-${manifest.id}`;
-      modCard.style.padding = '16px';
-      modCard.style.flexDirection = 'row';
-      modCard.style.alignItems = 'center';
-      modCard.style.justifyContent = 'space-between';
+      let modCard = document.getElementById(`installed-mod-${manifest.id}`);
+      if (!modCard) {
+        modCard = document.createElement('div');
+        modCard.className = 'settings-card';
+        modCard.id = `installed-mod-${manifest.id}`;
+        modCard.style.padding = '16px';
+        modCard.style.flexDirection = 'row';
+        modCard.style.alignItems = 'center';
+        modCard.style.justifyContent = 'space-between';
+        list.appendChild(modCard);
+      }
+
       modCard.innerHTML = `
         <div style="display: flex; gap: 14px; align-items: center;">
-          <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
-            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary); flex-shrink: 0;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           </div>
           <div>
-            <h4 style="font-size: 14px; font-weight: 600;">${manifest.name}</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">${manifest.description || ''}</p>
-            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v${manifest.version || '1.0.0'} // Grupo: ${manifest.group || 'General'}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h4 style="font-size: 14px; font-weight: 600;">${manifest.name}</h4>
+              <span class="card-badge" style="color: var(--accent-success);">v${manifest.version || '1.0.0'}</span>
+              ${isUpdate ? '<span class="card-badge" style="color: var(--accent-primary); background: var(--accent-primary-dim);">ACTUALIZADO</span>' : ''}
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${manifest.description || ''}</p>
+            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-secondary);">Grupo: ${manifest.group || 'General'}</span>
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 14px;">
@@ -1619,26 +1903,28 @@
           </button>
         </div>
       `;
-      list.appendChild(modCard);
 
       // 2. Actualizar contadores
       updateModuleCounts();
 
-      // 3. Añadir navegación al Sidebar bajo su grupo
+      // 3. Añadir o actualizar navegación al Sidebar bajo su grupo
       const groupName = manifest.group || 'General';
       ensureSidebarGroup(groupName);
       const groupContainer = document.getElementById(`sidebar-group-items-${groupName}`);
       if (groupContainer) {
-        const navBtn = document.createElement('button');
-        navBtn.className = 'nav-button';
-        navBtn.id = `nav-module-${manifest.id}`;
+        let navBtn = document.getElementById(`nav-module-${manifest.id}`);
+        if (!navBtn) {
+          navBtn = document.createElement('button');
+          navBtn.className = 'nav-button';
+          navBtn.id = `nav-module-${manifest.id}`;
+          navBtn.onclick = () => switchView(`module-${manifest.id}`);
+          groupContainer.appendChild(navBtn);
+        }
         navBtn.title = manifest.name;
-        navBtn.onclick = () => switchView(`module-${manifest.id}`);
         navBtn.innerHTML = `
           <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <span>${manifest.name}</span>
         `;
-        groupContainer.appendChild(navBtn);
       }
 
       // 4. Inyectar vista dedicada del módulo
@@ -1657,7 +1943,7 @@
         });
       }
 
-      // 5. Inyectar widgets en el Dashboard
+      // 5. Inyectar widgets en el Dashboard con drag & drop habilitado
       if (manifest.widgets && manifest.widgets.length > 0) {
         const emptyHero = document.querySelector('.empty-dashboard-hero');
         if (emptyHero) emptyHero.style.display = 'none';
@@ -1666,14 +1952,66 @@
           const card = document.createElement('article');
           card.className = `card card-size-${w.size || '2x1'}`;
           card.id = w.id || `card-${manifest.id}`;
-          card.draggable = true;
           card.innerHTML = w.html;
+          makeCardDraggable(card);
           document.getElementById('grid-board').appendChild(card);
         });
         updateDashboardCardsCount();
       }
 
-      // 6. Ejecutar script del módulo si existe
+      // 6. Inyectar Meta-Opciones en la sección de Configuraciones
+      if (manifest.meta_options && manifest.meta_options.length > 0) {
+        const settingsContainer = document.getElementById('dynamic-module-settings-container');
+        if (settingsContainer) {
+          const sCard = document.createElement('div');
+          sCard.className = 'settings-card';
+          sCard.id = `settings-mod-${manifest.id}`;
+          sCard.innerHTML = `
+            <div class="settings-header">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <h4>Configuración: ${manifest.name}</h4>
+              <span class="card-badge" style="color:var(--accent-primary);">v${manifest.version}</span>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 4px;">
+              Parámetros de funcionamiento expuestos dinámicamente por este módulo.
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 8px;">
+              ${manifest.meta_options.map(opt => {
+                if (opt.type === 'switch') {
+                  return `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <div>
+                        <strong style="font-size: 13px;">${opt.name}</strong>
+                        <div style="font-size: 11.5px; color: var(--text-muted);">${opt.desc}</div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" ${opt.default ? 'checked' : ''} onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.checked)">
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                  `;
+                } else if (opt.type === 'select') {
+                  return `
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
+                        ${opt.name}
+                      </label>
+                      <select class="form-select" onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.value)">
+                        ${opt.options.map(o => `<option value="${o.value}" ${o.value === opt.default ? 'selected' : ''}>${o.label}</option>`).join('')}
+                      </select>
+                      <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">${opt.desc}</div>
+                    </div>
+                  `;
+                }
+                return '';
+              }).join('')}
+            </div>
+          `;
+          settingsContainer.appendChild(sCard);
+        }
+      }
+
+      // 7. Ejecutar script del módulo
       if (scriptCode) {
         try {
           const runFn = new Function(scriptCode);
@@ -1683,7 +2021,11 @@
         }
       }
 
-      addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success');
+      if (isUpdate) {
+        addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success');
+      } else {
+        addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success');
+      }
     }
 
     function toggleModuleActive(moduleId, isActive) {
@@ -1701,6 +2043,9 @@
         });
         updateDashboardCardsCount();
       }
+
+      const settingsCard = document.getElementById(`settings-mod-${moduleId}`);
+      if (settingsCard) settingsCard.style.display = isActive ? 'block' : 'none';
 
       checkSidebarGroupsVisibility();
       addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info');
@@ -1726,6 +2071,16 @@
           const widgetEl = document.getElementById(w.id || `card-${moduleId}`);
           if (widgetEl) widgetEl.remove();
         });
+      }
+
+      const settingsEl = document.getElementById(`settings-mod-${moduleId}`);
+      if (settingsEl) settingsEl.remove();
+
+      // Llamar a cleanup si existe
+      const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');
+      const cleanupKey = `__CLEANUP_${cleanId}__`;
+      if (window[cleanupKey] && typeof window[cleanupKey] === 'function') {
+        try { window[cleanupKey](); } catch(e) {}
       }
 
       installedModules.delete(moduleId);

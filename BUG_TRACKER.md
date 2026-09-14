@@ -266,6 +266,39 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-012] Corrección de Tarjetas No Estilizadas, Implementación de Drag & Drop, Auto-organización, Meta-Opciones y Actualización de Módulos (v1.1.0)
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `Dashboard y Gestor de Módulos (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`)`
+- **Descripción del Fallo**: 
+  1. Los widgets inyectados en el Dashboard aparecían como texto desprovisto de formato de tarjeta (sin fondo, sin bordes y sin variantes de tamaño grid).
+  2. No era posible mover las tarjetas mediante arrastrar y soltar (drag & drop) ni funcionaba el botón flotante de Auto-organizar.
+  3. Faltaba soporte para que los módulos registren meta-opciones de configuración dinámicas dentro de la sección de *Configuraciones*.
+  4. Faltaban widgets operativos para cronómetro y temporizador interactivos con botones de control.
+  5. El instalador no contemplaba el flujo de actualización en caliente para paquetes `.pcm` (ej. actualizar de v1.0.0 a v1.1.0 sin duplicar elementos).
+- **Causa Raíz**: 
+  1. Las clases CSS `.card`, `.card-size-*`, `.card-header`, etc., no habían sido incluidas en la hoja de estilos de la carcasa.
+  2. Faltaban los listeners de arrastre HTML5 (`dragstart`, `dragover`, `drop`, `dragend`) asociados a los elementos del grid y la lógica de reordenamiento e inserción relativa.
+  3. El Core carecía de un contenedor para meta-opciones de módulos y de un despachador de eventos de cambio de ajustes.
+- **Solución Implementada**: 
+  1. Se incorporaron en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) y [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) las reglas completas de `.card`, variantes de tamaño (`1x1` a `10x2`), animaciones fluidas `cardDrop` y `cardPulse`, y estados visuales `.dragging` y `.drag-target`.
+  2. Se programó la función `makeCardDraggable(card)` para habilitar drag & drop suave entre tarjetas y `autoOrganizeDashboard()` con compactación y retroalimentación animada.
+  3. Se creó el contenedor `#dynamic-module-settings-container` y el despachador `dispatchModuleSetting(moduleId, optId, val)` para que los módulos expongan opciones configurables (selectores, switches) en caliente.
+  4. Se implementó el soporte de actualización en `installModule`: si el módulo ya existe, purga los widgets y vistas anteriores, refresca los metadatos de versión en la lista de módulos instalados con la etiqueta `ACTUALIZADO`, monta los nuevos componentes y emite la notificación correspondiente.
+  5. Se actualizó el paquete [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm) a la versión `1.1.0` con 3 widgets (Reloj digital 2x1, Cronómetro interactivo con vueltas 2x2 y Temporizador con barra de progreso y alarma sonora Web Audio 2x2), además de 3 meta-opciones funcionales en Configuraciones (formato 24h/12h, mostrar/ocultar segundos, alerta sonora).
+  6. Se sincronizó `core_shell.html` y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
