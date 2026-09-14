@@ -114,7 +114,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 ### [BUG-006] Desvío arquitectónico: concepción errónea de servidor web en lugar de software nativo de escritorio (Rust + Tauri)
 - **Fecha**: 2026-09-13
-- **Commit**: `pending`
+- **Commit**: `75c0e03`
 - **Versión**: `v0.0.1-alpha`
 - **Severidad**: `CRÍTICA`
 - **Componente**: `Arquitectura Global / Directivas de Sistema`
