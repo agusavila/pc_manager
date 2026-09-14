@@ -510,5 +510,44 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-020] Motor de Posicionamiento Libre por Coordenadas en Cuadrícula, Vista Previa de Snapping y Auto-organización con Empaquetado 2D
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `Dashboard / Drag & Drop / Grid System (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  El mecanismo de arrastre previo dependía exclusivamente del flujo DOM secuencial de CSS Grid (`grid-auto-flow`). Al arrastrar una tarjeta solo permitía intercambiarla de posición con tarjetas contiguas, imposibilitando ubicar tarjetas en posiciones arbitrarias de la cuadrícula (ej. dejar espacios vacíos, mover una tarjeta a una columna o fila específica alejada) y provocando saltos bruscos al mover el cursor.
+- **Causa Raíz**: 
+  1. Las tarjetas carecían de asignación explícita de coordenadas de inicio en la cuadrícula (`grid-column-start`, `grid-row-start`), dependiendo del orden natural de los elementos DOM, lo que forzaba a CSS Grid a compactar secuencialmente todo elemento sin admitir huecos ni libre albedrío de ubicación.
+  2. No existía un indicador visual de celda de destino (`grid-drop-indicator`) ni un clon flotante con elevación visual que siguiera de forma suave y desacoplada al cursor sin alterar el flujo del DOM mientras duraba el arrastre.
+  3. El botón de Auto-organizar se limitaba a disparar una animación visual sin recalcular la distribución óptima de las tarjetas en la cuadrícula.
+- **Solución Implementada**: 
+  1. **Sistema de Coordenadas de Cuadrícula Fijas y Libres**:
+     - Cada tarjeta ahora posee atributos `data-col` y `data-row` y estilos inline explícitos (`gridColumn: ${col} / span ${spanCol}`, `gridRow: ${row} / span ${spanRow}`).
+     - El usuario puede mover cualquier tarjeta a cualquier columna o fila del Dashboard con total libertad, dejando celdas vacías o agrupándolas a voluntad.
+  2. **Motor de Arrastre Fluido con Clon y Previsualización de Snapping**:
+     - Al iniciar el arrastre (umbral > 5px), se crea un clon flotante con elevación suave (`.card-drag-clone`, z-index 999999, ligera rotación de 0.8° y sombra Material Expressive).
+     - La tarjeta de origen se atenúa sutilmente (`.card-drag-source`).
+     - Se proyecta en tiempo real un indicador de celda de destino (`#grid-drop-indicator`) dentro de la cuadrícula con borde punteado del acento primario y fondo translúcido, calculando con precisión matemática la celda más cercana según la posición del cursor, padding y gaps de la cuadrícula.
+     - Se incorporó desplazamiento automático suave (auto-scroll) si el puntero se acerca a los extremos superior o inferior del área visible.
+  3. **Resolución Inteligente de Colisiones**:
+     - Si la tarjeta se suelta en una celda vacía, se asienta en ella inmediatamente sin desplazar ninguna otra.
+     - Si se suelta sobre una tarjeta existente, se intercambian las coordenadas de manera fluida y táctil. Si colisiona con múltiples tarjetas, estas se desplazan hacia filas inferiores para mantener la coherencia espacial.
+  4. **Auto-organización Real con Algoritmo de Empaquetado 2D (Bin-Packing)**:
+     - La función `autoOrganizeDashboard()` ordena las tarjetas activas de arriba a abajo y de izquierda a derecha, calculando con una matriz de ocupación el primer hueco libre disponible sin dejar espacios vacíos, compactándolas con animación `.card-drop`.
+  5. **Persistencia Completa de Coordenadas y Adaptabilidad**:
+     - Las coordenadas `{ col, row }` se persisten en Rust (`save_module_setting` en `core_dashboard`) y `localStorage`, restaurándose fielmente al iniciar el sistema.
+     - Se añadió listener de `resize` para adaptar y re-clampear las coordenadas cuando la ventana reduce sus columnas a 6 o 4 tracks.
+  6. **Sincronización y Compilación**:
+     - Sincronizado en [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y recompilado en el binario nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 

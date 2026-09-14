@@ -585,19 +585,36 @@
       box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
     }
 
-    .card.dragging {
-      opacity: 0.55;
-      transform: scale(0.97);
-      cursor: grabbing;
-      border-color: var(--accent-primary) !important;
-      box-shadow: 0 0 0 2px var(--accent-primary), 0 16px 36px rgba(0, 0, 0, 0.55);
-      z-index: 100;
+    .card.card-drag-source {
+      opacity: 0.25 !important;
+      filter: grayscale(0.6) !important;
+      border: 1px dashed var(--accent-primary) !important;
+      box-shadow: none !important;
     }
 
-    .card.drag-target {
+    .card-drag-clone {
+      position: fixed !important;
+      pointer-events: none !important;
+      z-index: 999999 !important;
+      opacity: 0.95 !important;
+      box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 2px var(--accent-primary) !important;
+      transform: scale(1.03) rotate(0.8deg) !important;
+      transition: none !important;
+      cursor: grabbing !important;
       border-color: var(--accent-primary) !important;
-      box-shadow: 0 0 0 2px var(--accent-primary-dim), 0 12px 28px rgba(59, 130, 246, 0.25);
-      transform: translateY(-3px);
+      margin: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    .grid-drop-indicator {
+      border: 2px dashed var(--accent-primary) !important;
+      background: rgba(59, 130, 246, 0.14) !important;
+      border-radius: var(--radius-lg) !important;
+      pointer-events: none !important;
+      transition: all 0.12s cubic-bezier(0.2, 0, 0, 1) !important;
+      box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2) !important;
+      z-index: 5 !important;
+      min-height: 90px;
     }
 
     /* CATÁLOGO DE WIDGETS (DRAWER LATERAL) */
@@ -1332,6 +1349,7 @@
 
           <!-- CUADRÍCULA 10x10 CON MENSAJE DE ONBOARDING -->
           <div class="grid-board" id="grid-board">
+            <div id="grid-drop-indicator" class="grid-drop-indicator" style="display: none;"></div>
             
             <div class="empty-dashboard-hero">
               <div class="hero-icon-box">
@@ -2145,20 +2163,71 @@
       }
     }
 
-    // DRAG AND DROP FLUIDO Y AUTO-ORGANIZACIÓN DEL DASHBOARD CON PERSISTENCIA (POINTER EVENTS)
+    // DRAG AND DROP FLUIDO, POSICIONAMIENTO LIBRE EN CUADRÍCULA Y AUTO-ORGANIZACIÓN (MATERIAL EXPRESSIVE)
+    function getGridCols() {
+      const w = window.innerWidth;
+      if (w <= 1080) return 4;
+      if (w <= 1400) return 6;
+      return 10;
+    }
+
+    function getCardSpan(card) {
+      const match = card.className.match(/card-size-(\d+)x(\d+)/);
+      if (match) {
+        return { spanCol: parseInt(match[1], 10), spanRow: parseInt(match[2], 10) };
+      }
+      return { spanCol: 2, spanRow: 1 };
+    }
+
+    function findNextFreeSlot(gridCols, spanCol, spanRow, occupiedMatrix) {
+      let row = 1;
+      while (true) {
+        for (let col = 1; col <= gridCols - spanCol + 1; col++) {
+          let canFit = true;
+          for (let r = row; r < row + spanRow; r++) {
+            for (let c = col; c < col + spanCol; c++) {
+              if (occupiedMatrix[r] && occupiedMatrix[r][c]) {
+                canFit = false;
+                break;
+              }
+            }
+            if (!canFit) break;
+          }
+          if (canFit) {
+            return { col, row };
+          }
+        }
+        row++;
+        if (row > 50) return { col: 1, row: 1 };
+      }
+    }
+
     let activeDraggedCard = null;
 
     function makeCardDraggable(card) {
       card.addEventListener('pointerdown', (e) => {
         // Ignorar si el usuario interactúa con controles interactivos
-        if (e.target.closest('button, input, select, .btn, .switch, label, a, .card-btn')) {
+        if (e.target.closest('button, input, select, .btn, .switch, label, a, .card-btn, textarea')) {
           return;
         }
         if (e.button !== 0) return; // Solo responder al clic principal
 
+        const grid = document.getElementById('grid-board');
+        if (!grid) return;
+
         const startX = e.clientX;
         const startY = e.clientY;
+        const cardRect = card.getBoundingClientRect();
+        const grabOffsetX = e.clientX - cardRect.left;
+        const grabOffsetY = e.clientY - cardRect.top;
+
         let isDragging = false;
+        let clone = null;
+        let indicator = null;
+
+        const origCol = parseInt(card.dataset.col || '1', 10);
+        const origRow = parseInt(card.dataset.row || '1', 10);
+        const { spanCol, spanRow } = getCardSpan(card);
 
         function onPointerMove(moveEvent) {
           const dx = moveEvent.clientX - startX;
@@ -2167,100 +2236,351 @@
           if (!isDragging && Math.hypot(dx, dy) > 5) {
             isDragging = true;
             activeDraggedCard = card;
-            card.classList.add('dragging');
             try { card.setPointerCapture(moveEvent.pointerId); } catch(err) {}
+
+            // Crear clon flotante elevado
+            clone = card.cloneNode(true);
+            clone.id = 'active-drag-clone';
+            clone.className = card.className + ' card-drag-clone';
+            clone.style.width = `${cardRect.width}px`;
+            clone.style.height = `${cardRect.height}px`;
+            clone.style.left = `${moveEvent.clientX - grabOffsetX}px`;
+            clone.style.top = `${moveEvent.clientY - grabOffsetY}px`;
+            document.body.appendChild(clone);
+
+            card.classList.add('card-drag-source');
+
+            // Obtener o crear indicador de cuadrícula
+            indicator = document.getElementById('grid-drop-indicator');
+            if (!indicator) {
+              indicator = document.createElement('div');
+              indicator.id = 'grid-drop-indicator';
+              indicator.className = 'grid-drop-indicator';
+              grid.appendChild(indicator);
+            }
+            indicator.style.display = 'block';
           }
 
           if (isDragging) {
             moveEvent.preventDefault();
 
-            // Detectar el elemento bajo el cursor ignorando la tarjeta arrastrada
-            card.style.visibility = 'hidden';
-            const elUnder = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
-            card.style.visibility = 'visible';
+            // Mover clon flotante
+            if (clone) {
+              clone.style.left = `${moveEvent.clientX - grabOffsetX}px`;
+              clone.style.top = `${moveEvent.clientY - grabOffsetY}px`;
+            }
 
-            const targetCard = elUnder ? elUnder.closest('#grid-board .card') : null;
-            if (targetCard && targetCard !== card) {
-              const rect = targetCard.getBoundingClientRect();
-              const relX = moveEvent.clientX - rect.left;
-              const relY = moveEvent.clientY - rect.top;
+            // Auto-scroll si el puntero se acerca a los bordes verticales del contenedor
+            const viewContent = document.querySelector('.view-content');
+            if (viewContent) {
+              const viewRect = viewContent.getBoundingClientRect();
+              if (moveEvent.clientY > viewRect.bottom - 45) {
+                viewContent.scrollTop += 9;
+              } else if (moveEvent.clientY < viewRect.top + 45) {
+                viewContent.scrollTop -= 9;
+              }
+            }
 
-              // Si el cursor cruzó la mitad de la tarjeta objetivo, colocar después; sino antes
-              if (relX > rect.width / 2 || relY > rect.height / 2) {
-                targetCard.after(card);
-              } else {
-                targetCard.before(card);
-              }
-            } else if (elUnder && (elUnder.id === 'grid-board' || elUnder.classList.contains('grid-board'))) {
-              const grid = document.getElementById('grid-board');
-              if (grid && grid.lastElementChild !== card) {
-                grid.appendChild(card);
-              }
+            // Calcular columna y fila objetivo en la cuadrícula
+            const boardRect = grid.getBoundingClientRect();
+            const gridCols = getGridCols();
+            const effSpanCol = Math.min(spanCol, gridCols);
+
+            const compStyle = window.getComputedStyle(grid);
+            const padLeft = parseFloat(compStyle.paddingLeft) || 16;
+            const padTop = parseFloat(compStyle.paddingTop) || 16;
+            const padRight = parseFloat(compStyle.paddingRight) || 16;
+            const gap = parseFloat(compStyle.rowGap || compStyle.gap) || 14;
+
+            const innerWidth = boardRect.width - padLeft - padRight;
+            const colWidth = (innerWidth - (gap * (gridCols - 1))) / gridCols;
+            const stepX = colWidth + gap;
+            const stepY = 90 + gap;
+
+            const cardLeft = moveEvent.clientX - grabOffsetX;
+            const cardTop = moveEvent.clientY - grabOffsetY;
+            const relX = cardLeft - boardRect.left - padLeft;
+            const relY = cardTop - boardRect.top - padTop;
+
+            let targetCol = Math.round(relX / stepX) + 1;
+            targetCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, targetCol));
+
+            let targetRow = Math.round(relY / stepY) + 1;
+            targetRow = Math.max(1, Math.min(25, targetRow));
+
+            if (indicator) {
+              indicator.style.gridColumn = `${targetCol} / span ${effSpanCol}`;
+              indicator.style.gridRow = `${targetRow} / span ${spanRow}`;
+              indicator.dataset.targetCol = targetCol;
+              indicator.dataset.targetRow = targetRow;
             }
           }
         }
 
         function onPointerUp(upEvent) {
+          card.removeEventListener('pointermove', onPointerMove);
+          card.removeEventListener('pointerup', onPointerUp);
+          card.removeEventListener('pointercancel', onPointerUp);
           window.removeEventListener('pointermove', onPointerMove);
           window.removeEventListener('pointerup', onPointerUp);
-          window.removeEventListener('pointercancel', onPointerUp);
 
           if (isDragging) {
             try { card.releasePointerCapture(upEvent.pointerId); } catch(err) {}
-            card.classList.remove('dragging');
+
+            if (clone) {
+              clone.remove();
+              clone = null;
+            }
+
+            let targetCol = origCol;
+            let targetRow = origRow;
+            if (indicator) {
+              targetCol = parseInt(indicator.dataset.targetCol || origCol, 10);
+              targetRow = parseInt(indicator.dataset.targetRow || origRow, 10);
+              indicator.style.display = 'none';
+            }
+
+            card.classList.remove('card-drag-source');
             activeDraggedCard = null;
+
+            const gridCols = getGridCols();
+            const effSpanCol = Math.min(spanCol, gridCols);
+
+            // Verificar colisiones con otras tarjetas activas
+            const otherCards = Array.from(grid.querySelectorAll('.card')).filter(c => c !== card && c.style.display !== 'none');
+            const overlappingCards = otherCards.filter(other => {
+              const oCol = parseInt(other.dataset.col || '1', 10);
+              const oRow = parseInt(other.dataset.row || '1', 10);
+              const { spanCol: oSpanCol, spanRow: oSpanRow } = getCardSpan(other);
+              const oEffSpanCol = Math.min(oSpanCol, gridCols);
+              const xOverlap = (targetCol < oCol + oEffSpanCol) && (targetCol + effSpanCol > oCol);
+              const yOverlap = (targetRow < oRow + oSpanRow) && (targetRow + spanRow > oRow);
+              return xOverlap && yOverlap;
+            });
+
+            if (overlappingCards.length === 1) {
+              // Intercambiar posición con la tarjeta existente
+              const other = overlappingCards[0];
+              const { spanCol: oSpanCol, spanRow: oSpanRow } = getCardSpan(other);
+              const oEffSpanCol = Math.min(oSpanCol, gridCols);
+              const clampedOrigCol = Math.max(1, Math.min(gridCols - oEffSpanCol + 1, origCol));
+
+              other.style.gridColumn = `${clampedOrigCol} / span ${oEffSpanCol}`;
+              other.style.gridRow = `${origRow} / span ${oSpanRow}`;
+              other.dataset.col = clampedOrigCol;
+              other.dataset.row = origRow;
+              other.classList.remove('card-drop');
+              void other.offsetWidth;
+              other.classList.add('card-drop');
+              setTimeout(() => other.classList.remove('card-drop'), 300);
+            } else if (overlappingCards.length > 1) {
+              // Desplazar tarjetas en conflicto hacia filas inferiores
+              overlappingCards.forEach(other => {
+                const { spanRow: oSpanRow } = getCardSpan(other);
+                const newRow = targetRow + spanRow;
+                other.style.gridRow = `${newRow} / span ${oSpanRow}`;
+                other.dataset.row = newRow;
+                other.classList.remove('card-drop');
+                void other.offsetWidth;
+                other.classList.add('card-drop');
+                setTimeout(() => other.classList.remove('card-drop'), 300);
+              });
+            }
+
+            // Asignar nuevas coordenadas fijas a la tarjeta arrastrada
+            card.style.gridColumn = `${targetCol} / span ${effSpanCol}`;
+            card.style.gridRow = `${targetRow} / span ${spanRow}`;
+            card.dataset.col = targetCol;
+            card.dataset.row = targetRow;
 
             card.classList.remove('card-drop');
             void card.offsetWidth;
             card.classList.add('card-drop');
             setTimeout(() => card.classList.remove('card-drop'), 300);
 
-            persistDashboardOrder();
+            persistDashboardLayout();
           }
         }
 
+        card.addEventListener('pointermove', onPointerMove);
+        card.addEventListener('pointerup', onPointerUp);
+        card.addEventListener('pointercancel', onPointerUp);
         window.addEventListener('pointermove', onPointerMove);
         window.addEventListener('pointerup', onPointerUp);
-        window.addEventListener('pointercancel', onPointerUp);
       });
     }
 
-    function persistDashboardOrder() {
+    function persistDashboardLayout() {
+      const grid = document.getElementById('grid-board');
+      if (!grid) return;
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      const layout = {};
+      const order = [];
+      cards.forEach(card => {
+        order.push(card.id);
+        if (card.dataset.col && card.dataset.row) {
+          layout[card.id] = {
+            col: parseInt(card.dataset.col, 10),
+            row: parseInt(card.dataset.row, 10)
+          };
+        }
+      });
+
+      try {
+        localStorage.setItem('pcm_dashboard_layout', JSON.stringify(layout));
+      } catch(e) {}
+
       const invokeFn = getTauriInvoke();
       if (invokeFn) {
-        const cardIds = Array.from(document.querySelectorAll('#grid-board .card')).map(c => c.id);
-        invokeFn('save_dashboard_order', { cardOrder: cardIds }).catch(e => console.warn(e));
+        invokeFn('save_dashboard_order', { cardOrder: order }).catch(e => console.warn(e));
+        invokeFn('save_module_setting', {
+          moduleId: 'core_dashboard',
+          optionId: 'layout',
+          value: JSON.stringify(layout)
+        }).catch(e => console.warn(e));
       }
     }
 
+    async function restoreDashboardLayout() {
+      let layout = null;
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        try {
+          const saved = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
+          if (saved && saved.layout) {
+            layout = typeof saved.layout === 'string' ? JSON.parse(saved.layout) : saved.layout;
+          }
+        } catch(e) {}
+      }
+      if (!layout) {
+        try {
+          const local = localStorage.getItem('pcm_dashboard_layout');
+          if (local) layout = JSON.parse(local);
+        } catch(e) {}
+      }
+
+      const grid = document.getElementById('grid-board');
+      if (!grid) return;
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      const gridCols = getGridCols();
+      const occupiedMatrix = {};
+
+      // 1. Asignar posiciones previamente guardadas
+      cards.forEach(card => {
+        const { spanCol, spanRow } = getCardSpan(card);
+        const effSpanCol = Math.min(spanCol, gridCols);
+        if (layout && layout[card.id] && layout[card.id].col && layout[card.id].row) {
+          let col = Math.max(1, Math.min(gridCols - effSpanCol + 1, layout[card.id].col));
+          let row = Math.max(1, layout[card.id].row);
+          card.style.gridColumn = `${col} / span ${effSpanCol}`;
+          card.style.gridRow = `${row} / span ${spanRow}`;
+          card.dataset.col = col;
+          card.dataset.row = row;
+
+          for (let r = row; r < row + spanRow; r++) {
+            if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
+            for (let c = col; c < col + effSpanCol; c++) {
+              occupiedMatrix[r][c] = true;
+            }
+          }
+        }
+      });
+
+      // 2. Asignar primera posición libre a tarjetas nuevas o sin posición
+      cards.forEach(card => {
+        if (!card.dataset.col) {
+          const { spanCol, spanRow } = getCardSpan(card);
+          const effSpanCol = Math.min(spanCol, gridCols);
+          const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
+          card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
+          card.style.gridRow = `${slot.row} / span ${spanRow}`;
+          card.dataset.col = slot.col;
+          card.dataset.row = slot.row;
+
+          for (let r = slot.row; r < slot.row + spanRow; r++) {
+            if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
+            for (let c = slot.col; c < slot.col + effSpanCol; c++) {
+              occupiedMatrix[r][c] = true;
+            }
+          }
+        }
+      });
+    }
+
     function initGridBoardDragDrop() {
-      // Drag and drop inicializado mediante PointerEvents
+      restoreDashboardLayout();
     }
 
     function autoOrganizeDashboard() {
       const grid = document.getElementById('grid-board');
-      const cards = Array.from(grid.querySelectorAll('.card'));
+      const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none');
       if (cards.length === 0) {
         addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para auto-organizar.', 'info');
         return;
       }
 
+      // Ordenar tarjetas de arriba hacia abajo y de izquierda a derecha
+      cards.sort((a, b) => {
+        const rA = parseInt(a.dataset.row || '1', 10);
+        const rB = parseInt(b.dataset.row || '1', 10);
+        if (rA !== rB) return rA - rB;
+        const cA = parseInt(a.dataset.col || '1', 10);
+        const cB = parseInt(b.dataset.col || '1', 10);
+        return cA - cB;
+      });
+
+      const gridCols = getGridCols();
+      const occupiedMatrix = {};
+
       cards.forEach((card) => {
+        const { spanCol, spanRow } = getCardSpan(card);
+        const effSpanCol = Math.min(spanCol, gridCols);
+        const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
+
+        for (let r = slot.row; r < slot.row + spanRow; r++) {
+          if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
+          for (let c = slot.col; c < slot.col + effSpanCol; c++) {
+            occupiedMatrix[r][c] = true;
+          }
+        }
+
+        card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
+        card.style.gridRow = `${slot.row} / span ${spanRow}`;
+        card.dataset.col = slot.col;
+        card.dataset.row = slot.row;
+
         card.classList.remove('card-drop');
         void card.offsetWidth;
         card.classList.add('card-drop');
         setTimeout(() => card.classList.remove('card-drop'), 350);
       });
 
-      // Persistir orden compactado en disco
-      const invokeFn = getTauriInvoke();
-      if (invokeFn) {
-        const cardIds = cards.map(c => c.id);
-        invokeFn('save_dashboard_order', { cardOrder: cardIds }).catch(e => console.warn(e));
-      }
-
+      persistDashboardLayout();
       addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula.`, 'success');
     }
+
+    function adjustCardsForCurrentGridCols() {
+      const grid = document.getElementById('grid-board');
+      if (!grid) return;
+      const gridCols = getGridCols();
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      cards.forEach(card => {
+        if (card.dataset.col) {
+          const { spanCol, spanRow } = getCardSpan(card);
+          const effSpanCol = Math.min(spanCol, gridCols);
+          let col = parseInt(card.dataset.col, 10);
+          const row = parseInt(card.dataset.row || '1', 10);
+          if (col + effSpanCol - 1 > gridCols) {
+            col = Math.max(1, gridCols - effSpanCol + 1);
+            card.dataset.col = col;
+          }
+          card.style.gridColumn = `${col} / span ${effSpanCol}`;
+          card.style.gridRow = `${row} / span ${spanRow}`;
+        }
+      });
+    }
+
+    window.addEventListener('resize', adjustCardsForCurrentGridCols);
 
     function dispatchModuleSetting(moduleId, optionId, value, syncDisk = true) {
       const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');
@@ -2423,6 +2743,7 @@
           document.getElementById('grid-board').appendChild(card);
         });
         updateDashboardCardsCount();
+        restoreDashboardLayout();
       }
 
       // 6. Inyectar Pestaña y Panel de Meta-Opciones en Configuraciones
@@ -3261,6 +3582,7 @@
                 if (card) grid.appendChild(card);
               });
             }
+            await restoreDashboardLayout();
 
             // Restaurar estado de visibilidad de tarjetas ocultas en el Dashboard
             try {
