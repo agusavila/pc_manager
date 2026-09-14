@@ -164,7 +164,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 ### [BUG-008] Reversión de módulos de prueba no solicitados y restauración canónica de la Carcasa / Core limpio (v0.0.1-alpha)
 - **Fecha**: 2026-09-14
-- **Commit**: `pending`
+- **Commit**: `ee4e4f8`
 - **Versión**: `v0.0.1-alpha`
 - **Severidad**: `ALTA`
 - **Componente**: `Carcasa / Core UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, `[`index.html`](file:///c:/Proyectos/pc_manager/index.html)`)`
