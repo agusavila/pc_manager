@@ -12,6 +12,7 @@ async function buildDummyModule() {
     description: "Módulo operativo de tiempo con reloj multinorma, cronómetro de precisión con registro de vueltas y temporizador con barra de progreso y alarma acústica.",
     author: "Modular Engine",
     group: "General",
+    icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
     entrypoint: "module.js",
     permissions: [],
     dependencies: [],
@@ -49,6 +50,7 @@ async function buildDummyModule() {
         id: "card-system-clock",
         name: "Reloj del Sistema",
         size: "2x1",
+        icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
         html: `
           <header class="card-header">
             <div class="card-title-box">
@@ -72,6 +74,7 @@ async function buildDummyModule() {
         id: "card-system-stopwatch",
         name: "Cronómetro del Sistema",
         size: "2x2",
+        icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M5 3L2 6"></path><path d="M22 6l-3-3"></path><path d="M12 2v3"></path></svg>`,
         html: `
           <header class="card-header">
             <div class="card-title-box">
@@ -109,6 +112,7 @@ async function buildDummyModule() {
         id: "card-system-timer",
         name: "Temporizador",
         size: "2x2",
+        icon: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg>`,
         html: `
           <header class="card-header">
             <div class="card-title-box">

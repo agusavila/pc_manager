@@ -480,4 +480,35 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-019] Corrección de Anidamiento de Tarjeta de Notificaciones, Rediseño del Drawer de Widgets con Iconos Reales de Módulo y Reemplazo de Drag & Drop por Sistema Robusto de PointerEvents
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `UI / Configuraciones / Widgets Drawer / Drag & Drop (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`)`
+- **Descripción del Fallo**: 
+  1. La tarjeta de configuración de notificaciones quedó anidada visualmente dentro de la tarjeta de temas y colores debido a etiquetas de cierre omitidas.
+  2. En el panel lateral de Widgets, las tarjetas aparecían desalineadas (el interruptor centrado verticalmente debajo del texto) y todas mostraban un icono genérico de cuadrícula en vez del icono representativo del módulo.
+  3. El Drag and Drop de las tarjetas del Dashboard no funcionaba debido a interferencias de eventos CSS (`pointer-events: none` en hijos de la tarjeta) y al bloqueo de eventos nativos OLE DnD de WebView2/Tauri en Windows.
+- **Causa Raíz**: 
+  1. En [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html), faltaban las dos etiquetas `</div></div>` para cerrar el flex container y la tarjeta de Temas y Colores antes de abrir `card-notification-settings`.
+  2. El catálogo del drawer utilizaba la clase `.settings-card` (cuya dirección flex es en columna) en vez de un componente horizontal dedicado, y usaba un SVG genérico hardcodeado.
+  3. El sistema de Drag and Drop previo se basaba en el API HTML5 Drag and Drop (`draggable="true"`), que en WebView2 bajo Windows dentro de Tauri sufre bloqueos por el manejador de drop de ventana de Tauri, sumado a la regla CSS `.card > *:not(...) { pointer-events: none; }` que bloqueaba eventos de inicio de arrastre.
+- **Solución Implementada**: 
+  1. Se cerró formalmente la tarjeta de Temas y Colores en la plantilla general, independizando la tarjeta de Notificaciones como un bloque de primer nivel en la pantalla de Configuraciones.
+  2. Se diseñó el componente horizontal `.widget-catalog-item` para el Drawer con icono del módulo/widget a la izquierda, títulos y badges en el centro y switch alineado a la derecha.
+  3. Se enriqueció el constructor del paquete dummy [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs) proveyendo iconos vectoriales SVG limpios tanto a nivel de módulo como individual para cada widget, y se regeneró [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm).
+  4. Se reemplazó el motor de arrastre por un sistema de **PointerEvents** (`pointerdown`, `pointermove`, `pointerup` con `setPointerCapture`), independiente de las limitaciones OLE de Windows/Tauri. Al arrastrar una tarjeta, detecta de forma continua la posición respecto a otras tarjetas del Dashboard y las reordena fluidamente en caliente, persistiendo el orden al soltar.
+  5. Se eliminó la regla `pointer-events: none` sobre los hijos de las tarjetas y se agregó `touch-action: none;` para garantizar control suave y sin conflictos.
+  6. Se sincronizó [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se recompiló el ejecutable [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
