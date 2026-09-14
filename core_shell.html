@@ -438,6 +438,37 @@
       border-color: var(--border-medium);
     }
 
+    /* Micro-tooltips flotantes en hover */
+    [data-tooltip] {
+      position: relative;
+    }
+    [data-tooltip]::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 9px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.18s cubic-bezier(0.2, 0, 0, 1), transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+    }
+    [data-tooltip]:hover::before {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(4px);
+    }
+
     .notification-counter {
       position: absolute;
       top: -3px;
@@ -1199,9 +1230,13 @@
         <div class="topbar-actions">
           <!-- Botones contextuales dinámicos según la vista activa -->
           <div id="topbar-contextual-actions" style="display: flex; align-items: center; gap: 8px;">
-            <button class="btn btn-secondary" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" title="Auto-organizar tarjetas en cuadrícula">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-              <span>Auto-organizar</span>
+            <button class="btn-icon" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" data-tooltip="Auto-organizar Dashboard" title="Auto-organizar Dashboard">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
             </button>
             <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Habilitar o deshabilitar tarjetas en el Dashboard">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
@@ -1258,17 +1293,6 @@
             </div>
 
           </div>
-
-          <!-- BOTÓN FLOTANTE CANÓNICO DE AUTO-ORGANIZACIÓN -->
-          <button class="fab-auto-organize" id="btn-auto-organize" onclick="autoOrganizeDashboard()" title="Auto-organizar y compactar cuadrícula de tarjetas">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-            </svg>
-            <span>Auto-organizar</span>
-          </button>
         </div>
       </section>
 
@@ -1704,9 +1728,13 @@
       if (viewId === 'dashboard') {
         container.style.display = 'flex';
         container.innerHTML = `
-          <button class="btn btn-secondary" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" title="Auto-organizar tarjetas en cuadrícula">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            <span>Auto-organizar</span>
+          <button class="btn-icon" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" data-tooltip="Auto-organizar Dashboard" title="Auto-organizar Dashboard">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
           </button>
           <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Habilitar o deshabilitar tarjetas en el Dashboard">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>

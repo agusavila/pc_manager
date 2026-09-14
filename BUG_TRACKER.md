@@ -367,6 +367,30 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-015] Optimización del Espacio Vertical del Dashboard y Botón de Auto-organizar en Barra Superior
+- **Fecha**: 2026-09-14
+- **Severidad**: `Baja`
+- **Componente**: `Dashboard UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. El botón flotante inferior de Auto-organización (`.fab-auto-organize`) se encontraba duplicado tras incorporarse la acción en la barra superior, ocupando espacio visual valioso en el pie del Dashboard y tapando tarjetas inferiores.
+  2. En la barra superior, el botón "Auto-organizar" se presentaba como un botón ancho con texto, en lugar de un botón compacto tipo icono (`btn-icon`) con retroalimentación explicativa en hover.
+- **Causa Raíz**: 
+  Convivencia de dos controles para la misma acción tras la migración a la barra superior y falta de un componente de tooltip enriquecido para botones tipo icono.
+- **Solución Implementada**: 
+  1. Se eliminó completamente el botón flotante inferior `#btn-auto-organize` (`.fab-auto-organize`) de la vista del Dashboard en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) y [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html), liberando el 100% del espacio vertical útil para la cuadrícula y sus tarjetas.
+  2. Se transformó el botón de la barra superior en un botón compacto tipo icono (`btn-icon`) utilizando el icono vectorial canónico de cuadrícula compacta (4 cuadrantes).
+  3. Se implementó el sistema CSS de micro-tooltips `[data-tooltip]` con animación suave y elevación en hover (`data-tooltip="Auto-organizar Dashboard"`), junto al atributo `title` nativo.
+  4. Se sincronizó `core_shell.html` y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
