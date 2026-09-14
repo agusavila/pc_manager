@@ -1,7 +1,11 @@
 # Regla de Arquitectura: Core-Modular (Carcasa Extensible)
 
-## 1. Principio Fundamental
-El proyecto **PC Manager** no es un script monolítico ni una aplicación rígida enfocada en una sola tarea. Es una plataforma **Core-Modular** (arquitectura de microkernel / plugin-driven) concebida como una **carcasa extensible** que orquesta módulos independientes.
+## 1. Principio Fundamental y Naturaleza del Sistema
+El proyecto **PC Manager** no es un script monolítico ni una aplicación web cliente-servidor. Es un **Software de Escritorio Nativo de Computadora (Desktop Application)** para Windows basado en **Rust + Tauri** con arquitectura **Core-Modular** (microkernel / plugin-driven).
+
+- **Backend / Core Shell en Rust**: Encargado de la ventana nativa, integración profunda con el **System Tray (bandeja del sistema)** de Windows, inicio con el SO, modo servicio pre-logon y gestión determinista de subprocesos.
+- **Frontend / Capa de Presentación**: Interfaz gráfica moderna (Material Expressive) renderizada en la WebView de Tauri, interactuando con el Core mediante contratos desacoplados.
+- **Prohibición Expresa**: Queda terminantemente prohibido concebir este proyecto como una aplicación web alojada en servidor HTTP. Es un programa ejecutable nativo para PC.
 
 ---
 

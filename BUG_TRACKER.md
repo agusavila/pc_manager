@@ -8,7 +8,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 | Versión | Total Incidencias | Críticas | Altas | Medias | Bajas | Estado |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| `0.0.1-alpha` | 5 | 1 | 3 | 1 | 0 | 100% Resueltas |
+| `0.0.1-alpha` | 6 | 2 | 3 | 1 | 0 | 100% Resueltas |
 
 ---
 
@@ -109,4 +109,29 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src/ui/icons.js`](file:///c:/Proyectos/pc_manager/src/ui/icons.js)
   - [`src/modules/system_telemetry/index.js`](file:///c:/Proyectos/pc_manager/src/modules/system_telemetry/index.js)
 - **Estado**: `RESUELTO`
+
+---
+
+### [BUG-006] Desvío arquitectónico: concepción errónea de servidor web en lugar de software nativo de escritorio (Rust + Tauri)
+- **Fecha**: 2026-09-13
+- **Commit**: `pending`
+- **Versión**: `v0.0.1-alpha`
+- **Severidad**: `CRÍTICA`
+- **Componente**: `Arquitectura Global / Directivas de Sistema`
+- **Descripción del Fallo**: 
+  Se introdujo un script de servidor web (`scripts/serve.js`) para visualización en navegador, desviando el proyecto de su naturaleza canónica de software de computadora ejecutable en el escritorio.
+- **Causa Raíz**: 
+  Asunción errónea de entrega web al encontrar prototipos basados en HTML/CSS/JS sin backend de escritorio inicializado.
+- **Solución Implementada**: 
+  1. Se eliminó completamente `scripts/serve.js` y se reconfiguró `package.json` para Tauri.
+  2. Se instituyó la **Regla 0** en [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md) y [`.agents/rules/core_modular_architecture.md`](file:///c:/Proyectos/pc_manager/.agents/rules/core_modular_architecture.md) fijando que PC Manager es exclusivamente un **Software de Escritorio Nativo de Computadora (Rust + Tauri)** para Windows.
+  3. Se reforzó el requisito de operación y minimizado al **System Tray (área de notificación)** de Windows.
+- **Archivos Afectados**: 
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/core_modular_architecture.md`](file:///c:/Proyectos/pc_manager/.agents/rules/core_modular_architecture.md)
+  - [`README.md`](file:///c:/Proyectos/pc_manager/README.md)
+  - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
+  - `scripts/serve.js` (eliminado)
+- **Estado**: `RESUELTO`
+
 

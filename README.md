@@ -1,11 +1,12 @@
 # PC Manager
 
 [![Versión](https://img.shields.io/badge/version-0.0.1--alpha-blue.svg)](https://github.com/agusavila/pc_manager)
-[![Arquitectura](https://img.shields.io/badge/architecture-core--modular-emerald.svg)](#arquitectura-core-modular)
-[![Diseño](https://img.shields.io/badge/design-material--expressive-violet.svg)](#sistema-de-diseño)
-[![Marca Blanca](https://img.shields.io/badge/standard-white--label-neutral.svg)](#directivas-de-marca-blanca)
+[![Plataforma](https://img.shields.io/badge/platform-Windows%20Desktop-informational.svg)](#arquitectura-core-modular)
+[![Stack](https://img.shields.io/badge/stack-Rust%20%2B%20Tauri-orange.svg)](#arquitectura-core-modular)
+[![Bandeja](https://img.shields.io/badge/integration-System%20Tray-purple.svg)](#principios-white-label-y-seguridad)
+[![Marca Blanca](https://img.shields.io/badge/standard-white--label-neutral.svg)](#principios-white-label-y-seguridad)
 
-**PC Manager** es una plataforma centralizada, modular y extensible de alto rendimiento para la monitorización, telemetría y administración del sistema operativo bajo una filosofía estricta de **Marca Blanca (White-Label)**.
+**PC Manager** es un **Software de Escritorio Nativo para Computadora (Desktop Application)** diseñado para Windows bajo la arquitectura **Rust + Tauri**. Proporciona una plataforma extensible de alto rendimiento para la monitorización, telemetría y administración del sistema operativo con integración en la **Bandeja del Sistema (System Tray)** bajo una filosofía estricta de **Marca Blanca (White-Label)**.
 
 ---
 

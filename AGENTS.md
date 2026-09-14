@@ -6,6 +6,16 @@ Bienvenido al espacio de trabajo de **PC Manager**. Estas directivas son de cump
 
 ## 1. Directivas Fundamentales
 
+### Regla 0: Naturaleza del Software — Programa Nativo de Escritorio (Desktop Software)
+- **Software de Computadora para Escritorio**: PC Manager es exclusivamente una **aplicación nativa de escritorio para Windows**, construida sobre la arquitectura **Rust + Tauri** con interfaz gráfica en WebView.
+- **Prohibición de Servidores Web**: Queda terminantemente prohibido concebir, estructurar o tratar el proyecto como un servidor web, sitio web, API HTTP o aplicación cliente-servidor para navegador. Es un programa ejecutable local de computadora.
+- **Integración Profunda con Windows**:
+  - Reside y opera en el **Área de Notificación (System Tray)** de Windows mediante icono y menú contextual nativo.
+  - Al cerrar la ventana, se minimiza a la bandeja del sistema por defecto para continuar operando en segundo plano.
+  - Soporta inicio automático con el sistema operativo.
+  - Soporta modo servicio nativo de Windows (pre-logon) para telemetría y colectores previos al inicio de sesión.
+  - Parada total determinista al ordenar el cierre definitivo (cero procesos huérfanos).
+
 ### Regla 1: Aislamiento Total y Privacidad
 - **Cero transferencia de datos externos**: Prohibido terminantemente buscar, leer, adaptar o reutilizar información, código, nombres de archivos, bases de datos o configuraciones de otros proyectos o directorios personales de este equipo o usuario.
 - Cualquier integración externa debe ser solicitada y aprobada explícitamente por el usuario antes de implementarse.

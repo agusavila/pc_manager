@@ -1,20 +1,20 @@
 {
   "name": "pc_manager",
   "version": "0.0.1-alpha",
-  "description": "PC Manager - Arquitectura Core-Modular White-Label para administración y telemetría de sistemas",
-  "main": "src/core/index.js",
+  "description": "PC Manager - Software de Escritorio Core-Modular para Windows (Rust + Tauri)",
   "type": "module",
   "scripts": {
-    "start": "node scripts/serve.js",
+    "tauri": "tauri",
     "test": "node test/core_test.js"
   },
   "keywords": [
     "pc-manager",
+    "desktop-application",
+    "rust",
+    "tauri",
     "core-modular",
-    "microkernel",
-    "white-label",
-    "telemetry",
-    "system-management"
+    "system-tray",
+    "white-label"
   ],
   "author": "aavila",
   "license": "MIT"
