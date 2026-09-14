@@ -63,6 +63,7 @@ pc_manager/
 ├── core_shell.html          # Interfaz visual del Core Limpio (sin módulos)
 ├── index.html               # Interfaz interactiva de demostración con módulos cargados
 ├── AGENTS.md                # Directivas maestras del proyecto
+├── BUG_TRACKER.md           # Bitácora continua de errores y bug fixes por commit
 └── README.md                # Portada principal del repositorio
 ```
 

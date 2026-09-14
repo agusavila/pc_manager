@@ -71,6 +71,10 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
 - **Cierre Total y Parada de Servicios**: Al ordenar el cierre definitivo de la aplicación (Quit / Salir desde el tray o ventana), el Core tiene la obligación de **detener inmediatamente todos los servicios, hilos de telemetría, procesos secundarios y recursos**, garantizando cero procesos huérfanos en memoria.
 - **Modo Servicio de Windows (Pre-logon)**: El Core debe soportar un modo de ejecución desacoplado como servicio nativo de Windows (`services.msc`), permitiendo que las tareas esenciales y colectores de fondo operen incluso antes de que el usuario inicie sesión.
 
+### Regla 9: Registro Obligatorio de Errores y Bug Fixes por Commit
+- **Bitácora Canónica (`BUG_TRACKER.md`)**: Es terminantemente obligatorio documentar todo error, fallo de sintaxis, bug funcional o bloqueo de entorno detectado y solucionado en [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md).
+- **Trazabilidad en Commits**: Cada commit que resuelva un problema debe registrar el identificador `BUG-XXX`, causa raíz, solución y archivos afectados en la bitácora, formando parte del commit o sincronizándose en conjunto.
+
 ---
 
 ## 2. Estructura de Customizaciones
@@ -83,8 +87,10 @@ Las reglas y habilidades de IA están organizadas en:
   - [`documentation_triad.md`](file:///c:/Proyectos/pc_manager/.agents/rules/documentation_triad.md): Requisitos para la tríada de documentación.
   - [`ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md): Sistema de diseño Material Expressive, iconografía SVG y componentes UI.
   - [`functional_integrity.md`](file:///c:/Proyectos/pc_manager/.agents/rules/functional_integrity.md): Integridad funcional, cero opciones de adorno o hardcodeadas.
+  - [`bug_and_error_tracking.md`](file:///c:/Proyectos/pc_manager/.agents/rules/bug_and_error_tracking.md): Registro continuo de errores y bug fixes por commit.
 - Skills de IA: [`.agents/skills/`](file:///c:/Proyectos/pc_manager/.agents/skills/)
   - [`core-module-scaffolder`](file:///c:/Proyectos/pc_manager/.agents/skills/core-module-scaffolder/SKILL.md): Creación estandarizada de módulos.
   - [`white-label-auditor`](file:///c:/Proyectos/pc_manager/.agents/skills/white-label-auditor/SKILL.md): Auditoría de código limpio y neutral.
   - [`documentation-triad-sync`](file:///c:/Proyectos/pc_manager/.agents/skills/documentation-triad-sync/SKILL.md): Sincronización de manuales de usuario, IA y desarrollador.
+
 
