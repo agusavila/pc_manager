@@ -418,3 +418,40 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
+
+---
+
+### [BUG-017] Corrección del Estado Vacío en Centro de Notificaciones, Gestión de Permisos por Módulo/Sistema, Alertas Nativas de Windows 10/11 y Botón "Widgets"
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `Centro de Notificaciones / Configuraciones / UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`)`
+- **Descripción del Fallo**: 
+  1. En el Centro de Notificaciones se mostraba simultáneamente una tarjeta de notificación activa y el aviso de lista vacía ("Sin notificaciones / El historial del sistema se encuentra vacío.") debajo de ella.
+  2. No existían opciones en la pantalla de Configuraciones para gestionar la emisión de alertas (habilitar/deshabilitar avisos del núcleo o permisos individuales por módulo).
+  3. No existía opción para derivar las notificaciones hacia el sistema operativo anfitrión (Centro de Notificaciones y Actividades de Windows 10/11).
+  4. El botón principal del Dashboard en la barra superior conservaba el texto "Personalizar Dashboard" en vez del término conciso "Widgets".
+- **Causa Raíz**: 
+  1. `clearAllNotifications` sobrescribía el contenido interno de `#notif-list` con el bloque HTML del estado vacío. Al ingresar una nueva notificación, `addSystemNotification` ejecutaba `list.prepend(item)`, insertando la tarjeta antes del bloque vacío sin eliminarlo ni ocultarlo.
+  2. Inexistencia de un gestor de preferencias de notificaciones (`notificationSettings`) persistido en disco y de una interfaz de control en la pestaña General de Configuraciones.
+  3. Falta de invocación y enlace con la API nativa de notificaciones de Windows (`window.Notification`) dentro del WebView del Core.
+  4. Texto extenso no simplificado en la barra superior del Dashboard.
+- **Solución Implementada**: 
+  1. Se estandarizó el elemento `#notif-empty-state` dentro de `#notif-list` y se creó la rutina `updateNotificationEmptyState()`, la cual valida la cantidad de elementos `.notif-item` activos, mostrando el mensaje de vacío únicamente cuando el conteo es estrictamente cero y ocultándolo transparentemente en cuanto existe una o más notificaciones.
+  2. Se añadió una nueva tarjeta en la pestaña General de Configuraciones: **"Gestión y Permisos de Notificaciones"**, con:
+     - Interruptor para activar/desactivar notificaciones del núcleo del sistema (`toggleSystemNotifPermission`).
+     - Interruptor para habilitar notificaciones nativas en Windows 10/11 (`toggleWindowsNativeNotif`) solicitando permisos al sistema operativo.
+     - Lista dinámica de extensiones modulares (`renderModuleNotificationPermissions`), permitiendo conceder o revocar permisos de emisión de alertas a cada módulo individualmente.
+     - Persistencia de configuración en disco mediante el comando Rust `save_module_setting` (`moduleId: 'core_notifications'`).
+  3. Se conectó `addSystemNotification` con el filtrado de permisos (núcleo y módulos) y con `dispatchWindowsNativeNotification` para emitir avisos al Centro de Notificaciones de Windows 10/11.
+  4. Se cambió el texto del botón contextual de la barra superior y los textos auxiliares de "Personalizar Dashboard" a "Widgets".
+  5. Se actualizó el constructor del módulo de prueba [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs) asociando el identificador de módulo `system-clock` y se recompiló [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm).
+  6. Se sincronizó [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+

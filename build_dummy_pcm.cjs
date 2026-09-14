@@ -456,7 +456,7 @@ async function buildDummyModule() {
     }
 
     if (typeof addSystemNotification === 'function') {
-      addSystemNotification('Temporizador Concluido', 'La cuenta regresiva ha llegado a cero.', 'warning');
+      addSystemNotification('Temporizador Concluido', 'La cuenta regresiva ha llegado a cero.', 'warning', 'system-clock');
     }
   }
 

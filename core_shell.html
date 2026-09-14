@@ -1241,9 +1241,9 @@
                 <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
               </svg>
             </button>
-            <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Habilitar o deshabilitar tarjetas en el Dashboard">
+            <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Gestionar Widgets del Dashboard">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-              <span>Personalizar Dashboard</span>
+              <span>Widgets</span>
             </button>
           </div>
 
@@ -1610,6 +1610,55 @@
                   Tono principal aplicado a botones, bordes activos e indicadores.
                 </div>
               </div>
+          <!-- GESTIÓN Y PERMISOS DE NOTIFICACIONES -->
+          <div class="settings-card" id="card-notification-settings">
+            <div class="settings-header">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+              </svg>
+              <h4>Gestión y Permisos de Notificaciones</h4>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px;">
+              Control de emisión de alertas, avisos del núcleo del sistema e integración con el centro de notificaciones de Windows.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
+              <!-- 1. Notificaciones del Núcleo -->
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="font-size: 13.5px;">Notificaciones del Núcleo del Sistema</strong>
+                  <div style="font-size: 11.5px; color: var(--text-muted);">Alertas de ciclo de vida, estado general y eventos operativos</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="chk-notif-system" checked onchange="toggleSystemNotifPermission(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- 2. Integración con Notificaciones Nativas de Windows 10/11 -->
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="font-size: 13.5px;">Notificaciones Nativas de Windows (10/11)</strong>
+                  <div style="font-size: 11.5px; color: var(--text-muted);">Mostrar avisos emergentes nativos en el Centro de Notificaciones de Windows</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="chk-notif-windows" onchange="toggleWindowsNativeNotif(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- 3. Permisos por Extensión Modular -->
+              <div style="margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">
+                  Permisos de Notificación por Extensión Modular
+                </div>
+                <div id="settings-module-notif-list" style="display: flex; flex-direction: column; gap: 8px;">
+                  <div style="font-size: 12px; color: var(--text-muted); font-style: italic; padding: 4px 0;">
+                    No hay extensiones modulares instaladas actualmente.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1643,6 +1692,14 @@
         </button>
       </div>
       <div class="drawer-body" id="notif-list">
+        <div id="notif-empty-state" style="display: none; text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <svg class="svg-icon svg-icon-lg" style="margin-bottom: 10px; opacity: 0.5;" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <div style="font-size: 13px; font-weight: 500;">Sin notificaciones</div>
+          <div style="font-size: 11.5px; margin-top: 4px;">El historial del sistema se encuentra vacío.</div>
+        </div>
         <div class="notif-item unread">
           <div class="notif-icon">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
@@ -1656,12 +1713,12 @@
       </div>
     </aside>
 
-    <!-- Drawer B: Personalizar Dashboard (Catálogo de Tarjetas y Widgets) -->
+    <!-- Drawer B: Catálogo de Widgets del Dashboard -->
     <aside class="drawer" id="drawer-catalog">
       <div class="drawer-header">
         <div>
-          <h3 style="font-size: 15px; font-weight: 600;">Personalizar Dashboard</h3>
-          <span style="font-size: 11.5px; color: var(--text-muted);">Habilitar o deshabilitar tarjetas en la cuadrícula</span>
+          <h3 style="font-size: 15px; font-weight: 600;">Widgets del Dashboard</h3>
+          <span style="font-size: 11.5px; color: var(--text-muted);">Habilitar o deshabilitar widgets en la cuadrícula</span>
         </div>
         <button class="btn-icon" onclick="closeAllDrawers()" title="Cerrar">
           <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1751,9 +1808,9 @@
               <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
             </svg>
           </button>
-          <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Habilitar o deshabilitar tarjetas en el Dashboard">
+          <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Gestionar Widgets del Dashboard">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-            <span>Personalizar Dashboard</span>
+            <span>Widgets</span>
           </button>
         `;
       } else if (viewId === 'module-manager' || viewId === 'settings') {
@@ -1903,7 +1960,7 @@
         if (allCards.length > 0 && visibleCards.length === 0) {
           emptyHero.style.display = 'flex';
           const p = emptyHero.querySelector('p');
-          if (p) p.textContent = 'Todas las tarjetas instaladas se encuentran ocultas. Pulsa en "Personalizar Dashboard" para activarlas.';
+          if (p) p.textContent = 'Todas las tarjetas instaladas se encuentran ocultas. Pulsa en "Widgets" para activarlas.';
         } else if (visibleCards.length > 0) {
           emptyHero.style.display = 'none';
         }
@@ -2380,6 +2437,7 @@
       }
 
       renderDashboardCustomizationCatalog();
+      renderModuleNotificationPermissions();
 
       if (isUpdate) {
         addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success');
@@ -2475,6 +2533,9 @@
       }
 
       installedModules.delete(moduleId);
+      delete notificationSettings.modulePermissions[moduleId];
+      saveNotificationSettingsToDisk();
+      renderModuleNotificationPermissions();
       updateModuleCounts();
       updateDashboardCardsCount();
       checkSidebarGroupsVisibility();
@@ -2576,7 +2637,37 @@
       addSystemNotification('Fuente Añadida', `Repositorio ${val} guardado localmente.`, 'success');
     }
 
-    // 6. GESTIÓN DE NOTIFICACIONES
+    // 6. GESTIÓN Y PERMISOS DE NOTIFICACIONES (WINDOWS Y MÓDULOS)
+    const notificationSettings = {
+      systemEnabled: true,
+      windowsNativeEnabled: false,
+      modulePermissions: {} // moduleId: boolean
+    };
+
+    function updateNotificationEmptyState() {
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      const items = list.querySelectorAll('.notif-item');
+      let emptyState = document.getElementById('notif-empty-state');
+      if (!emptyState) {
+        emptyState = document.createElement('div');
+        emptyState.id = 'notif-empty-state';
+        emptyState.style.textAlign = 'center';
+        emptyState.style.padding = '40px 20px';
+        emptyState.style.color = 'var(--text-muted)';
+        emptyState.innerHTML = `
+          <svg class="svg-icon svg-icon-lg" style="margin-bottom: 10px; opacity: 0.5;" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <div style="font-size: 13px; font-weight: 500;">Sin notificaciones</div>
+          <div style="font-size: 11.5px; margin-top: 4px;">El historial del sistema se encuentra vacío.</div>
+        `;
+        list.appendChild(emptyState);
+      }
+      emptyState.style.display = (items.length === 0) ? 'block' : 'none';
+    }
+
     function markAllNotificationsAsRead() {
       document.querySelectorAll('#notif-list .notif-item').forEach(item => item.classList.remove('unread'));
       const badge = document.getElementById('notif-badge');
@@ -2589,16 +2680,8 @@
     function clearAllNotifications() {
       const list = document.getElementById('notif-list');
       if (list) {
-        list.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-            <svg class="svg-icon svg-icon-lg" style="margin-bottom: 10px; opacity: 0.5;" viewBox="0 0 24 24">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <div style="font-size: 13px; font-weight: 500;">Sin notificaciones</div>
-            <div style="font-size: 11.5px; margin-top: 4px;">El historial del sistema se encuentra vacío.</div>
-          </div>
-        `;
+        list.querySelectorAll('.notif-item').forEach(i => i.remove());
+        updateNotificationEmptyState();
       }
       const badge = document.getElementById('notif-badge');
       if (badge) {
@@ -2607,8 +2690,36 @@
       }
     }
 
-    function addSystemNotification(title, text, type) {
+    function dispatchWindowsNativeNotification(title, text) {
+      if (!notificationSettings.windowsNativeEnabled) return;
+      try {
+        if ('Notification' in window) {
+          if (Notification.permission === 'granted') {
+            new Notification(title, { body: text });
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+              if (permission === 'granted') {
+                new Notification(title, { body: text });
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Fallo al emitir notificación nativa de Windows:', e);
+      }
+    }
+
+    function addSystemNotification(title, text, type, sourceId = 'system') {
+      // 1. Filtrar por permisos configurados
+      if (sourceId === 'system' || !sourceId) {
+        if (!notificationSettings.systemEnabled) return;
+      } else {
+        if (notificationSettings.modulePermissions[sourceId] === false) return;
+      }
+
       const list = document.getElementById('notif-list');
+      if (!list) return;
+
       const item = document.createElement('div');
       item.className = 'notif-item unread';
       item.innerHTML = `
@@ -2622,10 +2733,88 @@
         </div>
       `;
       list.prepend(item);
+      updateNotificationEmptyState();
 
       const badge = document.getElementById('notif-badge');
-      badge.style.display = 'flex';
-      badge.textContent = parseInt(badge.textContent || '0') + 1;
+      if (badge) {
+        badge.style.display = 'flex';
+        badge.textContent = parseInt(badge.textContent || '0') + 1;
+      }
+
+      // 2. Emisión nativa a Windows 10/11 si está autorizada
+      dispatchWindowsNativeNotification(title, text);
+    }
+
+    function toggleSystemNotifPermission(enabled) {
+      notificationSettings.systemEnabled = enabled;
+      saveNotificationSettingsToDisk();
+    }
+
+    async function toggleWindowsNativeNotif(enabled) {
+      notificationSettings.windowsNativeEnabled = enabled;
+      if (enabled) {
+        if ('Notification' in window) {
+          if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            try {
+              const perm = await Notification.requestPermission();
+              if (perm !== 'granted') {
+                console.warn('Permiso de notificaciones del SO denegado por el usuario.');
+              }
+            } catch (e) {
+              console.warn('Error al solicitar permiso de notificaciones:', e);
+            }
+          }
+        }
+      }
+      saveNotificationSettingsToDisk();
+    }
+
+    function toggleModuleNotifPermission(moduleId, enabled) {
+      notificationSettings.modulePermissions[moduleId] = enabled;
+      saveNotificationSettingsToDisk();
+    }
+
+    function saveNotificationSettingsToDisk() {
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        invokeFn('save_module_setting', {
+          moduleId: 'core_notifications',
+          optionId: 'preferences',
+          value: JSON.stringify(notificationSettings)
+        }).catch(e => console.warn(e));
+      }
+    }
+
+    function renderModuleNotificationPermissions() {
+      const container = document.getElementById('settings-module-notif-list');
+      if (!container) return;
+
+      if (installedModules.size === 0) {
+        container.innerHTML = `
+          <div style="font-size: 12px; color: var(--text-muted); font-style: italic; padding: 4px 0;">
+            No hay extensiones modulares instaladas actualmente.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      installedModules.forEach((mod, modId) => {
+        const isAllowed = notificationSettings.modulePermissions[modId] !== false;
+        html += `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-subtle);">
+            <div>
+              <strong style="font-size: 13px;">${mod.manifest.name}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Emitir alertas y avisos operativos de esta extensión</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="chk-notif-mod-${modId}" ${isAllowed ? 'checked' : ''} onchange="toggleModuleNotifPermission('${modId}', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
     }
 
     // 7. GESTOR DE GRUPOS
@@ -3007,6 +3196,28 @@
             renderDashboardCustomizationCatalog();
             addSystemNotification('Módulos Restaurados', `${installedList.length} extensión(es) cargada(s) desde el disco duro.`, 'success');
           }
+
+          // Restaurar preferencias de notificaciones desde disco
+          try {
+            const savedNotifs = await invokeFn('get_saved_settings', { moduleId: 'core_notifications' });
+            if (savedNotifs && savedNotifs.preferences) {
+              const parsed = typeof savedNotifs.preferences === 'string' ? JSON.parse(savedNotifs.preferences) : savedNotifs.preferences;
+              if (parsed) {
+                if (typeof parsed.systemEnabled === 'boolean') notificationSettings.systemEnabled = parsed.systemEnabled;
+                if (typeof parsed.windowsNativeEnabled === 'boolean') notificationSettings.windowsNativeEnabled = parsed.windowsNativeEnabled;
+                if (parsed.modulePermissions) notificationSettings.modulePermissions = parsed.modulePermissions;
+              }
+            }
+          } catch (e) {
+            console.warn('No se pudieron restaurar preferencias de notificaciones:', e);
+          }
+
+          const chkSys = document.getElementById('chk-notif-system');
+          if (chkSys) chkSys.checked = notificationSettings.systemEnabled;
+          const chkWin = document.getElementById('chk-notif-windows');
+          if (chkWin) chkWin.checked = notificationSettings.windowsNativeEnabled;
+          renderModuleNotificationPermissions();
+          updateNotificationEmptyState();
         }
       } catch (err) {
         console.warn('Ejecutando en entorno webview desacoplado:', err);
