@@ -138,7 +138,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 ### [BUG-007] Colisión de lectura de activos en build de Tauri y estructuración del host de escritorio nativo
 - **Fecha**: 2026-09-14
-- **Commit**: `pending`
+- **Commit**: `1ee6331`
 - **Versión**: `v0.0.1-alpha`
 - **Severidad**: `ALTA`
 - **Componente**: `Tauri Desktop Host (`[`src-tauri/`](file:///c:/Proyectos/pc_manager/src-tauri)`)`
