@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Manager // Core v0.0.1-alpha (Sin Módulos)</title>
+  <title>PC Manager // Core v0.0.2-alpha (Software Nativo de Escritorio)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -567,15 +567,46 @@
       100% { transform: scale(1); }
     }
 
-    /* VARIANTES DE TAMAÑO EN CUADRÍCULA 10x10 */
-    .card-size-1x1 { grid-column: span 1; grid-row: span 1; }
-    .card-size-2x1 { grid-column: span 2; grid-row: span 1; }
-    .card-size-2x2 { grid-column: span 2; grid-row: span 2; }
-    .card-size-3x2 { grid-column: span 3; grid-row: span 2; }
-    .card-size-4x2 { grid-column: span 4; grid-row: span 2; }
-    .card-size-5x2 { grid-column: span 5; grid-row: span 2; }
-    .card-size-5x5 { grid-column: span 5; grid-row: span 5; }
-    .card-size-10x2 { grid-column: span 10; grid-row: span 2; }
+    /* VARIANTES DE TAMAÑO EN CUADRÍCULA CON MIN-WIDTH PROTECTOR */
+    .card-size-1x1 { grid-column: span 1; grid-row: span 1; min-width: 140px; }
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 220px; }
+    .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 220px; }
+    .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 300px; }
+    .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 380px; }
+    .card-size-5x2 { grid-column: span 5; grid-row: span 2; min-width: 440px; }
+    .card-size-5x5 { grid-column: span 5; grid-row: span 5; min-width: 440px; }
+    .card-size-10x2 { grid-column: span 10; grid-row: span 2; min-width: 100%; }
+
+    /* ADAPTABILIDAD RESPONSIVE EN VENTANAS NO MAXIMIZADAS (MATERIAL EXPRESSIVE) */
+    @media (max-width: 1400px) {
+      .grid-board {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .card-size-1x1 { grid-column: span 1; }
+      .card-size-2x1 { grid-column: span 2; }
+      .card-size-2x2 { grid-column: span 2; }
+      .card-size-3x2 { grid-column: span 3; }
+      .card-size-4x2 { grid-column: span 4; }
+      .card-size-5x2 { grid-column: span 6; }
+      .card-size-5x5 { grid-column: span 6; }
+      .card-size-10x2 { grid-column: span 6; }
+    }
+
+    @media (max-width: 1080px) {
+      .grid-board {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card-size-1x1 { grid-column: span 2; }
+      .card-size-2x1 { grid-column: span 4; }
+      .card-size-2x2 { grid-column: span 4; }
+      .card-size-3x2 { grid-column: span 4; }
+      .card-size-4x2 { grid-column: span 4; }
+      .card-size-5x2 { grid-column: span 4; }
+      .card-size-5x5 { grid-column: span 4; }
+      .card-size-10x2 { grid-column: span 4; }
+    }
 
     /* CABECERA DE TARJETA */
     .card-header {
@@ -1592,8 +1623,16 @@
   </div>
 
   <script>
-    // 1. NAVEGACIÓN Y VISTAS
     let currentView = 'dashboard';
+
+    function getTauriInvoke() {
+      if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+        return window.__TAURI__.core.invoke;
+      } else if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
+        return window.__TAURI_INTERNALS__.invoke;
+      }
+      return null;
+    }
 
     const VIEW_METADATA = {
       'dashboard': {
@@ -1711,8 +1750,21 @@
           return;
         }
 
-        addSystemNotification('Instalación en Curso', `Descomprimiendo y validando ${file.name}...`, 'info');
         const arrayBuffer = await file.arrayBuffer();
+        const invokeFn = getTauriInvoke();
+
+        // 1. Vía Nativa Rust (Software de Escritorio)
+        if (invokeFn) {
+          addSystemNotification('Instalación Nativa', `Instalando ${file.name} físicamente en el disco duro de Windows...`, 'info');
+          const packageBytes = Array.from(new Uint8Array(arrayBuffer));
+          const record = await invokeFn('install_module_package', { packageBytes });
+          if (record && record.manifest) {
+            installModule(record.manifest, record.script_code);
+            return;
+          }
+        }
+
+        // 2. Fallback de descompresión en memoria si se ejecuta fuera de Tauri
         if (typeof JSZip === 'undefined') {
           addSystemNotification('Dependencia no cargada', 'Motor de descompresión JSZip no disponible.', 'warning');
           return;
@@ -1746,7 +1798,7 @@
       }
     }
 
-    // DRAG AND DROP FLUIDO Y AUTO-ORGANIZACIÓN DEL DASHBOARD
+    // DRAG AND DROP FLUIDO Y AUTO-ORGANIZACIÓN DEL DASHBOARD CON PERSISTENCIA
     let draggedCard = null;
 
     function makeCardDraggable(card) {
@@ -1796,6 +1848,13 @@
           void draggedCard.offsetWidth;
           draggedCard.classList.add('card-drop');
           setTimeout(() => draggedCard.classList.remove('card-drop'), 300);
+
+          // Persistir nuevo orden en disco con Rust
+          const invokeFn = getTauriInvoke();
+          if (invokeFn) {
+            const cardIds = Array.from(document.querySelectorAll('#grid-board .card')).map(c => c.id);
+            invokeFn('save_dashboard_order', { cardOrder: cardIds }).catch(e => console.warn(e));
+          }
         }
       });
     }
@@ -1815,16 +1874,37 @@
         setTimeout(() => card.classList.remove('card-drop'), 350);
       });
 
-      addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula 10x10.`, 'success');
+      // Persistir orden compactado en disco
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        const cardIds = cards.map(c => c.id);
+        invokeFn('save_dashboard_order', { cardOrder: cardIds }).catch(e => console.warn(e));
+      }
+
+      addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula.`, 'success');
     }
 
-    function dispatchModuleSetting(moduleId, optionId, value) {
+    function dispatchModuleSetting(moduleId, optionId, value, syncDisk = true) {
       const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');
       const handlerName = `__SETTING_CHANGE_${cleanId}__`;
       if (window[handlerName] && typeof window[handlerName] === 'function') {
         window[handlerName](optionId, value);
       }
-      addSystemNotification('Ajuste de Módulo', `Opción "${optionId}" actualizada a ${value}.`, 'info');
+
+      // Actualizar control en la UI si existe
+      const optEl = document.getElementById(`opt-${moduleId}-${optionId}`);
+      if (optEl) {
+        if (optEl.type === 'checkbox') optEl.checked = Boolean(value);
+        else optEl.value = value;
+      }
+
+      if (syncDisk) {
+        const invokeFn = getTauriInvoke();
+        if (invokeFn) {
+          invokeFn('save_module_setting', { moduleId, optionId, value }).catch(e => console.warn(e));
+        }
+        addSystemNotification('Ajuste Guardado en Disco', `"${optionId}" guardado en el sistema.`, 'info');
+      }
     }
 
     function installModule(manifest, scriptCode) {
@@ -1985,7 +2065,7 @@
                         <div style="font-size: 11.5px; color: var(--text-muted);">${opt.desc}</div>
                       </div>
                       <label class="switch">
-                        <input type="checkbox" ${opt.default ? 'checked' : ''} onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.checked)">
+                        <input type="checkbox" id="opt-${manifest.id}-${opt.id}" ${opt.default ? 'checked' : ''} onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.checked)">
                         <span class="slider"></span>
                       </label>
                     </div>
@@ -1996,7 +2076,7 @@
                       <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
                         ${opt.name}
                       </label>
-                      <select class="form-select" onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.value)">
+                      <select class="form-select" id="opt-${manifest.id}-${opt.id}" onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.value)">
                         ${opt.options.map(o => `<option value="${o.value}" ${o.value === opt.default ? 'selected' : ''}>${o.label}</option>`).join('')}
                       </select>
                       <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">${opt.desc}</div>
@@ -2028,7 +2108,7 @@
       }
     }
 
-    function toggleModuleActive(moduleId, isActive) {
+    function toggleModuleActive(moduleId, isActive, syncDisk = true) {
       const mod = installedModules.get(moduleId);
       if (!mod) return;
       mod.active = isActive;
@@ -2048,6 +2128,14 @@
       if (settingsCard) settingsCard.style.display = isActive ? 'block' : 'none';
 
       checkSidebarGroupsVisibility();
+
+      if (syncDisk) {
+        const invokeFn = getTauriInvoke();
+        if (invokeFn) {
+          invokeFn('toggle_module_active', { moduleId, active: isActive }).catch(e => console.warn(e));
+        }
+      }
+
       addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info');
     }
 
@@ -2075,6 +2163,12 @@
 
       const settingsEl = document.getElementById(`settings-mod-${moduleId}`);
       if (settingsEl) settingsEl.remove();
+
+      // Borrar de disco en Windows con Rust
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        invokeFn('uninstall_module', { moduleId }).catch(e => console.warn('Error al desinstalar en disco:', e));
+      }
 
       // Llamar a cleanup si existe
       const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');
@@ -2539,21 +2633,49 @@
       addSystemNotification('Color de Acento Actualizado', `Paleta primaria cambiada a ${colorHex}.`, 'success');
     }
 
-    // 10. INICIALIZACIÓN Y VINCULACIÓN CON HOST NATIVO TAURI
+    // 10. INICIALIZACIÓN Y VINCULACIÓN CON HOST NATIVO TAURI (SOFTWARE DE ESCRITORIO)
     window.addEventListener('DOMContentLoaded', async () => {
       try {
-        let invokeFn = null;
-        if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
-          invokeFn = window.__TAURI__.core.invoke;
-        } else if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
-          invokeFn = window.__TAURI_INTERNALS__.invoke;
-        }
-
+        const invokeFn = getTauriInvoke();
         if (invokeFn) {
           const sysInfo = await invokeFn('get_system_info');
           if (sysInfo) {
             console.log('PC Manager Core conectado al host nativo:', sysInfo);
-            addSystemNotification('Host Nativo Conectado', `${sysInfo.os_name} (${sysInfo.arch}) // Core v${sysInfo.version} operacional.`, 'info');
+            addSystemNotification('Host Nativo Windows Conectado', `${sysInfo.os_name} (${sysInfo.arch}) // Core v${sysInfo.version} operacional.`, 'info');
+          }
+
+          // Cargar módulos previamente instalados en Windows desde disco
+          const installedList = await invokeFn('get_installed_modules');
+          if (installedList && installedList.length > 0) {
+            console.log(`Restaurando ${installedList.length} módulo(s) persistentes desde disco.`);
+            installedList.forEach(rec => {
+              installModule(rec.manifest, rec.script_code);
+              if (!rec.active) {
+                toggleModuleActive(rec.manifest.id, false, false);
+              }
+            });
+
+            // Restaurar configuraciones guardadas
+            for (const rec of installedList) {
+              const savedSettings = await invokeFn('get_saved_settings', { moduleId: rec.manifest.id });
+              if (savedSettings) {
+                for (const [k, v] of Object.entries(savedSettings)) {
+                  dispatchModuleSetting(rec.manifest.id, k, v, false);
+                }
+              }
+            }
+
+            // Restaurar orden de tarjetas en el Dashboard
+            const savedOrder = await invokeFn('get_dashboard_order');
+            if (savedOrder && savedOrder.length > 0) {
+              const grid = document.getElementById('grid-board');
+              savedOrder.forEach(id => {
+                const card = document.getElementById(id);
+                if (card) grid.appendChild(card);
+              });
+            }
+
+            addSystemNotification('Módulos Restaurados', `${installedList.length} extensión(es) cargada(s) desde el disco duro.`, 'success');
           }
         }
       } catch (err) {

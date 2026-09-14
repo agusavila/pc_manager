@@ -298,6 +298,41 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-013] Transición a Arquitectura Nativa de Escritorio (Alpha 0.0.2): Persistencia en Windows (Rust) y Cuadrícula Responsive
+- **Fecha**: 2026-09-14
+- **Severidad**: `ALTA`
+- **Componente**: `Core Nativo Rust (`[`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`, [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`) y Presentación (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Al cerrar la aplicación, todos los módulos instalados y sus ajustes se desinstalaban/perdían completamente, ya que la gestión ocurría únicamente en memoria volátil de JavaScript (comportamiento de navegador web no deseado, violando la Regla 0).
+  2. En ventanas no maximizadas, la cuadrícula fija de 10 columnas (`grid-template-columns: repeat(10, minmax(0, 1fr))`) reducía el ancho de las celdas a ~50px, provocando que los widgets se deformaran, montando textos y botones unos encima de otros.
+- **Causa Raíz**: 
+  1. Ausencia de un módulo gestor nativo en Rust con acceso al sistema de archivos de Windows (`%APPDATA%\com.pcmanager.core\`).
+  2. Falta de reglas responsive con media queries y `min-width` protector para las tarjetas del Dashboard.
+- **Solución Implementada**: 
+  1. Se implementó el módulo nativo [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs) con soporte completo para:
+     - Descompresión nativa de archivos `.pcm` mediante crate `zip`.
+     - Almacenamiento físico de archivos en `%APPDATA%\com.pcmanager.core\modules\<id>\`.
+     - Base de datos persistente en `%APPDATA%\com.pcmanager.core\registry.json` que registra módulos, estado activo/inactivo, ajustes y orden de tarjetas.
+  2. Se expusieron comandos IPC nativos en [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs): `get_installed_modules`, `install_module_package`, `uninstall_module`, `toggle_module_active`, `save_module_setting`, `get_saved_settings`, `save_dashboard_order` y `get_dashboard_order`.
+  3. Se conectó [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) con la IPC de Tauri: al arrancar el programa, lee y restaura automáticamente del disco todos los módulos y ajustes guardados; al instalar, desinstalar o modificar, sincroniza atómicamente con Windows.
+  4. Se rediseñó la cuadrícula del Dashboard con media queries adaptativas (`10` columnas en pantallas anchas, `6` columnas en < 1400px y `4` columnas en < 1080px) y `min-width` protector, impidiendo la deformación de tarjetas en ventanas no maximizadas.
+  5. Se incrementó la versión a `0.0.2-alpha` en `Cargo.toml`, `tauri.conf.json`, `package.json`, `ui/index.html` y `core_shell.html`.
+  6. Se compiló el ejecutable nativo de Windows: [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe) (14.4 MB).
+- **Archivos Afectados**: 
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json)
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs) (creado)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

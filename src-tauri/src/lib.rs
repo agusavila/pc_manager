@@ -1,9 +1,14 @@
+mod module_manager;
+
+use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, WindowEvent,
+    AppHandle, Manager, WindowEvent,
 };
-use serde::{Deserialize, Serialize};
+use module_manager::InstalledModuleRecord;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SystemInfoPayload {
@@ -18,13 +23,13 @@ fn get_system_info() -> SystemInfoPayload {
     SystemInfoPayload {
         os_name: "Windows NT".to_string(),
         arch: std::env::consts::ARCH.to_string(),
-        version: "0.0.1-alpha".to_string(),
+        version: "0.0.2-alpha".to_string(),
         status: "OPERATIONAL".to_string(),
     }
 }
 
 #[tauri::command]
-fn minimize_to_tray(app: tauri::AppHandle) -> Result<(), String> {
+fn minimize_to_tray(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
         window.hide().map_err(|e| e.to_string())?;
     }
@@ -32,9 +37,57 @@ fn minimize_to_tray(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn quit_app(app: tauri::AppHandle) {
+fn quit_app(app: AppHandle) {
     log::info!("Cierre definitivo ordenado desde el Core. Deteniendo subprocesos...");
     app.exit(0);
+}
+
+#[tauri::command]
+fn get_installed_modules(app: AppHandle) -> Vec<InstalledModuleRecord> {
+    let registry = module_manager::load_registry(&app);
+    registry.modules.into_values().collect()
+}
+
+#[tauri::command]
+fn install_module_package(app: AppHandle, package_bytes: Vec<u8>) -> Result<InstalledModuleRecord, String> {
+    module_manager::install_package_bytes(&app, package_bytes)
+}
+
+#[tauri::command]
+fn uninstall_module(app: AppHandle, module_id: String) -> Result<(), String> {
+    module_manager::uninstall_package(&app, &module_id)
+}
+
+#[tauri::command]
+fn toggle_module_active(app: AppHandle, module_id: String, active: bool) -> Result<(), String> {
+    module_manager::set_module_active(&app, &module_id, active)
+}
+
+#[tauri::command]
+fn save_module_setting(
+    app: AppHandle,
+    module_id: String,
+    option_id: String,
+    value: Value,
+) -> Result<(), String> {
+    module_manager::set_module_setting(&app, &module_id, &option_id, value)
+}
+
+#[tauri::command]
+fn get_saved_settings(app: AppHandle, module_id: String) -> HashMap<String, Value> {
+    let registry = module_manager::load_registry(&app);
+    registry.settings.get(&module_id).cloned().unwrap_or_default()
+}
+
+#[tauri::command]
+fn save_dashboard_order(app: AppHandle, card_order: Vec<String>) -> Result<(), String> {
+    module_manager::set_dashboard_order(&app, card_order)
+}
+
+#[tauri::command]
+fn get_dashboard_order(app: AppHandle) -> Vec<String> {
+    let registry = module_manager::load_registry(&app);
+    registry.card_order
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -48,7 +101,15 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_system_info,
             minimize_to_tray,
-            quit_app
+            quit_app,
+            get_installed_modules,
+            install_module_package,
+            uninstall_module,
+            toggle_module_active,
+            save_module_setting,
+            get_saved_settings,
+            save_dashboard_order,
+            get_dashboard_order
         ])
         .setup(|app| {
             // 1. Configuración del menú contextual nativo del Tray
@@ -65,7 +126,7 @@ pub fn run() {
             // 2. Construcción del icono del System Tray
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("PC Manager Core v0.0.1")
+                .tooltip("PC Manager Core v0.0.2")
                 .menu(&tray_menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
