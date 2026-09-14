@@ -1523,12 +1523,10 @@
       input.accept = '.pcm,.zip';
       input.onchange = (e) => {
         if (e.target.files.length > 0) {
-          const fileName = e.target.files[0].name;
-          addSystemNotification('Instalación Iniciada', `Validando integridad de ${fileName}...`, 'info');
-          setTimeout(() => {
-            addSystemNotification('Módulo Instalado', `El paquete ${fileName} ha sido registrado exitosamente.`, 'success');
-            alert(`PC Manager: Paquete ${fileName} verificado y cargado en caliente.`);
-          }, 1200);
+          const file = e.target.files[0];
+          const fileName = file.name;
+          const fileSizeKb = (file.size / 1024).toFixed(1);
+          addSystemNotification('Paquete Seleccionado', `Archivo ${fileName} (${fileSizeKb} KB) cargado para verificación de manifiesto.`, 'info');
         }
       };
       input.click();
@@ -1920,6 +1918,28 @@
 
       addSystemNotification('Color de Acento Actualizado', `Paleta primaria cambiada a ${colorHex}.`, 'success');
     }
+
+    // 10. INICIALIZACIÓN Y VINCULACIÓN CON HOST NATIVO TAURI
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        let invokeFn = null;
+        if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+          invokeFn = window.__TAURI__.core.invoke;
+        } else if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
+          invokeFn = window.__TAURI_INTERNALS__.invoke;
+        }
+
+        if (invokeFn) {
+          const sysInfo = await invokeFn('get_system_info');
+          if (sysInfo) {
+            console.log('PC Manager Core conectado al host nativo:', sysInfo);
+            addSystemNotification('Host Nativo Conectado', `${sysInfo.os_name} (${sysInfo.arch}) // Core v${sysInfo.version} operacional.`, 'info');
+          }
+        }
+      } catch (err) {
+        console.warn('Ejecutando en entorno webview desacoplado:', err);
+      }
+    });
   </script>
 </body>
 </html>
