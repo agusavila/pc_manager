@@ -1,3 +1,9 @@
+# Rust / Cargo / Tauri
+target/
+src-tauri/target/
+**/*.rs.bk
+*.pdb
+
 # Node.js / Web
 node_modules/
 npm-debug.log*

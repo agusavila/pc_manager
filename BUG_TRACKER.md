@@ -8,7 +8,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 | Versión | Total Incidencias | Críticas | Altas | Medias | Bajas | Estado |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| `0.0.1-alpha` | 6 | 2 | 3 | 1 | 0 | 100% Resueltas |
+| `0.0.1-alpha` | 7 | 2 | 4 | 1 | 0 | 100% Resueltas |
 
 ---
 
@@ -133,5 +133,32 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
   - `scripts/serve.js` (eliminado)
 - **Estado**: `RESUELTO`
+
+---
+
+### [BUG-007] Colisión de lectura de activos en build de Tauri y estructuración del host de escritorio nativo
+- **Fecha**: 2026-09-14
+- **Commit**: `pending`
+- **Versión**: `v0.0.1-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `Tauri Desktop Host (`[`src-tauri/`](file:///c:/Proyectos/pc_manager/src-tauri)`)`
+- **Descripción del Fallo**: 
+  Al compilar el proyecto Tauri con `cargo check` o `cargo build`, el compilador arrojaba el error `failed to read asset at ..\target\debug\.cargo-build-lock (os error 33)`.
+- **Causa Raíz**: 
+  La propiedad `frontendDist` en `tauri.conf.json` apuntaba a la raíz (`../`), provocando que el empaquetador de Tauri escaneara recursivamente su propia carpeta interna de compilación de Rust (`src-tauri/target/`).
+- **Solución Implementada**: 
+  1. Se aisló la distribución de la interfaz gráfica en [`ui/`](file:///c:/Proyectos/pc_manager/ui) (`frontendDist: "../ui"`).
+  2. Se configuró e implementó en Rust el soporte completo del **System Tray (área de notificación)** de Windows en [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs) con menú nativo (*Abrir*, *Ocultar*, *Cerrar sin huérfanos*).
+  3. Se interceptó el evento de cierre de ventana (`WindowEvent::CloseRequested`) para minimizar a la bandeja del sistema por defecto según la Regla 8.
+  4. Se compiló satisfactoriamente el ejecutable nativo de Windows: `src-tauri/target/debug/pc_manager.exe` (13.4 MB).
+- **Archivos Afectados**: 
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs)
+  - [`.gitignore`](file:///c:/Proyectos/pc_manager/.gitignore)
+  - [`ui/`](file:///c:/Proyectos/pc_manager/ui)
+- **Estado**: `RESUELTO`
+
 
 

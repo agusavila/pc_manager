@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es" data-theme-mode="dark" data-theme-style="carbon" data-accent="blue">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PC Manager // v0.0.1-alpha</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/ui/styles.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <!-- MENU LATERAL (SIDEBAR) -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <!-- Control canónico único de colapso: pulsando el logo (Regla 6) -->
+        <button class="brand-btn" id="btn-brand-logo" type="button" title="Colapsar / Expandir Navegación" data-icon="logo"></button>
+        <div class="brand-info">
+          <span class="brand-title">PC Manager</span>
+          <span class="brand-version">Core v0.0.1-alpha</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="dashboard" type="button">
+          <span data-icon="dashboard"></span>
+          <span class="nav-text">Dashboard</span>
+        </button>
+        <button class="nav-item" data-section="modules" type="button">
+          <span data-icon="modules"></span>
+          <span class="nav-text">Gestor de Módulos</span>
+        </button>
+        <button class="nav-item" data-section="settings" type="button">
+          <span data-icon="settings"></span>
+          <span class="nav-text">Configuraciones</span>
+        </button>
+
+        <!-- Grupos dinámicos de módulos con auto-ocultamiento -->
+        <div id="sidebar-dynamic-groups"></div>
+      </nav>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+    <main class="main-viewport">
+      
+      <!-- BARRA SUPERIOR UNIFICADA (TOP-BAR) -->
+      <header class="top-bar">
+        <div class="top-bar-titles">
+          <h1 class="top-bar-title" id="top-bar-title">Dashboard</h1>
+          <p class="top-bar-subtitle" id="top-bar-subtitle">Supervisión en tiempo real y widgets operativos</p>
+        </div>
+
+        <div class="top-bar-actions">
+          <button class="btn-icon" id="btn-search-toggle" type="button" title="Buscar métricas o herramientas" data-icon="search"></button>
+          
+          <!-- Botón de notificaciones con indicador numérico (Regla 6) -->
+          <button class="btn-icon" id="btn-notifications-toggle" type="button" title="Notificaciones del Sistema">
+            <span data-icon="bell"></span>
+            <span class="badge-count" id="badge-notifications-count" style="display: none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VISTA: DASHBOARD -->
+      <section class="view-container active" id="view-dashboard">
+        <div class="dashboard-grid" id="dashboard-grid">
+          <!-- Las tarjetas de los módulos habilitados se insertan dinámicamente aquí -->
+        </div>
+
+        <!-- Botón flotante canónico de Auto-organización (Regla 6) -->
+        <button class="btn-fab" id="btn-auto-organize" type="button" title="Auto-organizar tarjetas" data-icon="autoOrganize"></button>
+      </section>
+
+      <!-- VISTA: GESTOR DE MÓDULOS -->
+      <section class="view-container" id="view-modules">
+        <div style="display: flex; flex-direction: column; gap: 24px; max-width: 1000px;">
+          
+          <div class="settings-card">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span class="settings-card-title">Módulos Registrados</span>
+              <form id="form-create-group" style="display: flex; gap: 8px;">
+                <input type="text" id="input-new-group-name" class="form-select" placeholder="Nuevo grupo..." style="padding: 6px 12px; font-size: 12px; width: 180px;">
+                <button type="submit" class="btn btn-secondary btn-sm">+ Crear Grupo</button>
+              </form>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); text-align: left;">
+                  <th style="padding: 10px 16px;">Módulo</th>
+                  <th style="padding: 10px 16px;">Grupo</th>
+                  <th style="padding: 10px 16px;">Estado</th>
+                  <th style="padding: 10px 16px; text-align: right;">Habilitado</th>
+                </tr>
+              </thead>
+              <tbody id="modules-table-body"></tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VISTA: CONFIGURACIONES -->
+      <section class="view-container" id="view-settings">
+        <div class="settings-grid">
+          
+          <!-- Tema y Esquema de Colores (Regla 6) -->
+          <div class="settings-card">
+            <span class="settings-card-title">Tema y Esquema de Colores</span>
+            
+            <div class="form-group">
+              <label class="form-label" for="select-theme-mode">Tipo de Modo</label>
+              <select class="form-select" id="select-theme-mode">
+                <option value="dark" selected>Modo Oscuro</option>
+                <option value="light">Modo Claro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="select-theme-style">Estilo de Fondo</label>
+              <select class="form-select" id="select-theme-style">
+                <!-- Se llena dinámicamente según el modo seleccionado -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Color de Acento Primario</label>
+              <div class="color-swatches-grid" id="accent-swatches-grid">
+                <!-- 10 botones de acento dinámicos -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Integración con el Sistema Operativo (Regla 8) -->
+          <div class="settings-card">
+            <span class="settings-card-title">Integración con el Sistema Operativo</span>
+
+            <div class="switch-row">
+              <div class="switch-info">
+                <span class="switch-title">Iniciar con Windows</span>
+                <span class="switch-desc">Arranque automático al encender el equipo.</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="chk-start-windows">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div class="switch-info">
+                <span class="switch-title">Minimizar a la Bandeja (System Tray)</span>
+                <span class="switch-desc">Permanece en segundo plano al cerrar la ventana.</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="chk-minimize-tray" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; display: flex; justify-content: flex-end;">
+              <button class="btn btn-secondary btn-sm" id="btn-app-quit" type="button" style="color: var(--accent-danger);">
+                <span data-icon="power"></span>
+                <span>Cerrar Aplicación Definitivamente</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- PANEL LATERAL DE NOTIFICACIONES (DRAWER) -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <aside class="drawer-panel" id="drawer-panel">
+      <div class="drawer-header">
+        <span style="font-size: 15px; font-weight: 700;">Notificaciones</span>
+        <button class="btn-icon" id="btn-close-drawer" type="button" style="border: none;" data-icon="close"></button>
+      </div>
+      <!-- Botones de acción canónicos: Marcar todas y Borrar todas (Regla 6) -->
+      <div class="drawer-actions-bar">
+        <button class="btn btn-secondary btn-sm" id="btn-read-all-notifications" type="button" style="flex: 1;">
+          <span data-icon="check"></span>
+          <span>Leídas</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-clear-all-notifications" type="button" style="flex: 1;">
+          <span data-icon="trash"></span>
+          <span>Borrar</span>
+        </button>
+      </div>
+      <div class="drawer-content" id="notifications-list"></div>
+    </aside>
+
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
