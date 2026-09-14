@@ -531,6 +531,25 @@
       position: relative;
       overflow: hidden;
       user-select: none;
+      -webkit-user-drag: element;
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    .card-header {
+      cursor: grab;
+    }
+
+    /* Evitar que elementos cosméticos internos interfieran con eventos de dragover / dragleave */
+    .card > *:not(button):not(input):not(select):not(.btn):not(label):not(a) {
+      pointer-events: none;
+    }
+
+    .card button, .card input, .card select, .card .btn, .card label, .card a, .card .switch, .card .slider {
+      pointer-events: auto !important;
+      cursor: pointer;
     }
 
     .card:hover {
@@ -1178,20 +1197,25 @@
         </div>
 
         <div class="topbar-actions">
-          <!-- Botón de notificaciones compacto con contador -->
+          <!-- Botones contextuales dinámicos según la vista activa -->
+          <div id="topbar-contextual-actions" style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-secondary" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" title="Auto-organizar tarjetas en cuadrícula">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <span>Auto-organizar</span>
+            </button>
+            <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Habilitar o deshabilitar tarjetas en el Dashboard">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              <span>Personalizar Dashboard</span>
+            </button>
+          </div>
+
+          <!-- Botón de notificaciones compacto con contador: SIEMPRE el más a la derecha -->
           <button class="btn-icon" id="topbar-notif-btn" onclick="toggleDrawer('notifications')" title="Centro de Notificaciones">
             <svg class="svg-icon" viewBox="0 0 24 24">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
             </svg>
             <span class="notification-counter" id="notif-badge">1</span>
-          </button>
-
-          <button class="btn btn-primary" onclick="toggleDrawer('catalog')">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
-              <path d="M5 12h14"></path><path d="M12 5v14"></path>
-            </svg>
-            <span>Personalizar Dashboard</span>
           </button>
         </div>
       </header>
@@ -1593,17 +1617,20 @@
       </div>
     </aside>
 
-    <!-- Drawer B: Personalizar Dashboard (Catálogo de Tarjetas - Vacío en versión base) -->
+    <!-- Drawer B: Personalizar Dashboard (Catálogo de Tarjetas y Widgets) -->
     <aside class="drawer" id="drawer-catalog">
       <div class="drawer-header">
-        <h3>Galería de Tarjetas</h3>
+        <div>
+          <h3 style="font-size: 15px; font-weight: 600;">Personalizar Dashboard</h3>
+          <span style="font-size: 11.5px; color: var(--text-muted);">Habilitar o deshabilitar tarjetas en la cuadrícula</span>
+        </div>
         <button class="btn-icon" onclick="closeAllDrawers()" title="Cerrar">
           <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-      <div class="drawer-body">
+      <div class="drawer-body" id="drawer-catalog-body" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
         <div style="text-align: center; padding: 40px 20px;">
-          <svg class="svg-icon svg-icon-xl" style="color: var(--text-muted); margin-bottom: 14px;" viewBox="0 0 24 24">
+          <svg class="svg-icon svg-icon-xl" style="color: var(--text-muted); margin-bottom: 14px; opacity: 0.5;" viewBox="0 0 24 24">
             <rect width="7" height="9" x="3" y="3" rx="1"></rect>
             <rect width="7" height="5" x="14" y="3" rx="1"></rect>
             <rect width="7" height="9" x="14" y="12" rx="1"></rect>
@@ -1611,7 +1638,7 @@
           </svg>
           <h4 style="font-size: 15px; font-weight: 600;">Sin tarjetas disponibles</h4>
           <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
-            Actualmente no hay módulos instalados. Cada módulo que instales registrará aquí automáticamente sus widgets para el Dashboard.
+            Actualmente no hay módulos activos con tarjetas de Dashboard. Instala o activa extensiones (.pcm) para configurar su visualización.
           </p>
           <button class="btn btn-primary" style="margin-top: 20px;" onclick="closeAllDrawers(); switchView('module-manager');">
             <span>Ir al Gestor de Módulos</span>
@@ -1666,23 +1693,44 @@
       if (descEl) descEl.textContent = meta.desc;
 
       currentView = viewId;
+      updateTopbarContextualActions(viewId);
     }
 
-    // AUTO-ORGANIZACIÓN DEL DASHBOARD (FAB)
-    function autoOrganizeDashboard() {
-      const cards = document.querySelectorAll('#grid-board .card');
-      if (cards.length === 0) {
-        addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para organizar.', 'info');
-        return;
+    // ACCIONES CONTEXTUALES DINÁMICAS EN LA BARRA SUPERIOR
+    function updateTopbarContextualActions(viewId) {
+      const container = document.getElementById('topbar-contextual-actions');
+      if (!container) return;
+
+      if (viewId === 'dashboard') {
+        container.style.display = 'flex';
+        container.innerHTML = `
+          <button class="btn btn-secondary" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" title="Auto-organizar tarjetas en cuadrícula">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <span>Auto-organizar</span>
+          </button>
+          <button class="btn btn-primary" id="btn-topbar-customize" onclick="toggleDrawer('catalog')" title="Habilitar o deshabilitar tarjetas en el Dashboard">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            <span>Personalizar Dashboard</span>
+          </button>
+        `;
+      } else if (viewId === 'module-manager' || viewId === 'settings') {
+        // En configuración y gestión de módulos: NUNCA se usan botones en la barra superior
+        container.style.display = 'none';
+        container.innerHTML = '';
+      } else if (viewId.startsWith('module-')) {
+        const modId = viewId.replace('module-', '');
+        const mod = installedModules.get(modId);
+        if (mod && mod.manifest && mod.manifest.topbar_actions) {
+          container.style.display = 'flex';
+          container.innerHTML = mod.manifest.topbar_actions;
+        } else {
+          container.style.display = 'none';
+          container.innerHTML = '';
+        }
+      } else {
+        container.style.display = 'none';
+        container.innerHTML = '';
       }
-      cards.forEach(card => {
-        card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
-        card.style.transform = 'scale(0.96)';
-        setTimeout(() => {
-          card.style.transform = '';
-        }, 300);
-      });
-      addSystemNotification('Cuadrícula Auto-organizada', 'Las tarjetas se compactaron eficientemente sin dejar huecos vacíos.', 'info');
     }
 
     // 2. COLAPSO CANÓNICO DEL SIDEBAR (ÚNICAMENTE VÍA LOGO)
@@ -1693,7 +1741,7 @@
       }
     }
 
-    // 3. DRAWERS LATERALES
+    // 3. DRAWERS LATERALES (NOTIFICACIONES Y PERSONALIZACIÓN DE DASHBOARD)
     function toggleDrawer(drawerId) {
       const overlay = document.getElementById('drawer-overlay');
       const drawer = document.getElementById('drawer-' + drawerId);
@@ -1701,9 +1749,134 @@
         const isActive = drawer.classList.contains('active');
         closeAllDrawers();
         if (!isActive) {
+          if (drawerId === 'catalog') {
+            renderDashboardCustomizationCatalog();
+          }
           drawer.classList.add('active');
           overlay.classList.add('active');
         }
+      }
+    }
+
+    function closeAllDrawers() {
+      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
+      document.getElementById('drawer-overlay').classList.remove('active');
+    }
+
+    // PERSONALIZACIÓN DEL DASHBOARD: CATÁLOGO Y VISIBILIDAD DE TARJETAS
+    function renderDashboardCustomizationCatalog() {
+      const container = document.getElementById('drawer-catalog-body');
+      if (!container) return;
+
+      const activeWidgets = [];
+      installedModules.forEach(mod => {
+        if (mod.active && mod.manifest && mod.manifest.widgets && mod.manifest.widgets.length > 0) {
+          mod.manifest.widgets.forEach(w => {
+            activeWidgets.push({
+              widget: w,
+              module: mod.manifest
+            });
+          });
+        }
+      });
+
+      if (activeWidgets.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <svg class="svg-icon svg-icon-xl" style="color: var(--text-muted); margin-bottom: 14px; opacity: 0.5;" viewBox="0 0 24 24">
+              <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+              <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+              <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+              <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+            </svg>
+            <h4 style="font-size: 15px; font-weight: 600;">Sin tarjetas disponibles</h4>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+              Actualmente no hay módulos activos con tarjetas de Dashboard. Instala o activa extensiones (.pcm) para configurar su visualización.
+            </p>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="closeAllDrawers(); switchView('module-manager');">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              <span>Ir al Gestor de Módulos</span>
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${activeWidgets.map(item => {
+            const cardId = item.widget.id || `card-${item.module.id}`;
+            const cardEl = document.getElementById(cardId);
+            const isVisible = cardEl ? cardEl.style.display !== 'none' : true;
+            return `
+              <div class="settings-card" style="padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; background: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                  <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary); flex-shrink: 0;">
+                    <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
+                      <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+                      <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+                      <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+                      <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+                    </svg>
+                  </div>
+                  <div style="min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <h5 style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.widget.name || 'Tarjeta'}</h5>
+                      <span class="card-badge" style="font-size: 10px; padding: 2px 6px;">${item.widget.size || '2x1'}</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${item.module.name}</div>
+                  </div>
+                </div>
+                <label class="switch" title="Mostrar/Ocultar tarjeta en el Dashboard">
+                  <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleWidgetVisibility('${cardId}', this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function toggleWidgetVisibility(cardId, isVisible) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        if (isVisible) {
+          card.style.display = 'flex';
+          card.classList.remove('card-drop');
+          void card.offsetWidth;
+          card.classList.add('card-drop');
+          setTimeout(() => card.classList.remove('card-drop'), 300);
+        } else {
+          card.style.display = 'none';
+        }
+      }
+
+      // Comprobar si todas las tarjetas están ocultas
+      const allCards = Array.from(document.querySelectorAll('#grid-board .card'));
+      const visibleCards = allCards.filter(c => c.style.display !== 'none');
+      const emptyHero = document.querySelector('.empty-dashboard-hero');
+      if (emptyHero) {
+        if (allCards.length > 0 && visibleCards.length === 0) {
+          emptyHero.style.display = 'flex';
+          const p = emptyHero.querySelector('p');
+          if (p) p.textContent = 'Todas las tarjetas instaladas se encuentran ocultas. Pulsa en "Personalizar Dashboard" para activarlas.';
+        } else if (visibleCards.length > 0) {
+          emptyHero.style.display = 'none';
+        }
+      }
+
+      updateDashboardCardsCount();
+
+      // Persistir tarjetas ocultas en disco con Rust
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        const hiddenIds = allCards.filter(c => c.style.display === 'none').map(c => c.id);
+        invokeFn('save_module_setting', {
+          moduleId: 'core_dashboard',
+          key: 'hidden_widgets',
+          value: JSON.stringify(hiddenIds)
+        }).catch(e => console.warn(e));
       }
     }
 
@@ -1805,6 +1978,12 @@
       card.setAttribute('draggable', 'true');
 
       card.addEventListener('dragstart', (e) => {
+        // Si el clic ocurrió sobre un control interactivo (botón, switch, input), no arrastrar tarjeta
+        if (e.target.closest('button, input, select, .btn, .switch, label, a')) {
+          e.preventDefault();
+          return;
+        }
+
         draggedCard = card;
         card.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
@@ -1825,20 +2004,23 @@
         }
       });
 
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('drag-target');
+      card.addEventListener('dragleave', (e) => {
+        if (!card.contains(e.relatedTarget)) {
+          card.classList.remove('drag-target');
+        }
       });
 
       card.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         card.classList.remove('drag-target');
         if (draggedCard && draggedCard !== card) {
-          const grid = document.getElementById('grid-board');
-          const cards = Array.from(grid.querySelectorAll('.card'));
-          const draggedIndex = cards.indexOf(draggedCard);
-          const targetIndex = cards.indexOf(card);
+          const rect = card.getBoundingClientRect();
+          const relY = e.clientY - rect.top;
+          const relX = e.clientX - rect.left;
 
-          if (draggedIndex < targetIndex) {
+          // Si el cursor está en la segunda mitad de la tarjeta, colocar después; sino antes
+          if (relX > rect.width / 2 || relY > rect.height / 2) {
             card.after(draggedCard);
           } else {
             card.before(draggedCard);
@@ -1849,12 +2031,37 @@
           draggedCard.classList.add('card-drop');
           setTimeout(() => draggedCard.classList.remove('card-drop'), 300);
 
-          // Persistir nuevo orden en disco con Rust
-          const invokeFn = getTauriInvoke();
-          if (invokeFn) {
-            const cardIds = Array.from(document.querySelectorAll('#grid-board .card')).map(c => c.id);
-            invokeFn('save_dashboard_order', { cardOrder: cardIds }).catch(e => console.warn(e));
-          }
+          persistDashboardOrder();
+        }
+      });
+    }
+
+    function persistDashboardOrder() {
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        const cardIds = Array.from(document.querySelectorAll('#grid-board .card')).map(c => c.id);
+        invokeFn('save_dashboard_order', { cardOrder: cardIds }).catch(e => console.warn(e));
+      }
+    }
+
+    function initGridBoardDragDrop() {
+      const grid = document.getElementById('grid-board');
+      if (!grid) return;
+
+      grid.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      grid.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (draggedCard && (e.target === grid || e.target.id === 'grid-board')) {
+          grid.appendChild(draggedCard);
+          draggedCard.classList.remove('card-drop');
+          void draggedCard.offsetWidth;
+          draggedCard.classList.add('card-drop');
+          setTimeout(() => draggedCard.classList.remove('card-drop'), 300);
+          persistDashboardOrder();
         }
       });
     }
@@ -2101,6 +2308,8 @@
         }
       }
 
+      renderDashboardCustomizationCatalog();
+
       if (isUpdate) {
         addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success');
       } else {
@@ -2128,6 +2337,7 @@
       if (settingsCard) settingsCard.style.display = isActive ? 'block' : 'none';
 
       checkSidebarGroupsVisibility();
+      renderDashboardCustomizationCatalog();
 
       if (syncDisk) {
         const invokeFn = getTauriInvoke();
@@ -2181,6 +2391,7 @@
       updateModuleCounts();
       updateDashboardCardsCount();
       checkSidebarGroupsVisibility();
+      renderDashboardCustomizationCatalog();
 
       if (installedModules.size === 0) {
         const emptyNotice = document.getElementById('empty-installed-notice');
@@ -2675,12 +2886,32 @@
               });
             }
 
+            // Restaurar estado de visibilidad de tarjetas ocultas en el Dashboard
+            try {
+              const savedHidden = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
+              if (savedHidden && savedHidden.hidden_widgets) {
+                const hiddenIds = JSON.parse(savedHidden.hidden_widgets);
+                if (Array.isArray(hiddenIds)) {
+                  hiddenIds.forEach(id => {
+                    const c = document.getElementById(id);
+                    if (c) c.style.display = 'none';
+                  });
+                  updateDashboardCardsCount();
+                }
+              }
+            } catch(e) {}
+
+            renderDashboardCustomizationCatalog();
             addSystemNotification('Módulos Restaurados', `${installedList.length} extensión(es) cargada(s) desde el disco duro.`, 'success');
           }
         }
       } catch (err) {
         console.warn('Ejecutando en entorno webview desacoplado:', err);
       }
+
+      // Inicializar botones contextuales de la barra superior y drag and drop de cuadrícula
+      updateTopbarContextualActions('dashboard');
+      initGridBoardDragDrop();
 
       // Drag & Drop de paquetes .pcm sobre la zona de arrastre
       const dropzone = document.getElementById('dropzone-pcm');

@@ -332,6 +332,42 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-014] Personalización de Tarjetas del Dashboard, Drag & Drop sin Bloqueos y Botones Contextuales Dinámicos
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `Dashboard & Carcasa UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. El panel lateral (drawer) "Personalizar Dashboard" (`#drawer-catalog`) mostraba únicamente un texto estático de "Sin tarjetas disponibles", impidiendo visualizar los widgets de los módulos instalados para activar o desactivar su presencia en la cuadrícula.
+  2. El drag & drop de tarjetas no respondía o se cancelaba debido a que los elementos cosméticos hijos internos disparaban eventos `dragleave`, `* { user-select: none; }` interfería con el inicio de arrastre en Chromium/WebView2 y el contenedor `#grid-board` no gestionaba eventos `dragover`/`drop` directos.
+  3. El botón "Personalizar Dashboard" era visible en todas las pantallas (incluyendo Configuración y Gestor de Módulos), cuando únicamente correspondía a la vista del Dashboard.
+  4. El botón de Notificaciones no ocupaba la posición canónica extrema derecha de la barra superior.
+- **Causa Raíz**: 
+  1. Ausencia de una función `renderDashboardCustomizationCatalog()` que recorra los widgets instalados y genere switches para alternar la visibilidad de cada tarjeta.
+  2. Ausencia de regla CSS `-webkit-user-drag: element`, interferencia de nodos hijos en el bubbling del drag y falta de exclusión para que los clics en botones de widgets no inicien arrastres accidentales.
+  3. Estructura fija de botones en `.topbar-actions` sin contenedor dinámico dependiente de `currentView`.
+- **Solución Implementada**: 
+  1. Se implementó `renderDashboardCustomizationCatalog()` y `toggleWidgetVisibility()`:
+     - Genera dinámicamente tarjetas en el drawer con nombre, tamaño (`2x1`, `2x2`), módulo padre y un switch para mostrar u ocultar la tarjeta en el Dashboard.
+     - Persiste la lista de tarjetas ocultas en disco de Windows mediante Tauri IPC (`save_module_setting` en `core_dashboard.hidden_widgets`) y restaura su estado en el arranque.
+     - Se actualiza automáticamente al instalar, activar/desactivar, desinstalar módulos o al abrir el drawer.
+  2. Se optimizó el Drag & Drop:
+     - Aplicadas reglas CSS `-webkit-user-drag: element;`, `cursor: grab / grabbing` y `pointer-events: none` en hijos cosméticos, preservando `pointer-events: auto !important` en botones y controles interactivos.
+     - Se añadió verificación en `dragstart` para no arrastrar si el puntero se posó sobre un control interactivo (permitiendo pulsar botones de cronómetro/temporizador con total fluidez).
+     - Se agregaron listeners `dragover` y `drop` en `#grid-board` y cálculo preciso de mitad de tarjeta (`after`/`before`) al soltar.
+  3. Se rediseñó la barra superior:
+     - Contenedor `#topbar-contextual-actions` que inyecta los botones "Auto-organizar" y "Personalizar Dashboard" únicamente cuando la vista activa es `dashboard`. En `settings` y `module-manager` el contenedor se vacía y oculta automáticamente.
+     - El botón de Notificaciones `#topbar-notif-btn` se ubicó de manera fija y permanente en el extremo derecho de la barra superior.
+  4. Se sincronizó `core_shell.html` y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
