@@ -8,7 +8,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 | Versión | Total Incidencias | Críticas | Altas | Medias | Bajas | Estado |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| `0.0.1-alpha` | 4 | 1 | 2 | 1 | 0 | 100% Resueltas |
+| `0.0.1-alpha` | 5 | 1 | 3 | 1 | 0 | 100% Resueltas |
 
 ---
 
@@ -85,3 +85,28 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src/core/module_manager.js`](file:///c:/Proyectos/pc_manager/src/core/module_manager.js)
   - [`test/core_test.js`](file:///c:/Proyectos/pc_manager/test/core_test.js)
 - **Estado**: `RESUELTO`
+
+---
+
+### [BUG-005] Desacoplamiento e integración funcional del Core Microkernel con la UI del Shell
+- **Fecha**: 2026-09-13
+- **Commit**: `pending`
+- **Versión**: `v0.0.1-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `UI Shell / Runtime Integrator (`[`index.html`](file:///c:/Proyectos/pc_manager/index.html)`, `[`src/app.js`](file:///c:/Proyectos/pc_manager/src/app.js)`)`
+- **Descripción del Fallo**: 
+  La interfaz visual operaba anteriormente como maquetas estáticas con código inline desacoplado de las clases del microkernel (`src/core/`), imposibilitando la ejecución de la aplicación como un sistema integral ejecutable.
+- **Causa Raíz**: 
+  Separación de la fase de prototipado HTML frente a la fase de implementación del microkernel.
+- **Solución Implementada**: 
+  Se modularizó el sistema con `package.json`, servidor local zero-dependency `scripts/serve.js`, controlador de vista `src/app.js`, estilos unificados `src/ui/styles.css`, e integración del módulo canónico `SystemTelemetryModule` (`telemetry:hardware`) que renderiza en tiempo real sus tarjetas y actualiza el Dashboard y menú lateral.
+- **Archivos Afectados**: 
+  - [`index.html`](file:///c:/Proyectos/pc_manager/index.html)
+  - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
+  - [`scripts/serve.js`](file:///c:/Proyectos/pc_manager/scripts/serve.js)
+  - [`src/app.js`](file:///c:/Proyectos/pc_manager/src/app.js)
+  - [`src/ui/styles.css`](file:///c:/Proyectos/pc_manager/src/ui/styles.css)
+  - [`src/ui/icons.js`](file:///c:/Proyectos/pc_manager/src/ui/icons.js)
+  - [`src/modules/system_telemetry/index.js`](file:///c:/Proyectos/pc_manager/src/modules/system_telemetry/index.js)
+- **Estado**: `RESUELTO`
+

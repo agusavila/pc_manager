@@ -1,0 +1,21 @@
+{
+  "name": "pc_manager",
+  "version": "0.0.1-alpha",
+  "description": "PC Manager - Arquitectura Core-Modular White-Label para administración y telemetría de sistemas",
+  "main": "src/core/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node test/core_test.js"
+  },
+  "keywords": [
+    "pc-manager",
+    "core-modular",
+    "microkernel",
+    "white-label",
+    "telemetry",
+    "system-management"
+  ],
+  "author": "aavila",
+  "license": "MIT"
+}
