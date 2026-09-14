@@ -528,7 +528,8 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      height: 100%;
+      min-height: 100%;
+      flex: 1;
     }
 
     /* GRID 10x10 */
@@ -541,7 +542,8 @@
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
       padding: 16px;
-      min-height: calc(100vh - 180px);
+      min-height: 100%;
+      flex: 1;
       position: relative;
       background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
       background-size: 20px 20px;
@@ -1006,23 +1008,24 @@
       display: block;
     }
 
-    /* VISTA DE CONFIGURACIONES HOMOGÉNEA */
-    .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
-      gap: 24px;
-      max-width: 1160px;
-      align-items: stretch;
+    /* VISTA DE CONFIGURACIONES HOMOGÉNEA (ANCHO COMPLETO 100% Y SISTEMA POR PESTAÑAS) */
+    .settings-content-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
     }
 
     .settings-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: 20px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .settings-header {
@@ -1441,9 +1444,19 @@
         </div>
       </section>
 
-      <!-- VISTA 3: CONFIGURACIONES DEL CORE -->
+      <!-- VISTA 3: CONFIGURACIONES DEL CORE Y MÓDULOS (SISTEMA POR PESTAÑAS) -->
       <section class="view-content hidden" id="view-settings">
-        <div class="settings-grid">
+        <!-- Barra de Pestañas de Configuración -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px; margin-bottom: 24px; overflow-x: auto;" id="settings-tabs-bar">
+          <button class="tab-btn active" id="tab-btn-settings-general" onclick="switchSettingsTab('general')">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>General</span>
+          </button>
+          <!-- Pestañas dinámicas de módulos con meta_options se inyectan aquí -->
+        </div>
+
+        <!-- PESTAÑA 1: GENERAL (OPCIONES DEL CORE A ANCHO COMPLETO) -->
+        <div id="settings-tab-pane-general" class="settings-content-stack">
 
           <!-- DIRECTIVAS DE FUNCIONAMIENTO Y WINDOWS -->
           <div class="settings-card">
@@ -1599,9 +1612,11 @@
               </div>
             </div>
           </div>
-          <!-- CONTENEDOR DINÁMICO DE META-OPCIONES DE MÓDULOS -->
-          <div id="dynamic-module-settings-container" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;"></div>
+
         </div>
+
+        <!-- CONTENEDOR DINÁMICO DE PANELES DE CONFIGURACIÓN DE MÓDULOS -->
+        <div id="dynamic-module-settings-panes"></div>
       </section>
 
     </main>
@@ -2162,6 +2177,10 @@
         if (oldView) oldView.remove();
 
         // 3. Limpiar meta-opciones de configuración anteriores
+        const oldSettingsTab = document.getElementById(`tab-btn-settings-mod-${prevMod.manifest.id}`);
+        if (oldSettingsTab) oldSettingsTab.remove();
+        const oldSettingsPane = document.getElementById(`settings-tab-pane-mod-${prevMod.manifest.id}`);
+        if (oldSettingsPane) oldSettingsPane.remove();
         const oldSettings = document.getElementById(`settings-mod-${prevMod.manifest.id}`);
         if (oldSettings) oldSettings.remove();
 
@@ -2274,55 +2293,79 @@
         updateDashboardCardsCount();
       }
 
-      // 6. Inyectar Meta-Opciones en la sección de Configuraciones
+      // 6. Inyectar Pestaña y Panel de Meta-Opciones en Configuraciones
       if (manifest.meta_options && manifest.meta_options.length > 0) {
-        const settingsContainer = document.getElementById('dynamic-module-settings-container');
-        if (settingsContainer) {
-          const sCard = document.createElement('div');
-          sCard.className = 'settings-card';
-          sCard.id = `settings-mod-${manifest.id}`;
-          sCard.innerHTML = `
-            <div class="settings-header">
-              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              <h4>Configuración: ${manifest.name}</h4>
-              <span class="card-badge" style="color:var(--accent-primary);">v${manifest.version}</span>
-            </div>
-            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 4px;">
-              Parámetros de funcionamiento expuestos dinámicamente por este módulo.
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 8px;">
-              ${manifest.meta_options.map(opt => {
-                if (opt.type === 'switch') {
-                  return `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <div>
-                        <strong style="font-size: 13px;">${opt.name}</strong>
-                        <div style="font-size: 11.5px; color: var(--text-muted);">${opt.desc}</div>
+        const tabsBar = document.getElementById('settings-tabs-bar');
+        const panesContainer = document.getElementById('dynamic-module-settings-panes');
+        
+        if (tabsBar && panesContainer) {
+          // Crear botón de pestaña para el módulo
+          let tabBtn = document.getElementById(`tab-btn-settings-mod-${manifest.id}`);
+          if (!tabBtn) {
+            tabBtn = document.createElement('button');
+            tabBtn.className = 'tab-btn';
+            tabBtn.id = `tab-btn-settings-mod-${manifest.id}`;
+            tabBtn.innerHTML = `
+              <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>${manifest.name}</span>
+            `;
+            tabBtn.onclick = () => switchSettingsTab(`mod-${manifest.id}`);
+            tabsBar.appendChild(tabBtn);
+          }
+
+          // Crear panel contenedor para el módulo
+          let pane = document.getElementById(`settings-tab-pane-mod-${manifest.id}`);
+          if (!pane) {
+            pane = document.createElement('div');
+            pane.className = 'settings-content-stack';
+            pane.id = `settings-tab-pane-mod-${manifest.id}`;
+            pane.style.display = 'none';
+            panesContainer.appendChild(pane);
+          }
+
+          pane.innerHTML = `
+            <div class="settings-card" id="settings-mod-${manifest.id}">
+              <div class="settings-header">
+                <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <h4>Configuración: ${manifest.name}</h4>
+                <span class="card-badge" style="color:var(--accent-primary);">v${manifest.version}</span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 4px;">
+                Parámetros de funcionamiento expuestos dinámicamente por este módulo.
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 8px;">
+                ${manifest.meta_options.map(opt => {
+                  if (opt.type === 'switch') {
+                    return `
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                          <strong style="font-size: 13px;">${opt.name}</strong>
+                          <div style="font-size: 11.5px; color: var(--text-muted);">${opt.desc}</div>
+                        </div>
+                        <label class="switch">
+                          <input type="checkbox" id="opt-${manifest.id}-${opt.id}" ${opt.default ? 'checked' : ''} onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.checked)">
+                          <span class="slider"></span>
+                        </label>
                       </div>
-                      <label class="switch">
-                        <input type="checkbox" id="opt-${manifest.id}-${opt.id}" ${opt.default ? 'checked' : ''} onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.checked)">
-                        <span class="slider"></span>
-                      </label>
-                    </div>
-                  `;
-                } else if (opt.type === 'select') {
-                  return `
-                    <div>
-                      <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
-                        ${opt.name}
-                      </label>
-                      <select class="form-select" id="opt-${manifest.id}-${opt.id}" onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.value)">
-                        ${opt.options.map(o => `<option value="${o.value}" ${o.value === opt.default ? 'selected' : ''}>${o.label}</option>`).join('')}
-                      </select>
-                      <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">${opt.desc}</div>
-                    </div>
-                  `;
-                }
-                return '';
-              }).join('')}
+                    `;
+                  } else if (opt.type === 'select') {
+                    return `
+                      <div>
+                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
+                          ${opt.name}
+                        </label>
+                        <select class="form-select" id="opt-${manifest.id}-${opt.id}" onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.value)">
+                          ${opt.options.map(o => `<option value="${o.value}" ${o.value === opt.default ? 'selected' : ''}>${o.label}</option>`).join('')}
+                        </select>
+                        <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">${opt.desc}</div>
+                      </div>
+                    `;
+                  }
+                  return '';
+                }).join('')}
+              </div>
             </div>
           `;
-          settingsContainer.appendChild(sCard);
         }
       }
 
@@ -2361,8 +2404,14 @@
         updateDashboardCardsCount();
       }
 
-      const settingsCard = document.getElementById(`settings-mod-${moduleId}`);
-      if (settingsCard) settingsCard.style.display = isActive ? 'block' : 'none';
+      const settingsTab = document.getElementById(`tab-btn-settings-mod-${moduleId}`);
+      if (settingsTab) settingsTab.style.display = isActive ? 'inline-flex' : 'none';
+      const settingsPane = document.getElementById(`settings-tab-pane-mod-${moduleId}`);
+      if (settingsPane) {
+        if (!isActive && settingsTab && settingsTab.classList.contains('active')) {
+          switchSettingsTab('general');
+        }
+      }
 
       checkSidebarGroupsVisibility();
       renderDashboardCustomizationCatalog();
@@ -2398,6 +2447,16 @@
           if (widgetEl) widgetEl.remove();
         });
       }
+
+      const settingsTab = document.getElementById(`tab-btn-settings-mod-${moduleId}`);
+      if (settingsTab) {
+        if (settingsTab.classList.contains('active')) {
+          switchSettingsTab('general');
+        }
+        settingsTab.remove();
+      }
+      const settingsPane = document.getElementById(`settings-tab-pane-mod-${moduleId}`);
+      if (settingsPane) settingsPane.remove();
 
       const settingsEl = document.getElementById(`settings-mod-${moduleId}`);
       if (settingsEl) settingsEl.remove();
@@ -2597,6 +2656,22 @@
       list.appendChild(newRow);
       input.value = '';
       updateGroupsBadgeCount();
+    }
+
+    // 7.1 PESTAÑAS DE CONFIGURACIÓN (GENERAL + MÓDULOS)
+    function switchSettingsTab(tabId) {
+      document.querySelectorAll('#settings-tabs-bar .tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`tab-btn-settings-${tabId}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const generalPane = document.getElementById('settings-tab-pane-general');
+      if (generalPane) {
+        generalPane.style.display = (tabId === 'general') ? 'flex' : 'none';
+      }
+
+      document.querySelectorAll('#dynamic-module-settings-panes .settings-content-stack').forEach(pane => {
+        pane.style.display = (pane.id === `settings-tab-pane-${tabId}`) ? 'flex' : 'none';
+      });
     }
 
     // 8. CICLO DE VIDA EN WINDOWS

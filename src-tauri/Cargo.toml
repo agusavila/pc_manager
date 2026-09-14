@@ -2,7 +2,7 @@
 name = "pc_manager"
 version = "0.0.2"
 description = "PC Manager - Software de Escritorio Core-Modular para Windows (Rust + Tauri)"
-authors = ["aavila"]
+authors = ["PC Manager Team"]
 edition = "2021"
 rust-version = "1.77.2"
 

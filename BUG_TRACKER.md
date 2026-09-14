@@ -390,13 +390,31 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
 
-
-
-
-
-
-
-
-
-
+### [BUG-016] Expansión Total del Dashboard y Rediseño de la Pantalla de Configuraciones por Pestañas
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `UI / Dashboard & Settings (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Tras retirar el botón flotante inferior en el Dashboard, la cuadrícula (`.grid-board`) mantenía un `min-height: calc(100vh - 180px)` rígido, dejando una franja inutilizada al pie de la ventana en lugar de expandirse hasta el fondo.
+  2. La pantalla de Configuraciones agrupaba todas las tarjetas (Core y módulos) en una cuadrícula compacta compartida (`.settings-grid`), sin segmentación modular y sin abarcar todo el espacio horizontal disponible (`max-width: 1160px`).
+- **Causa Raíz**: 
+  1. Falta de propiedad `flex: 1` y `min-height: 100%` en `.dashboard-container` y `.grid-board`.
+  2. Falta de un sistema de navegación por pestañas (`switchSettingsTab`) para separar las configuraciones generales del Core de las de cada módulo instalado, así como estilo de tarjetas estrechas.
+- **Solución Implementada**: 
+  1. Se actualizó `.dashboard-container` y `.grid-board` a `min-height: 100%; flex: 1;`, logrando que la cuadrícula del Dashboard aproveche el 100% del área vertical disponible hasta el fondo.
+  2. Se rediseñó la pantalla de Configuraciones implementando:
+     - Barra superior de pestañas de configuración (`#settings-tabs-bar`) con la pestaña predeterminada e inmutable **"General"**.
+     - Inyección dinámica de pestañas y paneles dedicados (`switchSettingsTab`) cuando un módulo `.pcm` declara `meta_options` en su `manifest.json`.
+     - Tarjetas de configuración (`.settings-card`) a ancho completo (`width: 100%`, `box-sizing: border-box`) dentro de un contenedor en columna (`.settings-content-stack`).
+     - Sincronización transparente en el ciclo de vida: al desactivar o desinstalar un módulo, su pestaña y panel se ocultan/eliminan y se restablece la pestaña General.
+  3. Se saneó `Cargo.toml` (`authors = ["PC Manager Team"]`) cumpliendo estrictamente con la Regla 2 de Marca Blanca.
+  4. Se sincronizó `core_shell.html` y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
