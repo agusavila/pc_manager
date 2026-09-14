@@ -1068,8 +1068,8 @@
             <span class="nav-badge" id="tab-installed-count">0</span>
           </button>
           <button class="tab-btn" id="tab-btn-catalog" onclick="switchManagerTab('catalog')">
-            <span>Catálogo Remoto (GitHub)</span>
-            <span class="nav-badge" style="background: var(--accent-primary-dim); color: var(--accent-primary);">3 Disponibles</span>
+            <span>Catálogo Remoto</span>
+            <span class="nav-badge" id="tab-catalog-count" style="background: var(--accent-primary-dim); color: var(--accent-primary);">0 Disponibles</span>
           </button>
           <button class="tab-btn" id="tab-btn-sources" onclick="switchManagerTab('sources')">
             <span>Repositorios Configurados</span>
@@ -1098,64 +1098,30 @@
           </div>
         </div>
 
-        <!-- PESTAÑA B: CATÁLOGO REMOTO (REPOSITORIO DE GITHUB) -->
+        <!-- PESTAÑA B: CATÁLOGO REMOTO -->
         <div id="manager-tab-catalog" class="hidden">
-          <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
-            Módulos verificados listos para descarga e instalación en 1 clic. Cada paquete incluye firma SHA-256.
-          </p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <p style="font-size: 12.5px; color: var(--text-secondary);">
+              Explora y descarga módulos verificados desde fuentes de repositorios configuradas.
+            </p>
+            <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="syncRemoteCatalog()">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+              <span>Sincronizar Catálogo</span>
+            </button>
+          </div>
 
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Módulo Remoto 1 -->
-            <div class="settings-card" style="padding: 16px; flex-direction: row; align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 14px; align-items: center;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
-                  <svg class="svg-icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect></svg>
-                </div>
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600;">Telemetría de Sistema</h4>
-                  <p style="font-size: 12px; color: var(--text-muted);">Colector nativo de telemetría de CPU, RAM, GPU y Red. Expone servicio compartido.</p>
-                  <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v1.0.0 // Grupo: General</span>
-                </div>
+          <div id="catalog-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 48px 24px; text-align: center; box-shadow: var(--shadow-surface);">
+              <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--bg-elevated); border: 1px solid var(--border-medium); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--accent-primary);">
+                <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
               </div>
-              <button class="btn btn-primary" onclick="simulateDownloadAndInstall('telemetry')">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar e Instalar</span>
-              </button>
-            </div>
-
-            <!-- Módulo Remoto 2 -->
-            <div class="settings-card" style="padding: 16px; flex-direction: row; align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 14px; align-items: center;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: #10b981;">
-                  <svg class="svg-icon" viewBox="0 0 24 24"><path d="m2 22 1-1h18l1 1"></path><path d="M9 8V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v3"></path></svg>
-                </div>
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600;">Almacenamiento Local</h4>
-                  <p style="font-size: 12px; color: var(--text-muted);">Diagnóstico y mantenimiento de unidades con modo de simulación previa.</p>
-                  <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v1.0.0 // Grupo: General</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="simulateDownloadAndInstall('cleaner')">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar e Instalar</span>
-              </button>
-            </div>
-
-            <!-- Módulo Remoto 3 -->
-            <div class="settings-card" style="padding: 16px; flex-direction: row; align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 14px; align-items: center;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: #8b5cf6;">
-                  <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5Z"></path></svg>
-                </div>
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600;">Controlador de Refrigeración</h4>
-                  <p style="font-size: 12px; color: var(--text-muted);">Control de pantallas digitales para disipadores. Requiere Telemetría de Sistema.</p>
-                  <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v1.1.0 // Grupo: Periféricos</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="simulateDownloadAndInstall('cooler')">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar e Instalar</span>
+              <h4 style="font-size: 16px; font-weight: 600; color: var(--text-primary);">0 Módulos disponibles en catálogo</h4>
+              <p style="font-size: 13px; color: var(--text-secondary); max-width: 460px; margin: 8px auto 20px; line-height: 1.5;">
+                No hay fuentes de repositorio sincronizadas actualmente. Configura la URL de un repositorio oficial o privado en la pestaña de repositorios para listar módulos disponibles.
+              </p>
+              <button class="btn btn-primary" onclick="switchManagerTab('sources')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                <span>Configurar Fuentes de Repositorio</span>
               </button>
             </div>
           </div>
@@ -1163,14 +1129,25 @@
 
         <!-- PESTAÑA C: FUENTES DE REPOSITORIOS -->
         <div id="manager-tab-sources" class="hidden">
-          <div class="settings-card">
-            <h4 style="font-size: 14px; font-weight: 600;">Repositorios Oficiales Conectados</h4>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-md);">
-              <div>
-                <strong style="font-size: 13px;">GitHub Official Modules Registry</strong>
-                <div style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">https://raw.githubusercontent.com/pc-manager/registry/main/v1/index.json</div>
+          <div class="settings-card" style="max-width: 720px;">
+            <div class="settings-header">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <h4>Fuentes de Repositorios Remotos</h4>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">
+              Configura endpoints e índices JSON seguros para el descubrimiento y actualización automática de paquetes de módulos.
+            </p>
+
+            <div id="sources-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <div id="sources-empty-state" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12.5px; border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">
+                No hay fuentes de repositorio configuradas de fábrica.
               </div>
-              <span class="group-pill-system">ACTIVO</span>
+            </div>
+
+            <!-- Añadir Repositorio -->
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <input type="text" id="new-repo-url" placeholder="https://ejemplo.dominio/repositorio/index.json" style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: #fff; font-size: 13px; outline: none;">
+              <button class="btn btn-primary" onclick="addRepositorySource()">Añadir Repositorio</button>
             </div>
           </div>
         </div>
@@ -1557,15 +1534,36 @@
       input.click();
     }
 
-    function simulateDownloadAndInstall(moduleKey) {
-      addSystemNotification('Descarga Remota', `Descargando paquete ${moduleKey}.pcm desde GitHub Releases...`, 'info');
-      setTimeout(() => {
-        addSystemNotification('Suma de Hash SHA-256 Validada', `Paquete ${moduleKey}.pcm verificado criptográficamente.`, 'info');
-        setTimeout(() => {
-          addSystemNotification('Módulo Instalado en Caliente', `El módulo se cargó en caliente exitosamente.`, 'success');
-          alert(`Módulo "${moduleKey}" instalado con éxito. El Sistema ha registrado sus servicios y tarjetas.`);
-        }, 800);
-      }, 900);
+    function syncRemoteCatalog() {
+      addSystemNotification('Catálogo Remoto', 'Consultando repositorios configurados (0 fuentes registradas).', 'info');
+    }
+
+    function addRepositorySource() {
+      const input = document.getElementById('new-repo-url');
+      const val = input ? input.value.trim() : '';
+      if (!val) return;
+
+      const emptyNotice = document.getElementById('sources-empty-state');
+      if (emptyNotice) emptyNotice.style.display = 'none';
+
+      const list = document.getElementById('sources-list');
+      const newRow = document.createElement('div');
+      newRow.className = 'group-row';
+      newRow.innerHTML = `
+        <div>
+          <strong style="font-size: 13px;">Repositorio Personalizado</strong>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${val}</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="group-pill-system">REGISTRADO</span>
+          <button class="btn-icon" style="color: var(--accent-danger);" onclick="this.closest('.group-row').remove();" title="Eliminar fuente">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+          </button>
+        </div>
+      `;
+      list.appendChild(newRow);
+      input.value = '';
+      addSystemNotification('Fuente Añadida', `Repositorio ${val} guardado localmente.`, 'success');
     }
 
     // 6. GESTIÓN DE NOTIFICACIONES

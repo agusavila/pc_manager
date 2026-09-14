@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Manager // Core v0.0.1-alpha (Sin Módulos)</title>
+  <title>PC Manager // Núcleo Modular</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -79,7 +79,6 @@
     }
     .svg-icon-sm { width: 15px; height: 15px; stroke-width: 2; }
     .svg-icon-lg { width: 22px; height: 22px; }
-    .svg-icon-xl { width: 42px; height: 42px; stroke-width: 1.5; }
 
     /* LAYOUT PRINCIPAL */
     .app-shell {
@@ -89,9 +88,9 @@
       background-color: var(--bg-base);
     }
 
-    /* SIDEBAR (SISTEMA BASE) */
+    /* SIDEBAR */
     .sidebar {
-      width: 270px;
+      width: 250px;
       background-color: var(--bg-surface);
       border-right: 1px solid var(--border-subtle);
       display: flex;
@@ -147,7 +146,6 @@
       border-bottom: 1px solid var(--border-subtle);
     }
 
-    /* ÚNICO CONTROL DE COLAPSO: EL ICONO DE LA APLICACIÓN */
     .brand-symbol {
       width: 36px;
       height: 36px;
@@ -160,13 +158,6 @@
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
       cursor: pointer;
       flex-shrink: 0;
-      transition: transform 0.18s ease;
-    }
-    .brand-symbol:hover {
-      transform: scale(1.06);
-    }
-    .brand-symbol:active {
-      transform: scale(0.96);
     }
 
     .brand-info h1 {
@@ -193,12 +184,49 @@
       overflow-x: hidden !important;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     .sidebar.collapsed .sidebar-nav {
       padding: 14px 6px;
       overflow: hidden !important;
+    }
+
+    /* GRUPOS COLAPSABLES */
+    .group-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 12px 10px 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-smooth);
+    }
+    .group-header:hover {
+      color: var(--text-primary);
+    }
+    .group-chevron {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2.2;
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .group-header.collapsed .group-chevron {
+      transform: rotate(-90deg);
+    }
+    .group-items {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .group-items.collapsed {
+      display: none;
     }
 
     .nav-button {
@@ -259,31 +287,7 @@
       border-color: rgba(59, 130, 246, 0.3);
     }
 
-    /* CONTENEDOR DINÁMICO DE MÓDULOS (INICIALMENTE VACÍO) */
-    .modules-nav-area {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-    }
-
-    .empty-modules-sidebar-notice {
-      padding: 20px 14px;
-      border: 1px dashed var(--border-subtle);
-      border-radius: var(--radius-md);
-      text-align: center;
-      margin: 10px 4px;
-      box-sizing: border-box;
-      overflow: hidden;
-      word-break: break-word;
-      max-width: 100%;
-    }
-    .empty-modules-sidebar-notice p {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
+    /* SEPARADOR Y PARTE INFERIOR */
     .sidebar-footer {
       padding: 12px;
       border-top: 1px solid var(--border-subtle);
@@ -302,7 +306,7 @@
       position: relative;
     }
 
-    /* BARRA SUPERIOR CANÓNICA */
+    /* BARRA SUPERIOR */
     .topbar {
       height: 64px;
       background-color: rgba(17, 20, 28, 0.85);
@@ -340,12 +344,6 @@
       text-overflow: ellipsis;
     }
 
-    .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
     /* BOTÓN FLOTANTE CANÓNICO DE AUTO-ORGANIZACIÓN (FAB) */
     .fab-auto-organize {
       position: absolute;
@@ -380,6 +378,33 @@
 
     .fab-auto-organize:active {
       transform: translateY(0);
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-success);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     /* BOTONES */
@@ -437,24 +462,7 @@
       border-color: var(--border-medium);
     }
 
-    .notification-counter {
-      position: absolute;
-      top: -3px;
-      right: -3px;
-      background-color: var(--accent-danger);
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 700;
-      width: 17px;
-      height: 17px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--bg-surface);
-    }
-
-    /* PESTAÑAS (TABS) */
+    /* PESTAÑAS (TABS) DE NAVEGACIÓN SECUNDARIA */
     .tab-btn {
       font-size: 13px;
       font-weight: 500;
@@ -480,6 +488,23 @@
       font-weight: 600;
     }
 
+    .notification-counter {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background-color: var(--accent-danger);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--bg-surface);
+    }
+
     /* CONTENEDOR DE VISTAS */
     .view-content {
       flex: 1;
@@ -487,11 +512,8 @@
       padding: 24px;
       position: relative;
     }
-    .hidden {
-      display: none !important;
-    }
 
-    /* DASHBOARD 10x10 */
+    /* PIZARRA DE CUADRÍCULA 10x10 (DASHBOARD) */
     .dashboard-container {
       display: flex;
       flex-direction: column;
@@ -513,72 +535,124 @@
       position: relative;
       background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
       background-size: 20px 20px;
-      align-content: start;
     }
 
-    /* HERO VACÍO DEL DASHBOARD (SIN MÓDULOS) */
-    .empty-dashboard-hero {
-      grid-column: 2 / span 8;
-      grid-row: 2 / span 4;
+    /* TARJETAS DEL DASHBOARD CON DRAG & DROP FLUIDO */
+    .card {
       background-color: var(--bg-card);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-xl);
-      padding: 40px 30px;
+      border-radius: var(--radius-lg);
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: var(--shadow-floating);
+      box-shadow: var(--shadow-surface);
+      transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.22s ease, border-color 0.2s ease, opacity 0.2s ease;
+      cursor: grab;
       position: relative;
       overflow: hidden;
-    }
-    .empty-dashboard-hero::before {
-      content: '';
-      position: absolute;
-      top: -80px;
-      width: 250px;
-      height: 150px;
-      background: radial-gradient(circle, var(--accent-primary-dim) 0%, transparent 70%);
-      pointer-events: none;
+      user-select: none;
     }
 
-    .hero-icon-box {
-      width: 72px;
-      height: 72px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-medium);
-      border-radius: 20px;
+    .card:hover {
+      border-color: var(--border-medium);
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+    }
+
+    .card.dragging {
+      opacity: 0.45;
+      transform: scale(0.98);
+      cursor: grabbing;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-primary), 0 16px 36px rgba(0, 0, 0, 0.55);
+    }
+
+    .card.drag-target {
+      border-color: var(--accent-primary) !important;
+      box-shadow: 0 0 0 2px var(--accent-primary-dim), 0 12px 28px rgba(59, 130, 246, 0.25);
+      transform: translateY(-3px);
+    }
+
+    @keyframes cardDrop {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .card.card-drop {
+      animation: cardDrop 0.28s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    @keyframes cardPulse {
+      0% { transform: scale(0.96); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    /* VARIANTES DE TAMAÑO EN CUADRÍCULA 10x10 */
+    .card-size-1x1 { grid-column: span 1; grid-row: span 1; }
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; }
+    .card-size-2x2 { grid-column: span 2; grid-row: span 2; }
+    .card-size-3x2 { grid-column: span 3; grid-row: span 2; }
+    .card-size-4x2 { grid-column: span 4; grid-row: span 2; }
+    .card-size-5x2 { grid-column: span 5; grid-row: span 2; }
+    .card-size-5x5 { grid-column: span 5; grid-row: span 5; }
+    .card-size-10x2 { grid-column: span 10; grid-row: span 2; }
+
+    /* CABECERA DE TARJETA */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    .card-title-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .card-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
+      background: var(--bg-elevated);
       color: var(--accent-primary);
-      margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      flex-shrink: 0;
     }
 
-    .empty-dashboard-hero h3 {
-      font-size: 20px;
-      font-weight: 700;
+    .card-title-box h4 {
+      font-size: 13px;
+      font-weight: 600;
       color: var(--text-primary);
-      letter-spacing: -0.02em;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.25;
+      overflow: visible;
+      text-overflow: clip;
     }
 
-    .empty-dashboard-hero p {
-      font-size: 13.5px;
-      color: var(--text-secondary);
-      max-width: 520px;
-      margin-top: 8px;
-      line-height: 1.5;
+    /* SWATCHES Y CONTROLES DE TEMA */
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: var(--transition-smooth);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
-
-    .hero-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
+    .color-swatch:hover {
+      transform: scale(1.15);
     }
-
-    /* SELECT / COMBOBOX */
+    .color-swatch.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 14px currentColor;
+    }
     .form-select {
       width: 100%;
       padding: 10px 14px;
@@ -600,12 +674,254 @@
       background-color: var(--bg-surface);
       color: var(--text-primary);
     }
+    .theme-preset-btn {
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+    }
+    .theme-preset-btn.active {
+      border-color: var(--accent-primary);
+      background: var(--accent-primary-dim);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
 
-    /* SWITCHES */
+    .card-badge {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-smooth);
+    }
+    .card-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+
+    /* CUERPO DE TARJETA */
+    .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .metric-big {
+      font-size: 26px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .metric-label {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .metric-progress-bg {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-pill);
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .metric-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), #60a5fa);
+      border-radius: var(--radius-pill);
+      transition: width 0.4s ease;
+    }
+
+    /* TACÓMETRO CIRCULAR SVG */
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    .gauge-svg {
+      width: 82px;
+      height: 82px;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: var(--bg-elevated);
+      stroke-width: 8;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: var(--accent-primary);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 140;
+      transition: stroke-dashoffset 0.6s ease;
+    }
+
+    /* TARJETA PANTALLA DIGITAL (DEMO SERVICIO COMPARTIDO) */
+    .cooler-screen {
+      background: #000000;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 16px rgba(59, 130, 246, 0.15);
+      position: relative;
+    }
+
+    .cooler-screen::before {
+      content: 'PANTALLA DIGITAL ACTIVA';
+      font-size: 8.5px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-primary);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .cooler-temp {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: #60a5fa;
+      text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+    }
+
+    .cooler-source {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* PANEL LATERAL DESLIZABLE (DRAWER / GALERÍA & NOTIFICACIONES) */
+    .drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer-panel {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 420px;
+      height: 100vh;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-medium);
+      z-index: 101;
+      box-shadow: var(--shadow-floating);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.28s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .drawer-panel.open {
+      right: 0;
+    }
+
+    .drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ELEMENTOS DE LA GALERÍA DE TARJETAS */
+    .catalog-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition-smooth);
+    }
+
+    .catalog-item:hover {
+      border-color: var(--border-medium);
+    }
+
+    .catalog-info h5 {
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .catalog-info p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .catalog-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    /* SWITCH TOGGLE */
     .switch {
       position: relative;
       display: inline-block;
-      width: 44px;
+      width: 42px;
       height: 24px;
       flex-shrink: 0;
     }
@@ -638,6 +954,39 @@
       transform: translateX(18px);
       background-color: #ffffff;
     }
+
+    /* ELEMENTOS DE NOTIFICACIONES */
+    .notif-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      position: relative;
+    }
+
+    .notif-item.unread {
+      border-left: 3px solid var(--accent-primary);
+      background: rgba(59, 130, 246, 0.04);
+    }
+
+    .notif-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .notif-icon.info { background: var(--accent-primary-dim); color: var(--accent-primary); }
+    .notif-icon.success { background: var(--accent-success-dim); color: var(--accent-success); }
+    .notif-icon.warning { background: var(--accent-warning-dim); color: var(--accent-warning); }
+
+    .notif-body h6 { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .notif-body p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+    .notif-time { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
 
     /* COLOR SWATCHES */
     .color-swatch {
@@ -802,109 +1151,24 @@
     .group-pill-system {
       font-size: 10.5px;
       padding: 2px 8px;
-      border-radius: var(--radius-pill);
-      background: rgba(59, 130, 246, 0.15);
-      color: var(--accent-primary);
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 600;
-    }
-
-    /* ELEMENTOS DE NOTIFICACIONES */
-    .notif-item {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      gap: 12px;
-      position: relative;
-    }
-    .notif-item.unread {
-      border-left: 3px solid var(--accent-primary);
-      background: rgba(59, 130, 246, 0.04);
-    }
-    .notif-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
       background: var(--accent-primary-dim);
       color: var(--accent-primary);
-    }
-    .notif-body h6 { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-    .notif-body p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
-    .notif-time { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
-
-    /* DRAWERS LATERALES */
-    .drawer-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      z-index: 99;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    .drawer-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      border: 1px solid rgba(59, 130, 246, 0.25);
     }
 
-    .drawer {
-      position: fixed;
-      top: 0; right: -420px;
-      width: 420px;
-      height: 100vh;
-      background-color: var(--bg-surface);
-      border-left: 1px solid var(--border-subtle);
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      box-shadow: var(--shadow-floating);
-      transition: right 0.28s cubic-bezier(0.2, 0, 0, 1);
-    }
-    .drawer.active {
-      right: 0;
-    }
-
-    .drawer-header {
-      padding: 20px;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .drawer-header h3 { font-size: 16px; font-weight: 700; }
-    .drawer-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
-
-    /* ZONA DE ARRASTRE DE ARCHIVOS (.PCM) */
-    .dropzone-pcm {
-      border: 2px dashed var(--border-medium);
-      border-radius: var(--radius-lg);
-      padding: 36px 20px;
-      text-align: center;
-      background-color: rgba(22, 27, 38, 0.3);
-      cursor: pointer;
-      transition: var(--transition-smooth);
-    }
-    .dropzone-pcm:hover {
-      border-color: var(--accent-primary);
-      background-color: var(--accent-primary-dim);
-    }
+    /* ESTADO OCULTO DE VISTAS */
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="app-shell">
 
-    <!-- 1. SIDEBAR CANÓNICO (SISTEMA BASE SIN MÓDULOS) -->
+    <!-- 1. SIDEBAR CANÓNICO -->
     <aside class="sidebar">
       <div class="brand-header">
-        <!-- Único control de colapso canónico -->
         <div class="brand-symbol" onclick="toggleSidebar()" title="Colapsar / Expandir menú lateral">
           <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24">
             <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -915,12 +1179,12 @@
         </div>
         <div class="brand-info">
           <h1>PC MANAGER</h1>
-          <span>CORE // v0.0.1-alpha</span>
+          <span>NÚCLEO // MODULAR</span>
         </div>
       </div>
 
       <nav class="sidebar-nav">
-        <!-- Dashboard Fijo Canónico -->
+        <!-- Dashboard Fijo -->
         <button class="nav-button active" id="nav-dashboard" onclick="switchView('dashboard')" title="Dashboard">
           <svg class="svg-icon" viewBox="0 0 24 24">
             <rect width="7" height="9" x="3" y="3" rx="1"></rect>
@@ -929,19 +1193,58 @@
             <rect width="7" height="5" x="3" y="16" rx="1"></rect>
           </svg>
           <span>Dashboard</span>
-          <span class="nav-badge" id="badge-active-cards">0</span>
+          <span class="nav-badge active-badge" id="active-cards-badge">5</span>
         </button>
 
-        <!-- ZONA DINÁMICA DE MÓDULOS: VACÍA DE FÁBRICA -->
-        <div class="modules-nav-area" id="modules-nav-area">
-          <div class="empty-modules-sidebar-notice">
-            <svg class="svg-icon" style="color: var(--text-muted); margin-bottom: 6px;" viewBox="0 0 24 24">
-              <rect width="7" height="7" x="3" y="3" rx="1"></rect>
-              <rect width="7" height="7" x="14" y="3" rx="1"></rect>
-              <rect width="7" height="7" x="14" y="14" rx="1"></rect>
-              <rect width="7" height="7" x="3" y="14" rx="1"></rect>
-            </svg>
-            <p>Sin módulos activos.<br>Instala paquetes para añadir secciones.</p>
+        <!-- GRUPO INMUTABLE: GENERAL (COLAPSABLE) -->
+        <div class="sidebar-group" id="group-wrapper-general">
+          <div class="group-header" onclick="toggleGroupCollapse('general')" title="Colapsar / Mostrar General">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <svg class="svg-icon svg-icon-xs group-chevron" id="chevron-general" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <span>GENERAL</span>
+            </div>
+            <span class="nav-badge" id="badge-count-general">2</span>
+          </div>
+          <div class="group-items" id="group-items-general">
+            <button class="nav-button" id="nav-module-telemetry" onclick="switchView('module-telemetry')" title="Telemetría de Sistema">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <rect width="16" height="16" x="4" y="4" rx="2"></rect>
+                <rect width="6" height="6" x="9" y="9" rx="1"></rect>
+                <path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path>
+                <path d="M20 15h2"></path><path d="M20 9h2"></path><path d="M9 2v2"></path><path d="M9 20v2"></path>
+              </svg>
+              <span>Telemetría de Sistema</span>
+            </button>
+            <button class="nav-button" id="nav-module-cleaner" onclick="switchView('module-cleaner')" title="Almacenamiento Local">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <path d="m2 22 1-1h18l1 1"></path><path d="M14 8h1"></path>
+                <path d="M18 8h1"></path><path d="M8 8H7a4 4 0 0 0-4 4v7h18v-7a4 4 0 0 0-4-4h-2"></path>
+                <path d="M9 8V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v3"></path>
+              </svg>
+              <span>Almacenamiento Local</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- GRUPO CONFIGURABLE: PERIFÉRICOS (COLAPSABLE) -->
+        <div class="sidebar-group" id="group-wrapper-peripherals">
+          <div class="group-header" id="label-group-peripherals" onclick="toggleGroupCollapse('peripherals')" title="Colapsar / Mostrar Periféricos">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <svg class="svg-icon svg-icon-xs group-chevron" id="chevron-peripherals" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <span>PERIFÉRICOS</span>
+            </div>
+            <span class="nav-badge">1</span>
+          </div>
+          <div class="group-items" id="group-items-peripherals">
+            <button class="nav-button" id="nav-module-cooler" onclick="switchView('module-cooler')" title="Disipador con Pantalla">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <path d="M12 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5Z"></path>
+                <path d="M12 12c0-2.8-2.2-5-5-5S2 9.2 2 12s2.2 5 5 5"></path>
+                <path d="M12 12c0-2.8 2.2-5 5-5s5 2.2 5 5-2.2 5-5 5"></path>
+                <path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5"></path>
+              </svg>
+              <span>Disipador con Pantalla</span>
+            </button>
           </div>
         </div>
       </nav>
@@ -950,12 +1253,13 @@
       <div class="sidebar-footer">
         <button class="nav-button" id="nav-module-manager" onclick="switchView('module-manager')" title="Gestor de Módulos">
           <svg class="svg-icon" viewBox="0 0 24 24">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="3.29 7 12 12 20.71 7"></polyline>
-            <line x1="12" y1="22" x2="12" y2="12"></line>
+            <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+            <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+            <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+            <rect width="7" height="7" x="3" y="14" rx="1"></rect>
           </svg>
           <span>Gestor de Módulos</span>
-          <span class="nav-badge" id="badge-total-modules">0</span>
+          <span class="nav-badge" id="badge-total-modules">3</span>
         </button>
 
         <button class="nav-button" id="nav-settings" onclick="switchView('settings')" title="Configuraciones">
@@ -968,7 +1272,7 @@
       </div>
     </aside>
 
-    <!-- 2. ÁREA DE TRABAJO PRINCIPAL -->
+    <!-- 2. STAGE PRINCIPAL -->
     <main class="main-stage">
 
       <!-- Barra Superior -->
@@ -979,13 +1283,12 @@
         </div>
 
         <div class="topbar-actions">
-          <!-- Botón de notificaciones compacto con contador -->
-          <button class="btn-icon" id="topbar-notif-btn" onclick="toggleDrawer('notifications')" title="Centro de Notificaciones">
+          <button class="btn-icon" id="topbar-notif-btn" onclick="toggleDrawer('notifications')" title="Centro de Notificaciones" style="position: relative;">
             <svg class="svg-icon" viewBox="0 0 24 24">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
             </svg>
-            <span class="notification-counter" id="notif-badge">1</span>
+            <span class="notification-counter" id="notif-badge">2</span>
           </button>
 
           <button class="btn btn-primary" onclick="toggleDrawer('catalog')">
@@ -997,42 +1300,136 @@
         </div>
       </header>
 
-      <!-- VISTA 1: DASHBOARD (ESTADO INICIAL VACÍO) -->
+      <!-- VISTA A: DASHBOARD 10x10 -->
       <section class="view-content" id="view-dashboard">
         <div class="dashboard-container">
 
-          <!-- CUADRÍCULA 10x10 CON MENSAJE DE ONBOARDING -->
+          <!-- EL DASHBOARD DE CUADRÍCULA 10x10 -->
           <div class="grid-board" id="grid-board">
-            
-            <div class="empty-dashboard-hero">
-              <div class="hero-icon-box">
-                <svg class="svg-icon svg-icon-xl" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                  <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-                  <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-                  <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+
+            <!-- Card 1: Tacómetro CPU (2x2) -->
+            <article class="card card-size-2x2" id="card-cpu-gauge" draggable="true">
+              <header class="card-header">
+                <div class="card-title-box">
+                  <div class="card-icon-wrap">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <rect width="16" height="16" x="4" y="4" rx="2"></rect>
+                      <path d="M9 9h6v6H9z"></path>
+                      <path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path>
+                    </svg>
+                  </div>
+                  <h4>Procesador</h4>
+                </div>
+                <span class="card-badge">2x2</span>
+              </header>
+              <div class="card-body">
+                <div class="gauge-container">
+                  <div>
+                    <div class="metric-big" id="val-cpu">38%</div>
+                    <div class="metric-label">Carga Total</div>
+                    <div class="metric-label" style="color: var(--accent-success); font-weight: 500;">48 °C Térmica</div>
+                  </div>
+                  <svg class="gauge-svg" viewBox="0 0 82 82">
+                    <circle class="gauge-bg" cx="41" cy="41" r="36"></circle>
+                    <circle class="gauge-fill" id="circle-cpu" cx="41" cy="41" r="36" style="stroke-dashoffset: 140;"></circle>
+                  </svg>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 2: Memoria RAM (2x1) -->
+            <article class="card card-size-2x1" id="card-ram-pill" draggable="true">
+              <header class="card-header">
+                <div class="card-title-box">
+                  <div class="card-icon-wrap">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <path d="M6 19v-3"></path><path d="M10 19v-3"></path><path d="M14 19v-3"></path><path d="M18 19v-3"></path>
+                      <rect width="20" height="8" x="2" y="8" rx="2"></rect>
+                    </svg>
+                  </div>
+                  <h4>Memoria del Sistema</h4>
+                </div>
+                <span class="card-badge">2x1</span>
+              </header>
+              <div class="card-body">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <div class="metric-big" style="font-size: 20px;" id="val-ram">7.8 / 16 GB</div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--accent-primary);">49%</span>
+                </div>
+                <div class="metric-progress-bg">
+                  <div class="metric-progress-bar" style="width: 49%;"></div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 3: Micro-Chip Estado (1x1) -->
+            <article class="card card-size-1x1" id="card-chip-freq" draggable="true">
+              <header class="card-header" style="margin-bottom: 4px;">
+                <div class="card-title-box">
+                  <h4>Frecuencia</h4>
+                </div>
+                <span class="card-badge">1x1</span>
+              </header>
+              <div class="card-body" style="align-items: center; justify-content: center; text-align: center;">
+                <div class="metric-big" style="font-size: 19px; color: #60a5fa;">4.2</div>
+                <div class="metric-label" style="font-size: 10px;">GHz Reloj</div>
+              </div>
+            </article>
+
+            <!-- Card 4: Historial de Telemetría Panorámica (4x2) -->
+            <article class="card card-size-4x2" id="card-telemetry-history" draggable="true">
+              <header class="card-header">
+                <div class="card-title-box">
+                  <div class="card-icon-wrap">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path>
+                    </svg>
+                  </div>
+                  <h4>Flujo de Actividad en Tiempo Real</h4>
+                </div>
+                <span class="card-badge">4x2</span>
+              </header>
+              <div class="card-body">
+                <svg viewBox="0 0 340 70" style="width: 100%; height: 70px; overflow: visible;">
+                  <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"></stop>
+                      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"></stop>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 50 Q 40 20, 80 40 T 160 30 T 240 15 T 340 35 L 340 70 L 0 70 Z" fill="url(#chartGrad)"></path>
+                  <path d="M0 50 Q 40 20, 80 40 T 160 30 T 240 15 T 340 35" fill="none" stroke="#3b82f6" stroke-width="2.5"></path>
                 </svg>
+                <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+                  <span>-60 seg</span>
+                  <span>Actual</span>
+                </div>
               </div>
-              <h3>Bienvenido a PC Manager</h3>
-              <p>
-                El sistema se encuentra listo para operar. Para poblar este Dashboard con paneles, métricas y controles personalizados, instala paquetes de extensión (.pcm) o descárgalos desde el catálogo de módulos.
-              </p>
-              <div class="hero-actions">
-                <button class="btn btn-primary" onclick="switchView('module-manager')">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  </svg>
-                  <span>Abrir Gestor de Módulos</span>
-                </button>
-                <button class="btn btn-secondary" onclick="triggerInstallDialog()">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  <span>Instalar Paquete Local (.pcm)</span>
-                </button>
+            </article>
+
+            <!-- Card 5: Módulo Cooler Display (3x2) -->
+            <article class="card card-size-3x2" id="card-cooler-display" draggable="true">
+              <header class="card-header">
+                <div class="card-title-box">
+                  <div class="card-icon-wrap" style="color: #60a5fa;">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <path d="M12 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5Z"></path>
+                      <path d="M12 12c0-2.8-2.2-5-5-5S2 9.2 2 12s2.2 5 5 5"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4>Pantalla Cooler Líquido</h4>
+                  </div>
+                </div>
+                <span class="card-badge">3x2</span>
+              </header>
+              <div class="card-body">
+                <div class="cooler-screen">
+                  <div class="cooler-temp" id="val-cooler-temp">48°C</div>
+                  <div class="cooler-source">Sincronizado con Sensor de Procesador</div>
+                </div>
               </div>
-            </div>
+            </article>
 
           </div>
 
@@ -1049,177 +1446,272 @@
         </div>
       </section>
 
-      <!-- VISTA 2: GESTOR DE MÓDULOS (0 INSTALADOS, CATÁLOGO REMOTO LISTO) -->
-      <section class="view-content hidden" id="view-module-manager">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-          <button class="btn btn-primary" onclick="triggerInstallDialog()">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>Instalar Archivo (.pcm)</span>
-          </button>
-        </div>
+      <!-- VISTA B: MÓDULO TELEMETRÍA (DASHBOARD DEDICADO Y CONTROL GRANULAR DE SENSORES) -->
+      <section class="view-content hidden" id="view-module-telemetry">
 
-        <!-- Pestañas del Gestor -->
-        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px; margin-bottom: 20px;">
-          <button class="tab-btn active" id="tab-btn-installed" onclick="switchManagerTab('installed')">
-            <span>Instalados</span>
-            <span class="nav-badge" id="tab-installed-count">0</span>
-          </button>
-          <button class="tab-btn" id="tab-btn-catalog" onclick="switchManagerTab('catalog')">
-            <span>Catálogo Remoto (GitHub)</span>
-            <span class="nav-badge" style="background: var(--accent-primary-dim); color: var(--accent-primary);">3 Disponibles</span>
-          </button>
-          <button class="tab-btn" id="tab-btn-sources" onclick="switchManagerTab('sources')">
-            <span>Repositorios Configurados</span>
-          </button>
-          <button class="tab-btn" id="tab-btn-groups" onclick="switchManagerTab('groups')">
-            <span>Grupos de Módulos</span>
-            <span class="nav-badge" id="tab-groups-count">1</span>
-          </button>
-        </div>
-
-        <!-- PESTAÑA A: INSTALADOS (VACÍO) -->
-        <div id="manager-tab-installed">
-          <div class="dropzone-pcm" onclick="triggerInstallDialog()">
-            <svg class="svg-icon svg-icon-xl" style="color: var(--accent-primary); margin-bottom: 12px;" viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            <h4 style="font-size: 15px; font-weight: 600;">Arrastra y suelta aquí paquetes .pcm</h4>
-            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">
-              O pulsa para seleccionar un archivo comprimido de módulo desde tu almacenamiento local.
-            </p>
+        <!-- BARRA DE CONTROL GRANULAR DE SENSORES -->
+        <div class="settings-card" style="padding: 16px 20px; margin-bottom: 20px; background: var(--bg-surface);">
+          <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 10px;">
+            Control Granular de Muestreo (Activar / Desactivar Sensores)
           </div>
-
-          <div style="margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">
-            <p>No hay módulos instalados actualmente en el equipo.</p>
-          </div>
-        </div>
-
-        <!-- PESTAÑA B: CATÁLOGO REMOTO (REPOSITORIO DE GITHUB) -->
-        <div id="manager-tab-catalog" class="hidden">
-          <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
-            Módulos verificados listos para descarga e instalación en 1 clic. Cada paquete incluye firma SHA-256.
-          </p>
-
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Módulo Remoto 1 -->
-            <div class="settings-card" style="padding: 16px; flex-direction: row; align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 14px; align-items: center;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
-                  <svg class="svg-icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect></svg>
-                </div>
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600;">Telemetría de Sistema</h4>
-                  <p style="font-size: 12px; color: var(--text-muted);">Colector nativo de telemetría de CPU, RAM, GPU y Red. Expone servicio compartido.</p>
-                  <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v1.0.0 // Grupo: General</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="simulateDownloadAndInstall('telemetry')">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar e Instalar</span>
-              </button>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+            
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch">
+                <input type="checkbox" id="sensor-cpu-toggle" checked onchange="toggleSensor('cpu', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 13px; font-weight: 500;">Sensor de Procesador (CPU)</span>
             </div>
 
-            <!-- Módulo Remoto 2 -->
-            <div class="settings-card" style="padding: 16px; flex-direction: row; align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 14px; align-items: center;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: #10b981;">
-                  <svg class="svg-icon" viewBox="0 0 24 24"><path d="m2 22 1-1h18l1 1"></path><path d="M9 8V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v3"></path></svg>
-                </div>
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600;">Almacenamiento Local</h4>
-                  <p style="font-size: 12px; color: var(--text-muted);">Diagnóstico y mantenimiento de unidades con modo de simulación previa.</p>
-                  <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v1.0.0 // Grupo: General</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="simulateDownloadAndInstall('cleaner')">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar e Instalar</span>
-              </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch">
+                <input type="checkbox" id="sensor-ram-toggle" checked onchange="toggleSensor('ram', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 13px; font-weight: 500;">Sensor de Memoria (RAM)</span>
             </div>
 
-            <!-- Módulo Remoto 3 -->
-            <div class="settings-card" style="padding: 16px; flex-direction: row; align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 14px; align-items: center;">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: #8b5cf6;">
-                  <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5Z"></path></svg>
-                </div>
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600;">Controlador de Refrigeración</h4>
-                  <p style="font-size: 12px; color: var(--text-muted);">Control de pantallas digitales para disipadores. Requiere Telemetría de Sistema.</p>
-                  <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v1.1.0 // Grupo: Periféricos</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="simulateDownloadAndInstall('cooler')">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar e Instalar</span>
-              </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch">
+                <input type="checkbox" id="sensor-gpu-toggle" checked onchange="toggleSensor('gpu', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 13px; font-weight: 500;">Sensor Gráfico (GPU)</span>
             </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch">
+                <input type="checkbox" id="sensor-disk-toggle" checked onchange="toggleSensor('disk', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 13px; font-weight: 500;">Sensor de Almacenamiento</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch">
+                <input type="checkbox" id="sensor-net-toggle" checked onchange="toggleSensor('net', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 13px; font-weight: 500;">Sensor de Red</span>
+            </div>
+
           </div>
         </div>
 
-        <!-- PESTAÑA C: FUENTES DE REPOSITORIOS -->
-        <div id="manager-tab-sources" class="hidden">
-          <div class="settings-card">
-            <h4 style="font-size: 14px; font-weight: 600;">Repositorios Oficiales Conectados</h4>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-md);">
-              <div>
-                <strong style="font-size: 13px;">GitHub Official Modules Registry</strong>
-                <div style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">https://raw.githubusercontent.com/pc-manager/registry/main/v1/index.json</div>
-              </div>
-              <span class="group-pill-system">ACTIVO</span>
-            </div>
-          </div>
-        </div>
+        <!-- GRID DEL DASHBOARD DE TELEMETRÍA -->
+        <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px;">
 
-        <!-- PESTAÑA D: GESTOR DE GRUPOS DE MÓDULOS -->
-        <div id="manager-tab-groups" class="hidden">
-          <div class="settings-card" style="max-width: 720px;">
+          <!-- SECCIÓN PROCESADOR (DESGLOSE 8 NÚCLEOS) -->
+          <div class="settings-card" id="section-cpu-metrics">
             <div class="settings-header">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M20 7h-9"></path><path d="M14 17H5"></path>
-                <circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle>
-              </svg>
-              <h4>Grupos de Módulos del Sistema</h4>
+              <svg class="svg-icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"></rect><path d="M9 9h6v6H9z"></path></svg>
+              <h4>Unidad de Procesamiento Central (CPU)</h4>
+              <span class="card-badge" id="cpu-status-badge" style="margin-left: auto; color: var(--accent-success);">Sensor Activo</span>
             </div>
 
-            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">
-              El grupo <strong>"General"</strong> es predeterminado e inborrable. Los módulos sin grupo asignado o cuyos grupos personalizados sean eliminados se agruparán automáticamente en "General". Los grupos vacíos se ocultan automáticamente del menú lateral.
-            </p>
-
-            <div id="groups-list" style="display: flex; flex-direction: column; gap: 8px;">
-              <!-- Grupo General Inmutable -->
-              <div class="group-row">
-                <div>
-                  <strong style="font-size: 13.5px;">General</strong>
-                  <div style="font-size: 11px; color: var(--text-muted);" id="group-general-count">0 módulos asignados</div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="group-pill-system">PREDETERMINADO</span>
-                  <button class="btn-icon" style="cursor: not-allowed; opacity: 0.4;" title="Inborrable por directiva del sistema">
-                    <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  </button>
-                </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px;">
+              <div style="background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-md);">
+                <div class="metric-label">Carga Global</div>
+                <div class="metric-big" style="font-size: 22px; margin-top: 4px;" id="telemetry-full-cpu">38%</div>
+              </div>
+              <div style="background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-md);">
+                <div class="metric-label">Frecuencia</div>
+                <div class="metric-big" style="font-size: 22px; margin-top: 4px; color: #60a5fa;">4.25 GHz</div>
+              </div>
+              <div style="background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-md);">
+                <div class="metric-label">Térmica Núcleo</div>
+                <div class="metric-big" style="font-size: 22px; margin-top: 4px; color: var(--accent-success);" id="telemetry-full-temp">48 °C</div>
               </div>
             </div>
 
-            <!-- Crear Grupo -->
-            <div style="display: flex; gap: 8px; margin-top: 14px;">
-              <input type="text" id="new-group-name" placeholder="Nombre de nuevo grupo..." style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: #fff; font-size: 13px; outline: none;">
-              <button class="btn btn-primary" onclick="createGroup()">Crear Grupo</button>
+            <div style="margin-top: 14px;">
+              <div style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Carga por Núcleo Lógico (8 Hilos)</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="cores-container">
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 0</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 42%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">42%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 1</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 36%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">36%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 2</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 55%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">55%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 3</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 28%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">28%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 4</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 44%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">44%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 5</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 31%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">31%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 6</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 48%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">48%</span>
+                </div>
+                <div class="core-bar-row" style="font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 50px; color: var(--text-muted);">Core 7</span>
+                  <div class="metric-progress-bg" style="margin: 0; flex: 1;"><div class="metric-progress-bar core-prog" style="width: 22%;"></div></div>
+                  <span style="width: 30px; text-align: right;" class="core-val">22%</span>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <!-- SECCIÓN MEMORIA Y ACELERADOR GRÁFICO -->
+          <div style="display: flex; flex-direction: column; gap: 18px;">
+
+            <!-- MEMORIA RAM -->
+            <div class="settings-card" id="section-ram-metrics">
+              <div class="settings-header">
+                <svg class="svg-icon" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="8" rx="2"></rect><path d="M6 19v-3"></path><path d="M10 19v-3"></path><path d="M14 19v-3"></path><path d="M18 19v-3"></path></svg>
+                <h4>Memoria del Sistema (RAM)</h4>
+                <span class="card-badge" id="ram-status-badge" style="margin-left: auto; color: var(--accent-success);">Sensor Activo</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span class="metric-big" style="font-size: 20px;">7.8 GB en uso</span>
+                <span style="font-size: 12px; color: var(--text-muted);">Total: 16.0 GB DDR4 (3200 MHz)</span>
+              </div>
+              <div class="metric-progress-bg"><div class="metric-progress-bar" style="width: 49%;"></div></div>
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                <span>Modificada: 120 MB</span>
+                <span>En espera: 5.4 GB</span>
+                <span>Libre: 2.8 GB</span>
+              </div>
+            </div>
+
+            <!-- ACELERADOR GRÁFICO (GPU) -->
+            <div class="settings-card" id="section-gpu-metrics">
+              <div class="settings-header">
+                <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <h4>Acelerador Gráfico (GPU)</h4>
+                <span class="card-badge" id="gpu-status-badge" style="margin-left: auto; color: var(--accent-success);">Sensor Activo</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: var(--bg-elevated); padding: 10px; border-radius: var(--radius-md);">
+                  <div class="metric-label">Carga del Motor 3D</div>
+                  <div style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">24%</div>
+                </div>
+                <div style="background: var(--bg-elevated); padding: 10px; border-radius: var(--radius-md);">
+                  <div class="metric-label">VRAM Asignada</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #60a5fa; margin-top: 2px;">3.8 / 12 GB</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
+                <span>Temperatura: <span id="telemetry-gpu-temp">52 °C</span></span>
+                <span>Ventilador: 40% (Silencioso)</span>
+              </div>
+            </div>
+
+            <!-- UNIDAD DE ALMACENAMIENTO (DISCO) -->
+            <div class="settings-card" id="section-disk-metrics">
+              <div class="settings-header">
+                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 12H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line></svg>
+                <h4>Unidad de Almacenamiento (Disco)</h4>
+                <span class="card-badge" id="disk-status-badge" style="margin-left: auto; color: var(--accent-success);">Sensor Activo</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: var(--bg-elevated); padding: 10px; border-radius: var(--radius-md);">
+                  <div class="metric-label">Lectura Activa</div>
+                  <div style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-top: 2px;" id="telemetry-disk-read">24.5 MB/s</div>
+                </div>
+                <div style="background: var(--bg-elevated); padding: 10px; border-radius: var(--radius-md);">
+                  <div class="metric-label">Escritura Activa</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #60a5fa; margin-top: 2px;" id="telemetry-disk-write">1.8 MB/s</div>
+                </div>
+              </div>
+              <div class="metric-progress-bg" style="margin-top: 10px;"><div class="metric-progress-bar" id="telemetry-disk-prog" style="width: 18%;"></div></div>
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
+                <span>Tiempo de Respuesta: 1.8 ms</span>
+                <span>Tiempo Activo: <span id="telemetry-disk-active">18%</span></span>
+              </div>
+            </div>
+
+            <!-- ADAPTADOR DE RED (NETWORK) -->
+            <div class="settings-card" id="section-net-metrics">
+              <div class="settings-header">
+                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                <h4>Adaptador de Red (Network I/O)</h4>
+                <span class="card-badge" id="net-status-badge" style="margin-left: auto; color: var(--accent-success);">Sensor Activo</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: var(--bg-elevated); padding: 10px; border-radius: var(--radius-md);">
+                  <div class="metric-label">Recepción (Down)</div>
+                  <div style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-top: 2px;" id="telemetry-net-down">5.2 MB/s</div>
+                </div>
+                <div style="background: var(--bg-elevated); padding: 10px; border-radius: var(--radius-md);">
+                  <div class="metric-label">Transmisión (Up)</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #10b981; margin-top: 2px;" id="telemetry-net-up">820 KB/s</div>
+                </div>
+              </div>
+              <div class="metric-progress-bg" style="margin-top: 10px;"><div class="metric-progress-bar" id="telemetry-net-prog" style="width: 25%; background: var(--accent-success);"></div></div>
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
+                <span>Latencia: 14 ms</span>
+                <span>Adaptador: Ethernet Gigabit</span>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      <!-- VISTA 3: CONFIGURACIONES DEL CORE -->
+      <!-- VISTA C: MÓDULO ALMACENAMIENTO -->
+      <section class="view-content hidden" id="view-module-cleaner">
+        <div class="settings-card" style="max-width: 600px;">
+          <div class="settings-header">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+            <h4>Simulación de Mantenimiento (Dry-Run Obligatorio)</h4>
+          </div>
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+            Conforme a la <strong>Regla 5</strong>, ninguna acción destructiva se ejecuta sin simulación previa ni consentimiento explícito.
+          </p>
+          <div style="display: flex; gap: 12px; margin-top: 8px;">
+            <button class="btn btn-primary" onclick="simulateScan()">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <span>Escanear Espacio Recuperable (Dry-Run)</span>
+            </button>
+          </div>
+          <div id="scan-result" style="display: none; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-md); font-size: 12.5px; border-left: 3px solid var(--accent-success);">
+            <strong>Resultado de la simulación:</strong> Se detectaron 2.4 GB de archivos temporales con más de 48h de inactividad. Listos para autorización.
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA D: MÓDULO COOLER PANTALLA -->
+      <section class="view-content hidden" id="view-module-cooler">
+        <div class="settings-card" style="max-width: 650px;">
+          <div class="settings-header">
+            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m10 15 5-3-5-3v6Z"></path></svg>
+            <h4>Dependencia Satisfecha</h4>
+          </div>
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 12px; font-size: 13px; color: var(--accent-success); display: flex; align-items: center; gap: 8px;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Vinculado exitosamente con <code>hardware.telemetry</code> provisto por el Módulo de Telemetría.</span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+            Este módulo no ejecuta ningún código repetido de lectura de temperatura. Recibe los paquetes directamente del servicio compartido y los envía a la interfaz gráfica o física del disipador.
+          </p>
+        </div>
+      </section>
+
+      <!-- VISTA E: CONFIGURACIONES DEL SISTEMA -->
       <section class="view-content hidden" id="view-settings">
         <div class="settings-grid">
-
-          <!-- DIRECTIVAS DE FUNCIONAMIENTO Y WINDOWS -->
+          <!-- AJUSTES DE NÚCLEO Y CICLO DE VIDA EN WINDOWS -->
           <div class="settings-card">
             <div class="settings-header">
               <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -1228,7 +1720,7 @@
             <div style="display: flex; flex-direction: column; gap: 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <strong style="font-size: 13.5px;">Aislamiento Local Estricto</strong>
+                  <strong style="font-size: 13.5px;">Aislamiento Local</strong>
                   <div style="font-size: 11.5px; color: var(--text-muted);">Cero telemetría externa saliente</div>
                 </div>
                 <label class="switch">
@@ -1254,7 +1746,7 @@
                   <div style="font-size: 11.5px; color: var(--text-muted);">Arranque automático al iniciar sesión</div>
                 </div>
                 <label class="switch">
-                  <input type="checkbox" id="chk-startup" onchange="toggleStartupWindows(this.checked)">
+                  <input type="checkbox" id="chk-startup-windows" onchange="toggleStartupWindows(this.checked)">
                   <span class="slider"></span>
                 </label>
               </div>
@@ -1262,10 +1754,10 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <strong style="font-size: 13.5px;">Minimizar a la Bandeja (Tray)</strong>
-                  <div style="font-size: 11.5px; color: var(--text-muted);">Permanece activo al cerrar ventana (predeterminado)</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted);">Permanece en segundo plano al cerrar ventana (predeterminado)</div>
                 </div>
                 <label class="switch">
-                  <input type="checkbox" id="chk-tray" checked onchange="toggleTrayMinimize(this.checked)">
+                  <input type="checkbox" id="chk-tray-minimize" checked onchange="toggleTrayMinimize(this.checked)">
                   <span class="slider"></span>
                 </label>
               </div>
@@ -1273,17 +1765,17 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <strong style="font-size: 13.5px;">Modo Servicio de Windows (Pre-logon)</strong>
-                  <div style="font-size: 11.5px; color: var(--text-muted);">Opera como servicio nativo antes de iniciar sesión</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted);">Opera como servicio nativo antes de iniciar sesión (services.msc)</div>
                 </div>
                 <label class="switch">
-                  <input type="checkbox" id="chk-service" onchange="toggleWindowsService(this.checked)">
+                  <input type="checkbox" id="chk-windows-service" onchange="toggleWindowsService(this.checked)">
                   <span class="slider"></span>
                 </label>
               </div>
 
               <div style="margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <strong style="font-size: 13px; color: var(--accent-danger);">Cierre Total del Core</strong>
+                  <strong style="font-size: 13px; color: var(--accent-danger);">Cierre Total del Sistema</strong>
                   <div style="font-size: 11.5px; color: var(--text-muted);">Detiene todos los servicios y subprocesos hijos</div>
                 </div>
                 <button class="btn btn-secondary" style="border-color: rgba(239, 68, 68, 0.3); color: var(--accent-danger);" onclick="shutdownApplication()">
@@ -1301,7 +1793,7 @@
               <h4>Tema y Esquema de Colores</h4>
             </div>
             <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 2px;">
-              Personaliza el lenguaje visual del sistema. Las variables semánticas se propagarán en tiempo real a toda la interfaz.
+              Personaliza el lenguaje visual del sistema. Las variables semánticas se propagarán en tiempo real a toda la interfaz y a todos los módulos instalados.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 4px;">
@@ -1376,206 +1868,840 @@
         </div>
       </section>
 
-    </main>
-
-    <!-- 3. DRAWERS LATERALES (NOTIFICACIONES Y CATÁLOGO DE TARJETAS) -->
-    <div class="drawer-overlay" id="drawer-overlay" onclick="closeAllDrawers()"></div>
-
-    <!-- Drawer A: Notificaciones -->
-    <aside class="drawer" id="drawer-notifications">
-      <div class="drawer-header">
-        <h3>Centro de Notificaciones</h3>
-        <button class="btn-icon" onclick="closeAllDrawers()" title="Cerrar">
-          <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-      <div style="display: flex; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface);">
-        <button class="btn btn-secondary" style="flex: 1; padding: 6px 10px; font-size: 11.5px; justify-content: center;" onclick="markAllNotificationsAsRead()">
-          <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <span>Marcar Leídas</span>
-        </button>
-        <button class="btn btn-secondary" style="flex: 1; padding: 6px 10px; font-size: 11.5px; justify-content: center; color: var(--accent-danger);" onclick="clearAllNotifications()">
-          <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          <span>Borrar Todas</span>
-        </button>
-      </div>
-      <div class="drawer-body" id="notif-list">
-        <div class="notif-item unread">
-          <div class="notif-icon">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-          </div>
-          <div class="notif-body">
-            <h6>Sistema Inicializado</h6>
-            <p>El núcleo base de PC Manager se encuentra activo. Listo para instalar extensiones modulares.</p>
-            <div class="notif-time">hace un momento</div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Drawer B: Personalizar Dashboard (Catálogo de Tarjetas - Vacío en versión base) -->
-    <aside class="drawer" id="drawer-catalog">
-      <div class="drawer-header">
-        <h3>Galería de Tarjetas</h3>
-        <button class="btn-icon" onclick="closeAllDrawers()" title="Cerrar">
-          <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-      <div class="drawer-body">
-        <div style="text-align: center; padding: 40px 20px;">
-          <svg class="svg-icon svg-icon-xl" style="color: var(--text-muted); margin-bottom: 14px;" viewBox="0 0 24 24">
-            <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-            <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-            <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-            <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-          </svg>
-          <h4 style="font-size: 15px; font-weight: 600;">Sin tarjetas disponibles</h4>
-          <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
-            Actualmente no hay módulos instalados. Cada módulo que instales registrará aquí automáticamente sus widgets para el Dashboard.
-          </p>
-          <button class="btn btn-primary" style="margin-top: 20px;" onclick="closeAllDrawers(); switchView('module-manager');">
-            <span>Ir al Gestor de Módulos</span>
+      <!-- VISTA F: GESTOR DE MÓDULOS (INSTALAR, DESINSTALAR, HABILITAR, DESHABILITAR, EXPORTAR) -->
+      <section class="view-content hidden" id="view-module-manager">
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 16px;">
+          <button class="btn btn-secondary" onclick="switchManagerTab('catalog')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <span>Explorar GitHub</span>
+          </button>
+          <button class="btn btn-primary" onclick="triggerInstallModule()">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Instalar Paquete (.pcm)</span>
           </button>
         </div>
-      </div>
-    </aside>
+
+        <!-- BARRA DE PESTAÑAS (TABS) -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; margin-bottom: 20px;">
+          <button class="tab-btn active" id="tab-btn-installed" onclick="switchManagerTab('installed')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            <span>Módulos Instalados</span>
+            <span class="card-badge" id="badge-tab-installed-count">3</span>
+          </button>
+          <button class="tab-btn" id="tab-btn-catalog" onclick="switchManagerTab('catalog')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            <span>Catálogo Remoto (GitHub)</span>
+            <span class="card-badge" style="color: var(--accent-success); border-color: rgba(16, 185, 129, 0.3);">En línea</span>
+          </button>
+          <button class="tab-btn" id="tab-btn-sources" onclick="switchManagerTab('sources')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Orígenes de Repositorio</span>
+          </button>
+          <button class="tab-btn" id="tab-btn-groups" onclick="switchManagerTab('groups')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M20 7h-9"></path><path d="M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg>
+            <span>Grupos de Módulos</span>
+            <span class="card-badge" id="badge-tab-groups-count">2</span>
+          </button>
+        </div>
+
+        <div id="dependency-alert-box" style="display: none; padding: 14px 18px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: var(--radius-md); margin-bottom: 20px; font-size: 13px; color: var(--accent-warning); align-items: center; gap: 12px;">
+          <svg class="svg-icon" viewBox="0 0 24 24" style="color: var(--accent-warning);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div id="dependency-alert-text"></div>
+        </div>
+
+        <!-- CONTENEDOR SUB-PESTAÑA 1: MÓDULOS INSTALADOS -->
+        <div id="manager-tab-installed-view" style="display: flex; flex-direction: column; gap: 14px;">
+
+          <!-- BANNER DE ACTUALIZACIÓN DESDE GITHUB EN TELEMETRÍA -->
+          <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-md); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;" id="telemetry-update-banner">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              </div>
+              <div>
+                <strong style="font-size: 13px; color: var(--text-primary); display: block;">Actualización en GitHub Releases disponible: v1.1.0</strong>
+                <span style="font-size: 11.5px; color: var(--text-secondary);">El paquete <code>hardware-telemetry.pcm</code> tiene una versión más reciente. Incluye muestreo optimizado de GPU y red.</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="updateModuleFromGitHub('telemetry', '1.1.0')">
+              <span>Actualizar en Caliente (v1.1.0)</span>
+            </button>
+          </div>
+
+          <!-- MÓDULO 1: TELEMETRÍA (PROVEEDOR) -->
+          <article class="settings-card" id="mod-card-telemetry">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="display: flex; gap: 14px;">
+                <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                  <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24">
+                    <rect width="16" height="16" x="4" y="4" rx="2"></rect>
+                    <path d="M9 9h6v6H9z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <h4 style="font-size: 15px; font-weight: 600;">Telemetría de Sistema</h4>
+                    <span class="card-badge">v1.0.0</span>
+                    <span class="card-badge" style="color: var(--accent-success); border-color: rgba(16, 185, 129, 0.3);">Proveedor de Servicio</span>
+                  </div>
+                  <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                    Mide parámetros de procesador, memoria, almacenamiento y temperaturas. Exporta el servicio compartido <code>hardware.telemetry</code>.
+                  </p>
+                  <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <span class="card-badge">Grupo: General</span>
+                    <span class="card-badge">Servicio: hardware.telemetry</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="text-align: right;">
+                  <div style="font-size: 11.5px; font-weight: 600;" id="status-telemetry-text">Habilitado</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">En ejecución</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switch-telemetry" checked onchange="toggleModuleTelemetry(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 4px;">
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="exportModule('telemetria-sistema')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Exportar (.pcm)</span>
+              </button>
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; color: var(--accent-danger);" onclick="uninstallModule('Telemetría de Sistema', true)">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+                <span>Desinstalar</span>
+              </button>
+            </div>
+          </article>
+
+          <!-- MÓDULO 2: ALMACENAMIENTO LOCAL -->
+          <article class="settings-card" id="mod-card-cleaner">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="display: flex; gap: 14px;">
+                <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                  <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24">
+                    <path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <h4 style="font-size: 15px; font-weight: 600;">Almacenamiento Local</h4>
+                    <span class="card-badge">v1.0.0</span>
+                  </div>
+                  <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                    Mantenimiento higiénico y análisis de espacio en unidades locales con modo simulación.
+                  </p>
+                  <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <span class="card-badge">Grupo: General</span>
+                    <span class="card-badge">Sin dependencias externas</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="text-align: right;">
+                  <div style="font-size: 11.5px; font-weight: 600;" id="status-cleaner-text">Habilitado</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">En ejecución</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switch-cleaner" checked onchange="toggleModuleCleaner(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 4px;">
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="exportModule('almacenamiento-local')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Exportar (.pcm)</span>
+              </button>
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; color: var(--accent-danger);" onclick="uninstallModule('Almacenamiento Local', false)">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+                <span>Desinstalar</span>
+              </button>
+            </div>
+          </article>
+
+          <!-- MÓDULO 3: CONTROLADOR DE REFRIGERACIÓN (CONSUMIDOR CON DEPENDENCIA) -->
+          <article class="settings-card" id="mod-card-cooler">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="display: flex; gap: 14px;">
+                <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md); color: #60a5fa;">
+                  <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24">
+                    <path d="M12 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5Z"></path>
+                    <path d="M12 12c0-2.8-2.2-5-5-5S2 9.2 2 12s2.2 5 5 5"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <h4 style="font-size: 15px; font-weight: 600;">Controlador de Refrigeración (Disipador)</h4>
+                    <span class="card-badge">v1.0.0</span>
+                    <span class="card-badge" id="cooler-dep-badge" style="color: var(--accent-primary); border-color: rgba(59, 130, 246, 0.3);">Depende de: Telemetría (Activo)</span>
+                  </div>
+                  <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                    Controla y sincroniza la pantalla digital del disipador de aire/líquido consumiendo el servicio de telemetría.
+                  </p>
+                  <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <span class="card-badge">Grupo: Periféricos</span>
+                    <span class="card-badge">Requiere: hardware.telemetry</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="text-align: right;">
+                  <div style="font-size: 11.5px; font-weight: 600;" id="status-cooler-text">Habilitado</div>
+                  <div style="font-size: 10px; color: var(--text-muted);" id="status-cooler-sub">En ejecución</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switch-cooler" checked onchange="toggleModuleCooler(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 4px;">
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="exportModule('cooler-controller')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Exportar (.pcm)</span>
+              </button>
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; color: var(--accent-danger);" onclick="uninstallModule('Controlador de Refrigeración', false)">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+                <span>Desinstalar</span>
+              </button>
+            </div>
+          </article>
+
+        </div> <!-- Fin manager-tab-installed-view -->
+
+        <!-- CONTENEDOR SUB-PESTAÑA 2: CATÁLOGO REMOTO GITHUB -->
+        <div id="manager-tab-catalog-view" class="hidden" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 420px;">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="color: var(--text-muted);"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <input type="text" placeholder="Buscar extensiones y módulos en GitHub Releases..." style="background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 13px; width: 100%;">
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+              <span>Origen activo:</span>
+              <code style="background: var(--bg-elevated); padding: 2px 8px; border-radius: var(--radius-sm); color: var(--accent-primary);">github.com/pcm-official/registry (v1)</code>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px;">
+            
+            <!-- MÓDULO REMOTO 1: OPTIMIZADOR DE RED -->
+            <article class="settings-card" id="catalog-card-net-opt">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="display: flex; gap: 14px;">
+                  <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                    <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                  </div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <h4 style="font-size: 15px; font-weight: 600;">Optimizador de Red y Latencia</h4>
+                      <span class="card-badge">v1.2.0</span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                      Ajuste dinámico de congestión TCP (BBR/CUBIC), bufferbloat y telemetría de ping en tiempo real.
+                    </p>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <span class="card-badge">Categoría: Rendimiento</span>
+                      <span class="card-badge" style="color: var(--accent-success);">SHA-256 Verificado</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 14px;">
+                <span style="font-size: 11.5px; color: var(--text-muted);">Paquete: <code>optimizador-red.pcm</code> (420 KB)</span>
+                <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="installFromCatalog('optimizador-red', 'Optimizador de Red y Latencia', 'v1.2.0', 'Rendimiento', 'network.qos')">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Instalar desde GitHub</span>
+                </button>
+              </div>
+            </article>
+
+            <!-- MÓDULO REMOTO 2: GESTOR DE INICIO -->
+            <article class="settings-card" id="catalog-card-startup">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="display: flex; gap: 14px;">
+                  <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                    <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><path d="m13 2-2 2.5-3-1.5L7 6l-3.5.5.5 3.5-2 2.5 2 2.5-.5 3.5 3.5.5 1 3 3-1.5 2 2.5 2-2.5 3 1.5 1-3 3.5-.5-.5-3.5 2-2.5-2-2.5.5-3.5-3.5-.5-1-3-3 1.5Z"></path></svg>
+                  </div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <h4 style="font-size: 15px; font-weight: 600;">Gestor de Inicio de Sistema</h4>
+                      <span class="card-badge">v1.0.4</span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                      Inspección y desactivación de ejecutables con impacto severo en el tiempo de arranque de Windows.
+                    </p>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <span class="card-badge">Categoría: Mantenimiento</span>
+                      <span class="card-badge" style="color: var(--accent-success);">SHA-256 Verificado</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 14px;">
+                <span style="font-size: 11.5px; color: var(--text-muted);">Paquete: <code>startup-manager.pcm</code> (310 KB)</span>
+                <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="installFromCatalog('startup-manager', 'Gestor de Inicio de Sistema', 'v1.0.4', 'Mantenimiento', 'system.startup')">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Instalar desde GitHub</span>
+                </button>
+              </div>
+            </article>
+
+            <!-- MÓDULO REMOTO 3: MONITOR DE ENERGÍA Y BATERÍA -->
+            <article class="settings-card" id="catalog-card-battery">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="display: flex; gap: 14px;">
+                  <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                    <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><rect width="16" height="10" x="2" y="7" rx="2" ry="2"></rect><line x1="22" x2="22" y1="11" y2="13"></line></svg>
+                  </div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <h4 style="font-size: 15px; font-weight: 600;">Monitor de Batería y Energía</h4>
+                      <span class="card-badge">v2.0.1</span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                      Análisis químico de ciclos de carga, capacidad diseñada vs real y perfil de consumo energético.
+                    </p>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <span class="card-badge">Categoría: Diagnóstico</span>
+                      <span class="card-badge" style="color: var(--accent-success);">SHA-256 Verificado</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 14px;">
+                <span style="font-size: 11.5px; color: var(--text-muted);">Paquete: <code>battery-health.pcm</code> (280 KB)</span>
+                <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="installFromCatalog('battery-health', 'Monitor de Batería y Energía', 'v2.0.1', 'Diagnóstico', 'power.telemetry')">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Instalar desde GitHub</span>
+                </button>
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+        <!-- CONTENEDOR SUB-PESTAÑA 3: ORÍGENES DE REPOSITORIO -->
+        <div id="manager-tab-sources-view" class="hidden" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="settings-card">
+            <div class="settings-header">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+              <h4>Repositorios de Módulos Configurados</h4>
+              <button class="btn btn-primary" style="margin-left: auto; font-size: 12px; padding: 6px 12px;" onclick="addCustomRepository()">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Añadir Repositorio</span>
+              </button>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
+              El Core consulta estos índices remotos JSON para resolver dependencias y comprobar actualizaciones en caliente.
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 10px;" id="repo-sources-list">
+              
+              <div style="background: var(--bg-elevated); padding: 12px 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="font-size: 13.5px;">Repositorio Oficial GitHub (Canal Principal)</strong>
+                    <span class="card-badge" style="color: var(--accent-success); border-color: rgba(16, 185, 129, 0.3);">Predeterminado</span>
+                  </div>
+                  <div style="font-size: 11.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 4px;">
+                    https://raw.githubusercontent.com/pcm-official/registry/main/v1/index.json
+                  </div>
+                </div>
+                <span class="card-badge" style="color: var(--accent-success);">En línea (24 ms)</span>
+              </div>
+
+              <div style="background: var(--bg-elevated); padding: 12px 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="font-size: 13.5px;">Repositorio Comunitario Abierto</strong>
+                    <span class="card-badge">Comunidad</span>
+                  </div>
+                  <div style="font-size: 11.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 4px;">
+                    https://raw.githubusercontent.com/pcm-community/registry/main/index.json
+                  </div>
+                </div>
+                <span class="card-badge" style="color: var(--accent-success);">En línea (38 ms)</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTENEDOR SUB-PESTAÑA 4: GESTOR DE GRUPOS DE MÓDULOS -->
+        <div id="manager-tab-groups-view" class="hidden" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="settings-card" style="max-width: 760px;">
+            <div class="settings-header">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <path d="M20 7h-9"></path><path d="M14 17H5"></path>
+                <circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle>
+              </svg>
+              <h4>Gestor de Grupos de Módulos</h4>
+            </div>
+
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">
+              El grupo <strong>"General"</strong> es predeterminado e inborrable. Al eliminar un grupo personalizado, sus módulos se reagrupan automáticamente en "General". Los grupos sin módulos activos se ocultan automáticamente del menú lateral.
+            </p>
+
+            <div id="groups-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Grupo General (Inborrable) -->
+              <div class="group-row">
+                <div>
+                  <strong style="font-size: 13.5px;">General</strong>
+                  <div style="font-size: 11px; color: var(--text-muted);" id="group-general-count">2 módulos asignados</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="group-pill-system">PREDETERMINADO</span>
+                  <button class="btn-icon" style="cursor: not-allowed; opacity: 0.4;" title="Inborrable por regla de núcleo">
+                    <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Grupo Personalizado: Periféricos -->
+              <div class="group-row" id="row-group-peripherals">
+                <div>
+                  <strong style="font-size: 13.5px;">Periféricos</strong>
+                  <div style="font-size: 11px; color: var(--text-muted);">1 módulo asignado</div>
+                </div>
+                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; color: var(--accent-danger);" onclick="deletePeripheralsGroup()">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+                  <span>Eliminar Grupo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Crear Nuevo Grupo -->
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <input type="text" id="new-group-name" placeholder="Nombre de nuevo grupo..." style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: #fff; font-size: 13px; outline: none;">
+              <button class="btn btn-primary" onclick="createGroup()">Crear Grupo</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
 
   </div>
 
+  <!-- 3. DRAWER DE GALERÍA DE TARJETAS -->
+  <div class="drawer-overlay" id="catalog-overlay" onclick="toggleDrawer('catalog')"></div>
+  <aside class="drawer-panel" id="catalog-drawer">
+    <div class="drawer-header">
+      <h3>Galería de Tarjetas (Módulos)</h3>
+      <button class="card-btn" onclick="toggleDrawer('catalog')">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+    <div class="drawer-content">
+      <p style="font-size: 12.5px; color: var(--text-secondary);">
+        Activa o desactiva las tarjetas proporcionadas por los módulos activos para posicionarlas en la cuadrícula 10x10.
+      </p>
+
+      <!-- Item 1: CPU Gauge -->
+      <div class="catalog-item">
+        <div class="catalog-info">
+          <h5>Tacómetro de Procesador</h5>
+          <p>Módulo: Telemetría de Sistema</p>
+          <div class="catalog-tags">
+            <span class="card-badge">Tamaño 2x2</span>
+            <span class="card-badge">Grupo: General</span>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-card-cpu" checked onchange="toggleCardVisibility('card-cpu-gauge', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Item 2: RAM Pill -->
+      <div class="catalog-item">
+        <div class="catalog-info">
+          <h5>Memoria del Sistema (Barra)</h5>
+          <p>Módulo: Telemetría de Sistema</p>
+          <div class="catalog-tags">
+            <span class="card-badge">Tamaño 2x1</span>
+            <span class="card-badge">Grupo: General</span>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-card-ram" checked onchange="toggleCardVisibility('card-ram-pill', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Item 3: Frecuencia Chip -->
+      <div class="catalog-item">
+        <div class="catalog-info">
+          <h5>Reloj de Procesador</h5>
+          <p>Módulo: Telemetría de Sistema</p>
+          <div class="catalog-tags">
+            <span class="card-badge">Tamaño 1x1</span>
+            <span class="card-badge">Grupo: General</span>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-card-freq" checked onchange="toggleCardVisibility('card-chip-freq', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Item 4: Historial Panorámica -->
+      <div class="catalog-item">
+        <div class="catalog-info">
+          <h5>Historial Panorámico</h5>
+          <p>Módulo: Telemetría de Sistema</p>
+          <div class="catalog-tags">
+            <span class="card-badge">Tamaño 4x2</span>
+            <span class="card-badge">Grupo: General</span>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-card-history" checked onchange="toggleCardVisibility('card-telemetry-history', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Item 5: Cooler Display -->
+      <div class="catalog-item">
+        <div class="catalog-info">
+          <h5>Pantalla Digital Cooler</h5>
+          <p>Módulo: Disipador Líquido</p>
+          <div class="catalog-tags">
+            <span class="card-badge">Tamaño 3x2</span>
+            <span class="card-badge" style="color: var(--accent-primary);">Servicio Compartido</span>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-card-cooler" checked onchange="toggleCardVisibility('card-cooler-display', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 4. DRAWER DE NOTIFICACIONES -->
+  <div class="drawer-overlay" id="notifications-overlay" onclick="toggleDrawer('notifications')"></div>
+  <aside class="drawer-panel" id="notifications-drawer">
+    <div class="drawer-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h3>Centro de Notificaciones</h3>
+        <span class="card-badge" id="notif-header-count">2 No Leídas</span>
+      </div>
+      <button class="card-btn" onclick="toggleDrawer('notifications')">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+    <div class="drawer-content">
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button class="btn btn-secondary" style="flex: 1; font-size: 11.5px; padding: 6px 10px; justify-content: center;" onclick="markAllNotificationsAsRead()">
+          <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>Marcar Leídas</span>
+        </button>
+        <button class="btn btn-secondary" style="flex: 1; font-size: 11.5px; padding: 6px 10px; justify-content: center; color: var(--accent-danger);" onclick="clearAllNotifications()">
+          <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>Borrar Todas</span>
+        </button>
+        <button class="btn btn-primary" style="font-size: 11.5px; padding: 6px 10px; justify-content: center;" onclick="simulateNewNotification()" title="Emitir notificación de prueba">
+          <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Emitir</span>
+        </button>
+      </div>
+
+      <div id="notif-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
+        <div class="notif-item unread" id="notif-1">
+          <div class="notif-icon info">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          </div>
+          <div class="notif-body">
+            <h6>Servicio Registrado Exitosamente</h6>
+            <p>El módulo <strong>hardware-telemetry</strong> expuso el servicio <code>hardware.telemetry</code> a los consumidores activos.</p>
+            <div class="notif-time">hace 3 minutos</div>
+          </div>
+        </div>
+
+        <div class="notif-item unread" id="notif-2">
+          <div class="notif-icon success">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m9 11 3 3L22 4"></path></svg>
+          </div>
+          <div class="notif-body">
+            <h6>Dependencia Vinculada</h6>
+            <p>El módulo <strong>cooler-controller</strong> se enlazó con éxito a los datos térmicos del procesador.</p>
+            <div class="notif-time">hace 7 minutos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MODAL DE DECISIÓN DE DEPENDENCIAS ANTE DESINSTALACIÓN -->
+  <div class="drawer-overlay" id="dep-modal-overlay" onclick="closeDepModal()"></div>
+  <div id="dep-modal-dialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 520px; background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-xl); box-shadow: var(--shadow-floating); z-index: 120; padding: 26px; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 42px; height: 42px; border-radius: var(--radius-md); background: rgba(245, 158, 11, 0.14); color: var(--accent-warning); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      </div>
+      <div>
+        <h3 style="font-size: 16px; font-weight: 700;">Resolución de Dependencias</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">El módulo a eliminar tiene otros componentes activos vinculados.</p>
+      </div>
+    </div>
+    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; background: var(--bg-elevated); padding: 14px; border-radius: var(--radius-md); border-left: 3px solid var(--accent-warning);">
+      El módulo <strong>"Controlador de Refrigeración"</strong> depende de <code>hardware.telemetry</code> provisto por <strong>"Telemetría de Sistema"</strong>. ¿Qué acción desea realizar con los módulos dependientes?
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+      <button class="btn btn-secondary" style="justify-content: flex-start; padding: 12px 14px; text-align: left;" onclick="resolveDependencyUninstall('disable-dependents')">
+        <div>
+          <strong style="font-size: 13px; display: block; color: var(--text-primary);">1. Desactivar módulos dependientes</strong>
+          <span style="font-size: 11.5px; color: var(--text-muted);">Elimina Telemetría. El Cooler se conserva instalado pero pasa a estado inactivo/bloqueado.</span>
+        </div>
+      </button>
+      <button class="btn btn-secondary" style="justify-content: flex-start; padding: 12px 14px; text-align: left; border-color: rgba(239, 68, 68, 0.35); color: #f87171;" onclick="resolveDependencyUninstall('cascade')">
+        <div>
+          <strong style="font-size: 13px; display: block; color: var(--accent-danger);">2. Eliminar en cascada</strong>
+          <span style="font-size: 11.5px; color: var(--text-muted);">Desinstala y purga permanentemente tanto Telemetría como el Controlador de Refrigeración del Sistema.</span>
+        </div>
+      </button>
+      <button class="btn btn-secondary" style="justify-content: center; margin-top: 4px;" onclick="closeDepModal()">
+        <span>Cancelar Operación</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LÓGICA DE INTERACCIÓN NATIVA JS -->
   <script>
-    // 1. NAVEGACIÓN Y VISTAS
-    let currentView = 'dashboard';
-
-    const VIEW_METADATA = {
-      'dashboard': {
-        title: 'Dashboard',
-        desc: 'Cuadrícula adaptable 10x10 para tarjetas y widgets del sistema.'
-      },
-      'module-manager': {
-        title: 'Gestor de Módulos',
-        desc: 'Administración de paquetes de extensión locales y comunitarios (.pcm).'
-      },
-      'settings': {
-        title: 'Configuraciones del Sistema',
-        desc: 'Parámetros centrales del sistema, integración con Windows y personalización estética.'
-      }
-    };
-
+    // 1. GESTIÓN DE VISTAS (SPA LIMPIA)
     function switchView(viewId) {
-      document.querySelectorAll('.view-content').forEach(view => view.classList.add('hidden'));
-      document.querySelectorAll('.sidebar-nav .nav-button, .sidebar-footer .nav-button').forEach(btn => btn.classList.remove('active'));
+      // Ocultar todas las vistas
+      document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
 
-      const targetView = document.getElementById('view-' + viewId);
-      const targetBtn = document.getElementById('nav-' + viewId);
+      // Mostrar seleccionada
+      const target = document.getElementById('view-' + viewId);
+      if (target) target.classList.remove('hidden');
+
+      const navBtn = document.getElementById('nav-' + viewId);
+      if (navBtn) navBtn.classList.add('active');
+
+      // Título y descripción en la barra superior
+      const VIEW_METADATA = {
+        'dashboard': {
+          title: 'Dashboard',
+          desc: 'Cuadrícula adaptable 10x10 para tarjetas y widgets del sistema.'
+        },
+        'module-telemetry': {
+          title: 'Rendimiento y Telemetría',
+          desc: 'Métricas detalladas de hardware en tiempo real y control de muestreo.'
+        },
+        'module-cleaner': {
+          title: 'Almacenamiento Local',
+          desc: 'Análisis higiénico y mantenimiento de archivos temporales huérfanos.'
+        },
+        'module-cooler': {
+          title: 'Disipador de Refrigeración',
+          desc: 'Control periférico de pantalla digital sincronizado con hardware.telemetry.'
+        },
+        'module-manager': {
+          title: 'Gestor de Módulos',
+          desc: 'Administra paquetes locales (.pcm), repositorios GitHub y grupos de organización.'
+        },
+        'settings': {
+          title: 'Configuraciones del Sistema',
+          desc: 'Parámetros centrales de inicio, bandeja del sistema y personalización estética.'
+        }
+      };
+      const meta = VIEW_METADATA[viewId] || { title: 'Dashboard', desc: 'Panel operativo del sistema.' };
       const titleEl = document.getElementById('current-view-title');
       const descEl = document.getElementById('current-view-desc');
-
-      if (targetView) targetView.classList.remove('hidden');
-      if (targetBtn) targetBtn.classList.add('active');
-
-      const meta = VIEW_METADATA[viewId] || { title: 'Panel', desc: '' };
       if (titleEl) titleEl.textContent = meta.title;
       if (descEl) descEl.textContent = meta.desc;
-
-      currentView = viewId;
     }
 
-    // AUTO-ORGANIZACIÓN DEL DASHBOARD (FAB)
+    // 2. GESTIÓN DE DRAWERS (CATÁLOGO Y NOTIFICACIONES)
+    function toggleDrawer(name) {
+      const drawer = document.getElementById(name + '-drawer');
+      const overlay = document.getElementById(name + '-overlay');
+      const isOpen = drawer.classList.contains('open');
+
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+      }
+    }
+
+    // 3. VISIBILIDAD DE TARJETAS EN DASHBOARD (10x10)
+    function toggleCardVisibility(cardId, isVisible) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.style.display = isVisible ? 'flex' : 'none';
+        updateCardCounter();
+      }
+    }
+
+    function updateCardCounter() {
+      const visible = Array.from(document.querySelectorAll('.card')).filter(c => c.style.display !== 'none').length;
+      document.getElementById('active-cards-badge').textContent = visible;
+    }
+
+    // 4. DRAG AND DROP FLUIDO EN LA CUADRÍCULA 10x10 (SIN JITTER NI REFLOWS BRUSCOS)
+    const gridBoard = document.getElementById('grid-board');
+    let draggedCard = null;
+
+    gridBoard.addEventListener('dragstart', (e) => {
+      const target = e.target.closest('.card');
+      if (target) {
+        draggedCard = target;
+        target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', target.id);
+      }
+    });
+
+    gridBoard.addEventListener('dragend', (e) => {
+      if (draggedCard) {
+        draggedCard.classList.remove('dragging');
+        draggedCard = null;
+      }
+      document.querySelectorAll('.card.drag-target').forEach(c => c.classList.remove('drag-target'));
+    });
+
+    gridBoard.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const targetCard = e.target.closest('.card');
+      document.querySelectorAll('.card.drag-target').forEach(c => {
+        if (c !== targetCard) c.classList.remove('drag-target');
+      });
+      if (targetCard && targetCard !== draggedCard) {
+        targetCard.classList.add('drag-target');
+      }
+    });
+
+    gridBoard.addEventListener('dragleave', (e) => {
+      const targetCard = e.target.closest('.card');
+      if (targetCard && !targetCard.contains(e.relatedTarget)) {
+        targetCard.classList.remove('drag-target');
+      }
+    });
+
+    gridBoard.addEventListener('drop', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.card.drag-target').forEach(c => c.classList.remove('drag-target'));
+      if (!draggedCard) return;
+
+      const targetCard = e.target.closest('.card');
+      if (targetCard && targetCard !== draggedCard) {
+        const rect = targetCard.getBoundingClientRect();
+        const insertAfter = (e.clientY > rect.top + rect.height / 2) || (e.clientX > rect.left + rect.width / 2);
+        if (insertAfter) {
+          targetCard.parentNode.insertBefore(draggedCard, targetCard.nextSibling);
+        } else {
+          targetCard.parentNode.insertBefore(draggedCard, targetCard);
+        }
+      } else if (!targetCard && e.target === gridBoard) {
+        gridBoard.appendChild(draggedCard);
+      }
+
+      draggedCard.classList.add('card-drop');
+      setTimeout(() => {
+        if (draggedCard) draggedCard.classList.remove('card-drop');
+      }, 350);
+    });
+
+    // AUTO-ORGANIZACIÓN DEL DASHBOARD (COMPACTACIÓN DE TARJETAS SIN HUECOS)
     function autoOrganizeDashboard() {
-      const cards = document.querySelectorAll('#grid-board .card');
-      if (cards.length === 0) {
+      const cards = Array.from(gridBoard.querySelectorAll('.card'));
+      if (!cards.length) {
         addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para organizar.', 'info');
         return;
       }
-      cards.forEach(card => {
-        card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
-        card.style.transform = 'scale(0.96)';
+
+      // Re-anexar secuencialmente para compactar la cuadrícula
+      cards.forEach((card, idx) => {
+        gridBoard.appendChild(card);
+        card.style.animation = `cardPulse 0.35s ease ${idx * 0.04}s forwards`;
         setTimeout(() => {
-          card.style.transform = '';
-        }, 300);
-      });
-      addSystemNotification('Cuadrícula Auto-organizada', 'Las tarjetas se compactaron eficientemente sin dejar huecos vacíos.', 'info');
-    }
-
-    // 2. COLAPSO CANÓNICO DEL SIDEBAR (ÚNICAMENTE VÍA LOGO)
-    function toggleSidebar() {
-      const sidebar = document.querySelector('.sidebar');
-      if (sidebar) {
-        sidebar.classList.toggle('collapsed');
-      }
-    }
-
-    // 3. DRAWERS LATERALES
-    function toggleDrawer(drawerId) {
-      const overlay = document.getElementById('drawer-overlay');
-      const drawer = document.getElementById('drawer-' + drawerId);
-      if (drawer) {
-        const isActive = drawer.classList.contains('active');
-        closeAllDrawers();
-        if (!isActive) {
-          drawer.classList.add('active');
-          overlay.classList.add('active');
-        }
-      }
-    }
-
-    function closeAllDrawers() {
-      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
-      document.getElementById('drawer-overlay').classList.remove('active');
-    }
-
-    // 4. GESTOR DE MÓDULOS (PESTAÑAS)
-    function switchManagerTab(tabId) {
-      document.querySelectorAll('#view-module-manager .tab-btn').forEach(btn => btn.classList.remove('active'));
-      const btn = document.getElementById('tab-btn-' + tabId);
-      if (btn) btn.classList.add('active');
-
-      ['installed', 'catalog', 'sources', 'groups'].forEach(t => {
-        const el = document.getElementById('manager-tab-' + t);
-        if (el) el.classList.add('hidden');
+          card.style.animation = '';
+        }, 400 + idx * 40);
       });
 
-      const activeTab = document.getElementById('manager-tab-' + tabId);
-      if (activeTab) activeTab.classList.remove('hidden');
+      addSystemNotification(
+        'Cuadrícula Auto-organizada',
+        'Las tarjetas del Dashboard se han compactado y reordenado eficientemente sin huecos residuales.',
+        'info'
+      );
     }
 
-    // 5. SIMULACIÓN DE INSTALACIÓN DINÁMICA (DEMO DE EXTENSIBILIDAD EN CALIENTE)
-    function triggerInstallDialog() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.pcm,.zip';
-      input.onchange = (e) => {
-        if (e.target.files.length > 0) {
-          const fileName = e.target.files[0].name;
-          addSystemNotification('Instalación Iniciada', `Validando integridad de ${fileName}...`, 'info');
-          setTimeout(() => {
-            addSystemNotification('Módulo Instalado', `El paquete ${fileName} ha sido registrado exitosamente.`, 'success');
-            alert(`PC Manager: Paquete ${fileName} verificado y cargado en caliente.`);
-          }, 1200);
-        }
-      };
-      input.click();
+    function resetLayout() {
+      autoOrganizeDashboard();
     }
 
-    function simulateDownloadAndInstall(moduleKey) {
-      addSystemNotification('Descarga Remota', `Descargando paquete ${moduleKey}.pcm desde GitHub Releases...`, 'info');
-      setTimeout(() => {
-        addSystemNotification('Suma de Hash SHA-256 Validada', `Paquete ${moduleKey}.pcm verificado criptográficamente.`, 'info');
-        setTimeout(() => {
-          addSystemNotification('Módulo Instalado en Caliente', `El módulo se cargó en caliente exitosamente.`, 'success');
-          alert(`Módulo "${moduleKey}" instalado con éxito. El Sistema ha registrado sus servicios y tarjetas.`);
-        }, 800);
-      }, 900);
+    // 5. DEMOSTRACIÓN DE LA REGLA DE GRUPOS: ELIMINAR Y REASIGNAR A "GENERAL"
+    function updateGroupsTabBadge() {
+      const rows = document.querySelectorAll('#groups-list .group-row');
+      const badge = document.getElementById('badge-tab-groups-count');
+      if (badge) badge.textContent = rows.length;
     }
 
-    // 6. GESTIÓN DE NOTIFICACIONES
+    function deletePeripheralsGroup() {
+      const row = document.getElementById('row-group-peripherals');
+      const sideLabel = document.getElementById('label-group-peripherals');
+      const coolerBtn = document.getElementById('nav-module-cooler');
+
+      if (row) row.remove();
+      if (sideLabel) sideLabel.remove();
+
+      // Mover el botón al grupo general en la navegación
+      const cleanerBtn = document.getElementById('nav-module-cleaner');
+      cleanerBtn.insertAdjacentElement('afterend', coolerBtn);
+
+      // Actualizar contador del grupo general
+      document.getElementById('group-general-count').textContent = '3 módulos asignados (1 reasignado automáticamente)';
+      updateGroupsTabBadge();
+
+      // Emitir notificación del Core
+      addSystemNotification(
+        'Grupo Eliminado - Módulo Reagrupado',
+        'El grupo "Periféricos" fue eliminado. Conforme a la regla de gobernanza, el módulo "Disipador con Pantalla" se auto-reasignó al grupo inmutable "General".',
+        'warning'
+      );
+    }
+
+    function createGroup() {
+      const input = document.getElementById('new-group-name');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const list = document.getElementById('groups-list');
+      const newRow = document.createElement('div');
+      newRow.className = 'group-row';
+      newRow.innerHTML = `
+        <div>
+          <strong style="font-size: 13.5px;">${val}</strong>
+          <div style="font-size: 11px; color: var(--text-muted);">0 módulos asignados</div>
+        </div>
+        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; color: var(--accent-danger);" onclick="this.closest('.group-row').remove(); updateGroupsTabBadge();">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+          <span>Eliminar</span>
+        </button>
+      `;
+      list.appendChild(newRow);
+      input.value = '';
+      updateGroupsTabBadge();
+    }
+
+    // 6. GESTIÓN DE NOTIFICACIONES REAL
     function markAllNotificationsAsRead() {
-      document.querySelectorAll('#notif-list .notif-item').forEach(item => item.classList.remove('unread'));
+      document.querySelectorAll('#notif-list .notif-item').forEach(n => n.classList.remove('unread'));
       const badge = document.getElementById('notif-badge');
-      if (badge) {
-        badge.style.display = 'none';
-        badge.textContent = '0';
-      }
+      if (badge) badge.style.display = 'none';
+      const countEl = document.getElementById('notif-header-count');
+      if (countEl) countEl.textContent = '0 No Leídas';
     }
 
     function clearAllNotifications() {
@@ -1597,14 +2723,28 @@
         badge.style.display = 'none';
         badge.textContent = '0';
       }
+      const countEl = document.getElementById('notif-header-count');
+      if (countEl) countEl.textContent = '0 Notificaciones';
+    }
+
+    const clearNotifications = markAllNotificationsAsRead;
+
+    function simulateNewNotification() {
+      addSystemNotification(
+        'Telemetría de Almacenamiento',
+        'Se verificó la integridad de las unidades locales. Todos los bloques se reportan saludables.',
+        'info'
+      );
     }
 
     function addSystemNotification(title, text, type) {
       const list = document.getElementById('notif-list');
       const item = document.createElement('div');
       item.className = 'notif-item unread';
+      
+      const iconClass = type === 'warning' ? 'warning' : (type === 'success' ? 'success' : 'info');
       item.innerHTML = `
-        <div class="notif-icon">
+        <div class="notif-icon ${iconClass}">
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
         </div>
         <div class="notif-body">
@@ -1620,69 +2760,677 @@
       badge.textContent = parseInt(badge.textContent || '0') + 1;
     }
 
-    // 7. GESTOR DE GRUPOS
-    function updateGroupsBadgeCount() {
-      const rows = document.querySelectorAll('#groups-list .group-row');
-      const badge = document.getElementById('tab-groups-count');
-      if (badge) badge.textContent = rows.length;
+    function simulateScan() {
+      const res = document.getElementById('scan-result');
+      res.style.display = 'block';
     }
 
-    function createGroup() {
-      const input = document.getElementById('new-group-name');
-      const val = input.value.trim();
-      if (!val) return;
+    // 8. FUNCIONES DEL GESTOR DE MÓDULOS (HABILITAR, DESHABILITAR, AUTO-OCULTAMIENTO DE GRUPOS)
+    function syncGroupVisibility(groupId) {
+      const groupWrapper = document.getElementById('group-wrapper-' + groupId);
+      const itemsContainer = document.getElementById('group-items-' + groupId);
+      if (!groupWrapper || !itemsContainer) return;
 
-      const list = document.getElementById('groups-list');
-      const newRow = document.createElement('div');
-      newRow.className = 'group-row';
-      newRow.innerHTML = `
-        <div>
-          <strong style="font-size: 13.5px;">${val}</strong>
-          <div style="font-size: 11px; color: var(--text-muted);">0 módulos asignados</div>
-        </div>
-        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; color: var(--accent-danger);" onclick="this.closest('.group-row').remove(); updateGroupsBadgeCount();">
-          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
-          <span>Eliminar</span>
-        </button>
-      `;
-      list.appendChild(newRow);
-      input.value = '';
-      updateGroupsBadgeCount();
+      const buttons = Array.from(itemsContainer.querySelectorAll('.nav-button'));
+      const hasVisible = buttons.some(btn => btn.style.display !== 'none');
+      groupWrapper.style.display = hasVisible ? 'block' : 'none';
     }
 
-    // 8. CICLO DE VIDA EN WINDOWS
-    function toggleStartupWindows(isEnabled) {
-      addSystemNotification('Arranque del Sistema', isEnabled ? 'Inicio con Windows activado.' : 'Inicio con Windows desactivado.', 'info');
+    function toggleModuleTelemetry(isEnabled) {
+      const statusText = document.getElementById('status-telemetry-text');
+      const coolerSwitch = document.getElementById('switch-cooler');
+      const coolerStatusText = document.getElementById('status-cooler-text');
+      const coolerStatusSub = document.getElementById('status-cooler-sub');
+      const coolerBadge = document.getElementById('cooler-dep-badge');
+      const alertBox = document.getElementById('dependency-alert-box');
+      const alertText = document.getElementById('dependency-alert-text');
+      const sideTelemetryBtn = document.getElementById('nav-module-telemetry');
+      const sideCoolerBtn = document.getElementById('nav-module-cooler');
+
+      if (!isEnabled) {
+        statusText.textContent = 'Deshabilitado';
+        statusText.style.color = 'var(--text-muted)';
+        if (sideTelemetryBtn) sideTelemetryBtn.style.display = 'none';
+        if (currentView === 'module-telemetry') switchView('dashboard');
+
+        // LÓGICA DE BLOQUEO ESTRICTO: Si se apaga Telemetría, el Cooler depende de él y no puede operar
+        if (coolerSwitch && coolerSwitch.checked) {
+          coolerSwitch.checked = false;
+          coolerSwitch.disabled = true;
+          coolerStatusText.textContent = 'Bloqueado';
+          coolerStatusText.style.color = 'var(--accent-warning)';
+          coolerStatusSub.textContent = 'Requiere Telemetría';
+          coolerBadge.innerHTML = '<svg class="svg-icon svg-icon-xs" style="vertical-align: -2px; margin-right: 4px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Bloqueado: Falta Telemetría';
+          coolerBadge.style.color = 'var(--accent-warning)';
+          coolerBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+          if (sideCoolerBtn) sideCoolerBtn.style.display = 'none';
+          if (currentView === 'module-cooler') switchView('dashboard');
+          syncGroupVisibility('peripherals');
+
+          alertBox.style.display = 'flex';
+          alertText.innerHTML = '<strong>Bloqueo de Dependencia Activado:</strong> El módulo <em>Controlador de Refrigeración</em> requiere <em>Telemetría de Sistema</em>. Se ha desactivado y bloqueado automáticamente hasta que vuelva a activarse el proveedor.';
+
+          addSystemNotification(
+            'Dependencia Bloqueada',
+            'Se deshabilitó Telemetría. El módulo dependiente "Controlador de Refrigeración" fue suspendido y retirado del menú por falta de datos.',
+            'warning'
+          );
+        }
+      } else {
+        statusText.textContent = 'Habilitado';
+        statusText.style.color = 'var(--text-primary)';
+        if (sideTelemetryBtn) sideTelemetryBtn.style.display = 'flex';
+
+        // Desbloquear Cooler
+        if (coolerSwitch) {
+          coolerSwitch.disabled = false;
+          coolerBadge.innerHTML = 'Depende de: Telemetría (Activo)';
+          coolerBadge.style.color = 'var(--accent-primary)';
+          coolerBadge.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+          coolerStatusSub.textContent = 'Listo para activar';
+        }
+        alertBox.style.display = 'none';
+
+        addSystemNotification(
+          'Servicio Restaurado',
+          'Telemetría de Sistema activa. Servicio "hardware.telemetry" disponible para módulos dependientes.',
+          'success'
+        );
+      }
+      syncGroupVisibility('general');
     }
 
-    function toggleTrayMinimize(isEnabled) {
-      addSystemNotification('Bandeja del Sistema', isEnabled ? 'Minimizar al Tray activo (predeterminado).' : 'Minimizar al Tray desactivado.', 'info');
-      if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
-        window.__TAURI_INTERNALS__.invoke('minimize_to_tray');
-      } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
-        window.__TAURI__.core.invoke('minimize_to_tray');
+    function toggleModuleCooler(isEnabled) {
+      const telemetrySwitch = document.getElementById('switch-telemetry');
+      const coolerStatusText = document.getElementById('status-cooler-text');
+      const coolerStatusSub = document.getElementById('status-cooler-sub');
+      const sideCoolerBtn = document.getElementById('nav-module-cooler');
+
+      // Si Telemetría está apagada, impedir encendido
+      if (isEnabled && (!telemetrySwitch || !telemetrySwitch.checked)) {
+        alert('ACCESO DENEGADO: Este módulo requiere que "Telemetría de Sistema" esté instalado y habilitado.');
+        document.getElementById('switch-cooler').checked = false;
+        return;
+      }
+
+      coolerStatusText.textContent = isEnabled ? 'Habilitado' : 'Deshabilitado';
+      coolerStatusText.style.color = isEnabled ? 'var(--text-primary)' : 'var(--text-muted)';
+      coolerStatusSub.textContent = isEnabled ? 'En ejecución' : 'Detenido';
+      if (sideCoolerBtn) sideCoolerBtn.style.display = isEnabled ? 'flex' : 'none';
+      if (!isEnabled && currentView === 'module-cooler') switchView('dashboard');
+
+      syncGroupVisibility('peripherals');
+
+      addSystemNotification(
+        isEnabled ? 'Módulo Activado' : 'Módulo Desactivado',
+        `El módulo Controlador de Refrigeración ha sido ${isEnabled ? 'puesto en marcha' : 'detenido'}.`,
+        isEnabled ? 'info' : 'warning'
+      );
+    }
+
+    function toggleModuleCleaner(isEnabled) {
+      const statusText = document.getElementById('status-cleaner-text');
+      const sideCleanerBtn = document.getElementById('nav-module-cleaner');
+      statusText.textContent = isEnabled ? 'Habilitado' : 'Deshabilitado';
+      statusText.style.color = isEnabled ? 'var(--text-primary)' : 'var(--text-muted)';
+      if (sideCleanerBtn) sideCleanerBtn.style.display = isEnabled ? 'flex' : 'none';
+      if (!isEnabled && currentView === 'module-cleaner') switchView('dashboard');
+      syncGroupVisibility('general');
+    }
+
+    // EXPORTACIÓN A ARCHIVO .PCM / .ZIP
+    function exportModule(moduleSlug) {
+      const dummyManifest = {
+        id: moduleSlug,
+        version: "1.0.0",
+        exported_at: new Date().toISOString(),
+        format: "PC-MANAGER-PACKAGE-V1"
+      };
+      const blob = new Blob([JSON.stringify(dummyManifest, null, 2)], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${moduleSlug}.pcm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      addSystemNotification(
+        'Módulo Exportado con Éxito',
+        `Se ha empaquetado el archivo "${moduleSlug}.pcm". Listo para compartir con otros equipos sin recompilación.`,
+        'success'
+      );
+    }
+
+    // SIMULAR INSTALACIÓN DE MÓDULO NUEVO DESDE ARCHIVO ZIP/PCM
+    function triggerInstallModule() {
+      const moduleName = prompt('Ingrese el nombre del paquete a simular (o seleccione un .pcm):', 'optimizador-red.pcm');
+      if (!moduleName) return;
+
+      addSystemNotification(
+        'Módulo Instalado Correctamente',
+        `El paquete "${moduleName}" fue validado, descomprimido y asignado al grupo inmutable "General".`,
+        'success'
+      );
+
+      const totalBadge = document.getElementById('badge-total-modules');
+      if (totalBadge) totalBadge.textContent = parseInt(totalBadge.textContent || '3') + 1;
+    }
+
+    // DESINSTALACIÓN ASISTIDA CON RESOLUCIÓN DE DEPENDENCIAS
+    function uninstallModule(name, isProvider) {
+      if (isProvider) {
+        const coolerSwitch = document.getElementById('switch-cooler');
+        if (coolerSwitch && coolerSwitch.checked) {
+          // ABRIR MODAL DE DECISIÓN ASISTIDA
+          document.getElementById('dep-modal-overlay').classList.add('open');
+          document.getElementById('dep-modal-dialog').style.display = 'flex';
+          return;
+        }
+      }
+
+      const confirmDelete = confirm(`¿Está seguro de que desea desinstalar permanentemente "${name}" y eliminar sus archivos de disco?`);
+      if (!confirmDelete) return;
+
+      if (name.includes('Almacenamiento')) {
+        const card = document.getElementById('mod-card-cleaner');
+        const nav = document.getElementById('nav-module-cleaner');
+        if (card) card.remove();
+        if (nav) nav.remove();
+      }
+
+      addSystemNotification(
+        'Módulo Desinstalado',
+        `El módulo "${name}" fue eliminado del sistema y sus descriptores fueron liberados.`,
+        'warning'
+      );
+      updateTotalModulesBadge(-1);
+    }
+
+    function closeDepModal() {
+      document.getElementById('dep-modal-overlay').classList.remove('open');
+      document.getElementById('dep-modal-dialog').style.display = 'none';
+    }
+
+    function resolveDependencyUninstall(action) {
+      closeDepModal();
+
+      const telemetryCard = document.getElementById('mod-card-telemetry');
+      const telemetryNav = document.getElementById('nav-module-telemetry');
+      if (telemetryCard) telemetryCard.remove();
+      if (telemetryNav) telemetryNav.remove();
+
+      if (action === 'disable-dependents') {
+        // Opción 1: Desactivar dependientes sin borrarlos
+        const coolerSwitch = document.getElementById('switch-cooler');
+        const coolerStatusText = document.getElementById('status-cooler-text');
+        const coolerStatusSub = document.getElementById('status-cooler-sub');
+        const coolerBadge = document.getElementById('cooler-dep-badge');
+        const coolerNav = document.getElementById('nav-module-cooler');
+
+        if (coolerSwitch) {
+          coolerSwitch.checked = false;
+          coolerSwitch.disabled = true;
+          coolerStatusText.textContent = 'Bloqueado';
+          coolerStatusText.style.color = 'var(--accent-warning)';
+          coolerStatusSub.textContent = 'Sin Telemetría';
+          coolerBadge.innerHTML = '<svg class="svg-icon svg-icon-xs" style="vertical-align: -2px; margin-right: 4px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Bloqueado: Falta Telemetría';
+          coolerBadge.style.color = 'var(--accent-warning)';
+          coolerBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        }
+        if (coolerNav) coolerNav.style.opacity = '0.4';
+
+        addSystemNotification(
+          'Desinstalación Asistida Completada',
+          'Se desinstaló "Telemetría de Sistema". El módulo "Controlador de Refrigeración" se conservó en disco pero pasó a estado inactivo/bloqueado.',
+          'warning'
+        );
+        updateTotalModulesBadge(-1);
+
+      } else if (action === 'cascade') {
+        // Opción 2: Eliminar en cascada
+        const coolerCard = document.getElementById('mod-card-cooler');
+        const coolerNav = document.getElementById('nav-module-cooler');
+        if (coolerCard) coolerCard.remove();
+        if (coolerNav) coolerNav.remove();
+
+        addSystemNotification(
+          'Eliminación en Cascada Completada',
+          'Se desinstalaron "Telemetría de Sistema" y "Controlador de Refrigeración" en cascada.',
+          'warning'
+        );
+        updateTotalModulesBadge(-2);
       }
     }
 
-    function toggleWindowsService(isEnabled) {
-      addSystemNotification('Servicio de Windows', isEnabled ? 'Modo servicio headless pre-logon habilitado.' : 'Modo servicio deshabilitado.', 'warning');
+    function updateTotalModulesBadge(delta) {
+      const badge = document.getElementById('badge-total-modules');
+      if (badge) {
+        const count = Math.max(0, parseInt(badge.textContent || '3') + delta);
+        badge.textContent = count;
+      }
     }
 
-    function shutdownApplication() {
-      if (confirm('¿Confirmas el cierre total de PC Manager?\n\nSe detendrán todos los servicios y colectores de fondo sin dejar procesos huérfanos.')) {
-        addSystemNotification('Cierre Total del Core', 'Todos los servicios han sido detenidos limpiamente.', 'warning');
-        if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
-          window.__TAURI_INTERNALS__.invoke('quit_app');
-        } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
-          window.__TAURI__.core.invoke('quit_app');
+    // 8.1 NAVEGACIÓN DE PESTAÑAS EN GESTOR DE MÓDULOS
+    function switchManagerTab(tabId) {
+      document.querySelectorAll('#view-module-manager .tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('tab-btn-' + tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const installedView = document.getElementById('manager-tab-installed-view');
+      const catalogView = document.getElementById('manager-tab-catalog-view');
+      const sourcesView = document.getElementById('manager-tab-sources-view');
+      const groupsView = document.getElementById('manager-tab-groups-view');
+
+      if (installedView) installedView.classList.toggle('hidden', tabId !== 'installed');
+      if (catalogView) catalogView.classList.toggle('hidden', tabId !== 'catalog');
+      if (sourcesView) sourcesView.classList.toggle('hidden', tabId !== 'sources');
+      if (groupsView) groupsView.classList.toggle('hidden', tabId !== 'groups');
+    }
+
+    // 8.2 ACTUALIZACIÓN DE MÓDULO DESDE GITHUB RELEASES (HOT-RELOAD EN CALIENTE)
+    function updateModuleFromGitHub(moduleSlug, newVersion) {
+      const banner = document.getElementById('telemetry-update-banner');
+      if (banner) {
+        banner.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px; color: var(--accent-primary);">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            <span style="font-size: 12.5px;">Descargando hardware-telemetry.pcm (${newVersion}) desde GitHub Releases... Verificando hash SHA-256...</span>
+          </div>
+        `;
+      }
+
+      setTimeout(() => {
+        if (banner) banner.remove();
+        const badge = document.querySelector('#mod-card-telemetry .card-badge');
+        if (badge) badge.textContent = `v${newVersion}`;
+
+        addSystemNotification(
+          'Actualización en Caliente Completada',
+          `El módulo Telemetría se actualizó a v${newVersion} desde GitHub Releases. Los servicios compartidos se reconectaron en caliente sin reiniciar.`,
+          'success'
+        );
+      }, 1400);
+    }
+
+    // 8.3 INSTALACIÓN DIRECTA DESDE EL CATÁLOGO GITHUB
+    function installFromCatalog(moduleSlug, moduleName, version, category, provides) {
+      const card = document.getElementById(`catalog-card-${moduleSlug.includes('net') ? 'net-opt' : (moduleSlug.includes('startup') ? 'startup' : 'battery')}`);
+      const btn = card ? card.querySelector('.btn-primary') : null;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          <span>Instalando...</span>
+        `;
+      }
+
+      setTimeout(() => {
+        if (btn) {
+          btn.innerHTML = `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Instalado</span>`;
+          btn.style.background = 'var(--bg-elevated)';
+          btn.style.color = 'var(--accent-success)';
+          btn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        }
+
+        // Crear tarjeta en la pestaña de instalados
+        const installedContainer = document.getElementById('manager-tab-installed-view');
+        const newCard = document.createElement('article');
+        newCard.className = 'settings-card';
+        newCard.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="display: flex; gap: 14px;">
+              <div class="card-icon-wrap" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+              </div>
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h4 style="font-size: 15px; font-weight: 600;">${moduleName}</h4>
+                  <span class="card-badge">${version}</span>
+                  <span class="card-badge" style="color: var(--accent-success); border-color: rgba(16, 185, 129, 0.3);">GitHub Release</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                  Instalado desde repositorio remoto oficial verificado.
+                </p>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <span class="card-badge">Grupo: ${category}</span>
+                  <span class="card-badge">Servicio: ${provides}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="text-align: right;">
+                <div style="font-size: 11.5px; font-weight: 600; color: var(--accent-success);">Habilitado</div>
+                <div style="font-size: 10px; color: var(--text-muted);">En ejecución</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        `;
+        installedContainer.appendChild(newCard);
+
+        addSystemNotification(
+          'Módulo Instalado desde GitHub',
+          `Se descargó "${moduleName}.pcm" (${version}), se verificó su suma SHA-256 y se montó en caliente en el Sistema.`,
+          'success'
+        );
+
+        updateTotalModulesBadge(1);
+        const countBadge = document.getElementById('badge-tab-installed-count');
+        if (countBadge) countBadge.textContent = parseInt(countBadge.textContent || '3') + 1;
+      }, 1200);
+    }
+
+    // 8.4 AÑADIR NUEVO REPOSITORIO
+    function addCustomRepository() {
+      const url = prompt('Ingrese la URL del catálogo de módulos remoto (formato index.json de GitHub Pages o Raw):', 'https://raw.githubusercontent.com/mi-organizacion/pcm-registry/main/index.json');
+      if (!url) return;
+
+      const list = document.getElementById('repo-sources-list');
+      const item = document.createElement('div');
+      item.style.cssText = 'background: var(--bg-elevated); padding: 12px 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;';
+      item.innerHTML = `
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <strong style="font-size: 13.5px;">Repositorio Personalizado</strong>
+            <span class="card-badge">Personalizado</span>
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 4px;">
+            ${url}
+          </div>
+        </div>
+        <span class="card-badge" style="color: var(--accent-success);">Sincronizado</span>
+      `;
+      list.appendChild(item);
+
+      addSystemNotification(
+        'Origen de Repositorio Añadido',
+        `Se indexó el repositorio remoto. El catálogo ahora incluye los módulos de esta fuente.`,
+        'success'
+      );
+    }
+
+    // 9. CONTROL GRANULAR DE SENSORES DE TELEMETRÍA
+    let isCpuSensorActive = true;
+    let isRamSensorActive = true;
+    let isGpuSensorActive = true;
+    let isDiskSensorActive = true;
+    let isNetSensorActive = true;
+
+    function toggleSensor(sensor, isEnabled) {
+      if (sensor === 'cpu') {
+        isCpuSensorActive = isEnabled;
+        const badge = document.getElementById('cpu-status-badge');
+        const telemetryVal = document.getElementById('telemetry-full-cpu');
+        const telemetryTemp = document.getElementById('telemetry-full-temp');
+        const coolerTemp = document.getElementById('val-cooler-temp');
+
+        if (!isEnabled) {
+          badge.textContent = 'Sensor Pausado';
+          badge.style.color = 'var(--text-muted)';
+          telemetryVal.textContent = '0%';
+          telemetryTemp.textContent = '-- °C';
+          if (coolerTemp) coolerTemp.textContent = 'PAUSADO';
+
+          document.querySelectorAll('.core-prog').forEach(bar => bar.style.width = '0%');
+          document.querySelectorAll('.core-val').forEach(val => val.textContent = '0%');
+
+          const circleCpu = document.getElementById('circle-cpu');
+          const valCpu = document.getElementById('val-cpu');
+          if (circleCpu) circleCpu.style.strokeDashoffset = 226;
+          if (valCpu) valCpu.textContent = '0%';
+
+          addSystemNotification(
+            'Sensor CPU Pausado',
+            'El sensor de CPU fue desactivado. Muestreo de procesador en segundo plano detenido para ahorro de recursos.',
+            'info'
+          );
         } else {
-          alert('PC Manager: Parada completa ejecutada con éxito (Cero procesos huérfanos).');
+          badge.textContent = 'Sensor Activo';
+          badge.style.color = 'var(--accent-success)';
+          addSystemNotification(
+            'Sensor CPU Reanudado',
+            'Muestreo de CPU reanudado en tiempo real.',
+            'success'
+          );
+        }
+      } else if (sensor === 'ram') {
+        isRamSensorActive = isEnabled;
+        const badge = document.getElementById('ram-status-badge');
+        const ramUsageText = document.querySelector('#section-ram-metrics .metric-big');
+        const ramProg = document.querySelector('#section-ram-metrics .metric-progress-bar');
+        
+        badge.textContent = isEnabled ? 'Sensor Activo' : 'Sensor Pausado';
+        badge.style.color = isEnabled ? 'var(--accent-success)' : 'var(--text-muted)';
+
+        if (!isEnabled) {
+          if (ramUsageText) ramUsageText.textContent = '-- GB en uso';
+          if (ramProg) ramProg.style.width = '0%';
+          addSystemNotification('Sensor RAM Pausado', 'Muestreo de memoria suspendido para ahorro de CPU.', 'info');
+        } else {
+          if (ramUsageText) ramUsageText.textContent = '7.8 GB en uso';
+          if (ramProg) ramProg.style.width = '49%';
+          addSystemNotification('Sensor RAM Reanudado', 'Muestreo de memoria activo en tiempo real.', 'success');
+        }
+      } else if (sensor === 'gpu') {
+        isGpuSensorActive = isEnabled;
+        const badge = document.getElementById('gpu-status-badge');
+        const gpuLoad = document.querySelector('#section-gpu-metrics [style*="font-size: 18px; font-weight: 700; color: var(--text-primary)"]');
+        const gpuTemp = document.getElementById('telemetry-gpu-temp');
+
+        badge.textContent = isEnabled ? 'Sensor Activo' : 'Sensor Pausado';
+        badge.style.color = isEnabled ? 'var(--accent-success)' : 'var(--text-muted)';
+
+        if (!isEnabled) {
+          if (gpuLoad) gpuLoad.textContent = '--%';
+          if (gpuTemp) gpuTemp.textContent = '-- °C';
+          addSystemNotification('Sensor GPU Pausado', 'Muestreo de acelerador gráfico suspendido.', 'info');
+        } else {
+          if (gpuLoad) gpuLoad.textContent = '24%';
+          if (gpuTemp) gpuTemp.textContent = '52 °C';
+          addSystemNotification('Sensor GPU Reanudado', 'Muestreo de GPU activo en tiempo real.', 'success');
+        }
+      } else if (sensor === 'disk') {
+        isDiskSensorActive = isEnabled;
+        const badge = document.getElementById('disk-status-badge');
+        const diskRead = document.getElementById('telemetry-disk-read');
+        const diskWrite = document.getElementById('telemetry-disk-write');
+        const diskProg = document.getElementById('telemetry-disk-prog');
+        const diskActive = document.getElementById('telemetry-disk-active');
+
+        badge.textContent = isEnabled ? 'Sensor Activo' : 'Sensor Pausado';
+        badge.style.color = isEnabled ? 'var(--accent-success)' : 'var(--text-muted)';
+
+        if (!isEnabled) {
+          if (diskRead) diskRead.textContent = '-- MB/s';
+          if (diskWrite) diskWrite.textContent = '-- MB/s';
+          if (diskProg) diskProg.style.width = '0%';
+          if (diskActive) diskActive.textContent = '0%';
+          addSystemNotification('Sensor Almacenamiento Pausado', 'Muestreo I/O de disco suspendido.', 'info');
+        } else {
+          if (diskRead) diskRead.textContent = '24.5 MB/s';
+          if (diskWrite) diskWrite.textContent = '1.8 MB/s';
+          if (diskProg) diskProg.style.width = '18%';
+          if (diskActive) diskActive.textContent = '18%';
+          addSystemNotification('Sensor Almacenamiento Reanudado', 'Muestreo I/O de disco activo en tiempo real.', 'success');
+        }
+      } else if (sensor === 'net') {
+        isNetSensorActive = isEnabled;
+        const badge = document.getElementById('net-status-badge');
+        const netDown = document.getElementById('telemetry-net-down');
+        const netUp = document.getElementById('telemetry-net-up');
+        const netProg = document.getElementById('telemetry-net-prog');
+
+        badge.textContent = isEnabled ? 'Sensor Activo' : 'Sensor Pausado';
+        badge.style.color = isEnabled ? 'var(--accent-success)' : 'var(--text-muted)';
+
+        if (!isEnabled) {
+          if (netDown) netDown.textContent = '-- MB/s';
+          if (netUp) netUp.textContent = '-- KB/s';
+          if (netProg) netProg.style.width = '0%';
+          addSystemNotification('Sensor Red Pausado', 'Muestreo de adaptadores de red suspendido.', 'info');
+        } else {
+          if (netDown) netDown.textContent = '5.2 MB/s';
+          if (netUp) netUp.textContent = '820 KB/s';
+          if (netProg) netProg.style.width = '25%';
+          addSystemNotification('Sensor Red Reanudado', 'Muestreo de red activo en tiempo real.', 'success');
         }
       }
     }
 
-    // 9. MOTOR DE TEMAS Y COLORES
+    // 10. SIMULACIÓN DE TELEMETRÍA EN VIVO RESPETANDO SENSORES
+    setInterval(() => {
+      // 1. Telemetría de CPU
+      if (isCpuSensorActive) {
+        const baseCpu = 35 + Math.floor(Math.random() * 12);
+        const temp = 45 + Math.floor(Math.random() * 6);
+        
+        const valCpu = document.getElementById('val-cpu');
+        const circleCpu = document.getElementById('circle-cpu');
+        const valCooler = document.getElementById('val-cooler-temp');
+        const telemetryFullCpu = document.getElementById('telemetry-full-cpu');
+        const telemetryFullTemp = document.getElementById('telemetry-full-temp');
+
+        if (valCpu) valCpu.textContent = baseCpu + '%';
+        if (telemetryFullCpu) telemetryFullCpu.textContent = baseCpu + '%';
+        if (telemetryFullTemp) telemetryFullTemp.textContent = temp + ' °C';
+
+        if (circleCpu) {
+          const offset = 226 - (226 * baseCpu / 100);
+          circleCpu.style.strokeDashoffset = offset;
+        }
+
+        if (valCooler) valCooler.textContent = temp + '°C';
+
+        // Simular variación en los 8 núcleos
+        document.querySelectorAll('.core-bar-row').forEach((row, i) => {
+          const coreLoad = Math.max(8, Math.min(95, baseCpu + Math.floor((Math.random() * 26) - 13)));
+          const prog = row.querySelector('.core-prog');
+          const val = row.querySelector('.core-val');
+          if (prog) prog.style.width = coreLoad + '%';
+          if (val) val.textContent = coreLoad + '%';
+        });
+      }
+
+      // 2. Telemetría de RAM
+      if (isRamSensorActive) {
+        const ramUsed = (7.6 + (Math.random() * 0.6)).toFixed(1);
+        const ramPct = Math.round((ramUsed / 16.0) * 100);
+        const ramUsageText = document.querySelector('#section-ram-metrics .metric-big');
+        const ramProg = document.querySelector('#section-ram-metrics .metric-progress-bar');
+        if (ramUsageText) ramUsageText.textContent = `${ramUsed} GB en uso`;
+        if (ramProg) ramProg.style.width = `${ramPct}%`;
+      }
+
+      // 3. Telemetría de GPU
+      if (isGpuSensorActive) {
+        const gpuLoadVal = 20 + Math.floor(Math.random() * 14);
+        const gpuTempVal = 50 + Math.floor(Math.random() * 5);
+        const gpuLoad = document.querySelector('#section-gpu-metrics [style*="font-size: 18px; font-weight: 700; color: var(--text-primary)"]');
+        const gpuTemp = document.getElementById('telemetry-gpu-temp');
+        if (gpuLoad) gpuLoad.textContent = `${gpuLoadVal}%`;
+        if (gpuTemp) gpuTemp.textContent = `${gpuTempVal} °C`;
+      }
+
+      // 4. Telemetría de Almacenamiento (Disco)
+      if (isDiskSensorActive) {
+        const diskReadVal = (15 + Math.random() * 25).toFixed(1);
+        const diskWriteVal = (0.8 + Math.random() * 3.5).toFixed(1);
+        const diskActiveVal = 10 + Math.floor(Math.random() * 18);
+        const diskRead = document.getElementById('telemetry-disk-read');
+        const diskWrite = document.getElementById('telemetry-disk-write');
+        const diskProg = document.getElementById('telemetry-disk-prog');
+        const diskActive = document.getElementById('telemetry-disk-active');
+        if (diskRead) diskRead.textContent = `${diskReadVal} MB/s`;
+        if (diskWrite) diskWrite.textContent = `${diskWriteVal} MB/s`;
+        if (diskProg) diskProg.style.width = `${diskActiveVal}%`;
+        if (diskActive) diskActive.textContent = `${diskActiveVal}%`;
+      }
+
+      // 5. Telemetría de Red
+      if (isNetSensorActive) {
+        const downVal = (3.5 + Math.random() * 4.2).toFixed(1);
+        const upVal = Math.floor(400 + Math.random() * 600);
+        const netDown = document.getElementById('telemetry-net-down');
+        const netUp = document.getElementById('telemetry-net-up');
+        const netProg = document.getElementById('telemetry-net-prog');
+        if (netDown) netDown.textContent = `${downVal} MB/s`;
+        if (netUp) netUp.textContent = `${upVal} KB/s`;
+        if (netProg) netProg.style.width = `${Math.min(100, Math.round(downVal * 10))}%`;
+      }
+    }, 2200);
+
+    // 11. GESTIÓN DE MENÚ LATERAL COLAPSABLE Y GRUPOS
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      if (sidebar) {
+        sidebar.classList.toggle('collapsed');
+      }
+    }
+
+    function toggleGroupCollapse(groupId) {
+      const items = document.getElementById('group-items-' + groupId);
+      const header = document.querySelector(`#group-wrapper-${groupId} .group-header`) || document.getElementById('label-group-' + groupId);
+      if (items) items.classList.toggle('collapsed');
+      if (header) header.classList.toggle('collapsed');
+    }
+
+    // 12. INTEGRACIÓN CON WINDOWS Y CICLO DE VIDA
+    function toggleStartupWindows(isEnabled) {
+      addSystemNotification(
+        'Arranque del Sistema',
+        isEnabled 
+          ? 'Inicio con Windows activado. PC Manager arrancará automáticamente con la sesión del usuario.' 
+          : 'Inicio con Windows desactivado.',
+        'info'
+      );
+    }
+
+    function toggleTrayMinimize(isEnabled) {
+      addSystemNotification(
+        'Bandeja del Sistema (Tray)',
+        isEnabled 
+          ? 'Minimizar al Tray activado (predeterminado). Al cerrar la ventana la app continuará activa.' 
+          : 'Minimizar al Tray desactivado. Al cerrar la ventana se solicitará salir de la app.',
+        'info'
+      );
+    }
+
+    function toggleWindowsService(isEnabled) {
+      addSystemNotification(
+        'Servicio de Windows (Pre-logon)',
+        isEnabled 
+          ? 'Modo Servicio de Windows habilitado (services.msc). Telemetría y control operarán antes del inicio de sesión.' 
+          : 'Modo Servicio de Windows deshabilitado. La app operará únicamente en sesión de usuario.',
+        'warning'
+      );
+    }
+
+    function shutdownApplication() {
+      if (confirm('¿Confirmas el cierre total de PC Manager?\n\nSe cerrará la aplicación y se detendrán todos los servicios, colectores de telemetría y subprocesos hijos sin dejar procesos huérfanos.')) {
+        // Detener colectores
+        isCpuSensorActive = false;
+        isRamSensorActive = false;
+        isDiskSensorActive = false;
+        isNetSensorActive = false;
+        
+        addSystemNotification(
+          'Cierre Total del Core',
+          'Todos los servicios han sido detenidos limpiamente. Proceso terminado con código 0.',
+          'warning'
+        );
+
+        alert('PC Manager: Parada completa ejecutada con éxito. Todos los servicios e hilos han sido terminados de forma segura.');
+      }
+    }
+
+    // 13. MOTOR DE TEMAS Y COLORES (DUAL COMBOBOX: CLARO / OSCURO + PRESETS + ACENTOS)
     const THEME_PRESETS = {
+      // TEMAS OSCUROS
       'default': {
         name: 'Oscuro Profundo',
         desc: 'Gradientes oscuros profundos con alto contraste OLED.',
@@ -1747,6 +3495,7 @@
           '--border-medium': 'rgba(167, 139, 250, 0.2)'
         }
       },
+      // TEMAS CLAROS
       'light-clean': {
         name: 'Blanco Puro',
         desc: 'Entorno claro diáfano de máxima luminosidad y pulcritud.',
@@ -1925,3 +3674,4 @@
   </script>
 </body>
 </html>
+

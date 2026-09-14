@@ -14,11 +14,15 @@ En **PC Manager**, cada elemento visual interactivo debe tener una función real
   - Métricas estáticas o simuladas (números fijos inventados de uso de CPU o memoria en lugar de lecturas reales de telemetría).
   - Interruptores o checkboxes que no persistan su estado en la configuración del sistema.
 
-### 2.2. Prohibición de Opciones y Rutas Hardcodeadas
+### 2.2. Uso de Mockups vs. Prohibición de Datos Inventados
+- **Mockups como Guía Canónica de Opciones Gráficas**: Las maquetas (`core_shell.html` para la carcasa limpia y `index.html` para el entorno con módulos) determinan la ergonomía, la distribución espacial, las opciones gráficas y la jerarquía de la interfaz. Todas las opciones y pestañas planteadas deben estar disponibles.
+- **Prohibición de Datos Ficticios**: Ningún componente debe poblarse con datos inventados (tarjetas dummy en catálogos, repositorios fingidos con estado ACTIVO o temporizadores `setTimeout` simulando descargas). Si no hay datos reales o no hay conexión configurada, el componente debe mostrar de forma transparente su **estado real (Empty State)** informativo con opciones para configurar o sincronizar fuentes.
+
+### 2.3. Prohibición de Opciones y Rutas Hardcodeadas
 - Todo elemento del menú lateral (Sidebar), toda tarjeta en la galería del Dashboard y toda pestaña en la vista de Configuraciones debe ser **registrado dinámicamente** por el Core o por los módulos formalmente instalados.
 - Si un módulo es desinstalado o desactivado, su tarjeta del Dashboard, su pestaña de configuración y su ítem del Sidebar **deben desaparecer automáticamente** de la interfaz.
 
-### 2.3. Unicidad y Coherencia de Controles (Cero Duplicidad)
+### 2.4. Unicidad y Coherencia de Controles (Cero Duplicidad)
 - Cada vista o acción debe tener **un único lugar canónico** en la interfaz.
 - No duplicar accesos de manera descuidada (por ejemplo, tener un botón de "Configuraciones" tanto en la barra superior como en el menú lateral).
 - Estructura unificada de navegación:

@@ -69,11 +69,15 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
   - Las tarjetas del Dashboard pueden moverse y reubicarse libremente en la cuadrícula de forma suave y continua, con animaciones fluidas (`cubic-bezier`), sombras de elevación y retroalimentación visual clara sin saltos toscos durante el arrastre.
   - El Dashboard debe contar obligatoriamente con un **botón flotante canónico de Auto-organización** (`btn-fab`) que reacomode y compacte inteligentemente las tarjetas en la cuadrícula sin dejar huecos vacíos.
 
-### Regla 7: Integridad Funcional y Visibilidad de Tarjetas (Cero Recortes)
+### Regla 7: Integridad Funcional, Uso de Mockups y Cero Datos Inventados
 - **Visibilidad 100% en Tarjetas**: Los títulos y contenidos de las tarjetas del Dashboard no pueden estar truncados ni recortados con puntos suspensivos (`ellipsis`). Todo lo que el módulo diseñe para mostrar debe ser 100% legible y visible en el tamaño de celda elegido (`1x1`, `2x1`, `2x2`, etc.).
+- **Uso Estricto de Mockups para Opciones Gráficas y Orden del UI**:
+  - Los mockups (`core_shell.html` para la versión limpia de fábrica y `index.html` para el sistema con módulos activos) son las **guías canónicas de diseño, opciones gráficas, jerarquía visual y orden de la interfaz**. Todas las opciones gráficas, pestañas y componentes planteados en la maqueta deben estar presentes.
+  - **Prohibición Absoluta de Opciones Falsas y Datos Inventados**: Queda terminantemente prohibido inventar datos ficticios, tarjetas dummy simulando módulos no instalados (ej. en catálogo remoto) o simulaciones con temporizadores (`setTimeout`). Si una opción o sección (como el catálogo remoto) no tiene datos disponibles o repositorios conectados, la interfaz debe mostrar con total transparencia su **estado real (Empty State)** con opciones para configurar o sincronizar fuentes reales.
 - **Cero elementos placebo o decorativos**: Todo botón, switch, selector o menú debe estar conectado a lógica real. Prohibidos los placeholders o botones sin función.
 - **Registro 100% dinámico**: Ningún menú, tarjeta o pestaña de configuración puede estar hardcodeado; todo se registra y desregistra dinámicamente mediante el Core y los módulos activos.
 - **Cero duplicidad**: Cada sección tiene un único acceso canónico en la interfaz.
+- **Documento Maestro**: Consultar [`PROJECT_SPECIFICATION.md`](file:///c:/Proyectos/pc_manager/PROJECT_SPECIFICATION.md) para el detalle exhaustivo de la arquitectura, maquetas y opciones del sistema.
 
 ### Regla 8: Ciclo de Vida del Core e Integración con Windows
 - **Inicio con Windows**: Opción configurable en Configuraciones para iniciar automáticamente con el sistema operativo.
