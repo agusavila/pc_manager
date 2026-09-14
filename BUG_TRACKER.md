@@ -236,6 +236,37 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-011] Creación del Módulo Dummy (.pcm) e Implementación del Instalador Dinámico Real en el Core
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `Gestor de Módulos (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`)`
+- **Descripción del Fallo**: 
+  El Core disponía de una zona de arrastrar y soltar (dropzone) y un diálogo para seleccionar paquetes `.pcm`, pero carecía de la capacidad técnica para descomprimir archivos ZIP (.pcm), validar su `manifest.json`, registrar sus componentes en caliente y ejecutar su lógica real en el Dashboard y la Navegación sin inventar datos ni usar timers simulados.
+- **Causa Raíz**: 
+  El formato de paquete `.pcm` es un archivo ZIP estándar, el cual no podía ser procesado por el WebView sin una librería de descompresión en memoria como JSZip y una API de montaje dinámico en el Core.
+- **Solución Implementada**: 
+  1. Se creó el generador formal de módulos dummy [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs) que compila un paquete real [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm) con `manifest.json`, `module.js` (reloj en vivo con hora UTC y local), `icon.svg` y `README.md`.
+  2. Se integró [`ui/vendor/jszip.min.js`](file:///c:/Proyectos/pc_manager/ui/vendor/jszip.min.js) para descomprimir y analizar paquetes `.pcm` localmente en memoria sin llamadas a servidores externos.
+  3. Se programó el cargador e instalador dinámico en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html):
+     - Soporta Drag & Drop directo sobre la zona de carga y selección mediante diálogo de archivos.
+     - Valida campos obligatorios del `manifest.json` (`id`, `name`, `version`, `entry`, etc.).
+     - Registra el módulo en la lista de *Módulos Instalados*, monta su tarjeta widget (2x1) en el Dashboard 10x10, crea su botón de acceso en el grupo del menú lateral y monta su vista detallada.
+     - Soporta conmutación activa/inactiva y desinstalación completa limpia (retornando al estado vacío si no quedan módulos).
+  4. Se sincronizó [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se recompiló el binario nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`ui/vendor/jszip.min.js`](file:///c:/Proyectos/pc_manager/ui/vendor/jszip.min.js)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

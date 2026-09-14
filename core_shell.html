@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="vendor/jszip.min.js"></script>
   <style>
     :root {
       --bg-base: #0a0c10;
@@ -1080,9 +1081,9 @@
           </button>
         </div>
 
-        <!-- PESTAÑA A: INSTALADOS (VACÍO) -->
+        <!-- PESTAÑA A: INSTALADOS -->
         <div id="manager-tab-installed">
-          <div class="dropzone-pcm" onclick="triggerInstallDialog()">
+          <div class="dropzone-pcm" id="dropzone-pcm" onclick="triggerInstallDialog()">
             <svg class="svg-icon svg-icon-xl" style="color: var(--accent-primary); margin-bottom: 12px;" viewBox="0 0 24 24">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line>
@@ -1093,8 +1094,10 @@
             </p>
           </div>
 
-          <div style="margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">
-            <p>No hay módulos instalados actualmente en el equipo.</p>
+          <div id="installed-modules-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+            <div id="empty-installed-notice" style="text-align: center; color: var(--text-muted); font-size: 13px;">
+              <p>No hay módulos instalados actualmente en el equipo.</p>
+            </div>
           </div>
         </div>
 
@@ -1516,20 +1519,282 @@
       if (activeTab) activeTab.classList.remove('hidden');
     }
 
-    // 5. SIMULACIÓN DE INSTALACIÓN DINÁMICA (DEMO DE EXTENSIBILIDAD EN CALIENTE)
+    // 5. GESTIÓN E INSTALACIÓN DE PAQUETES .PCM (DYNAMIC EXTENSIBILITY)
+    const installedModules = new Map();
+
     function triggerInstallDialog() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.pcm,.zip';
       input.onchange = (e) => {
         if (e.target.files.length > 0) {
-          const file = e.target.files[0];
-          const fileName = file.name;
-          const fileSizeKb = (file.size / 1024).toFixed(1);
-          addSystemNotification('Paquete Seleccionado', `Archivo ${fileName} (${fileSizeKb} KB) cargado para verificación de manifiesto.`, 'info');
+          handlePcmPackage(e.target.files[0]);
         }
       };
       input.click();
+    }
+
+    async function handlePcmPackage(file) {
+      if (!file) return;
+      try {
+        if (!file.name.endsWith('.pcm') && !file.name.endsWith('.zip')) {
+          addSystemNotification('Formato No Soportado', 'El paquete debe tener extensión .pcm o .zip.', 'warning');
+          return;
+        }
+
+        addSystemNotification('Instalación en Curso', `Descomprimiendo y validando ${file.name}...`, 'info');
+        const arrayBuffer = await file.arrayBuffer();
+        if (typeof JSZip === 'undefined') {
+          addSystemNotification('Dependencia no cargada', 'Motor de descompresión JSZip no disponible.', 'warning');
+          return;
+        }
+
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const manifestFile = zip.file('manifest.json');
+        if (!manifestFile) {
+          addSystemNotification('Manifiesto Ausente', 'El paquete .pcm no contiene un manifest.json válido.', 'warning');
+          return;
+        }
+
+        const manifestText = await manifestFile.async('string');
+        const manifest = JSON.parse(manifestText);
+
+        if (!manifest.id || !manifest.name) {
+          addSystemNotification('Manifiesto Inválido', 'Faltan campos obligatorios id o name.', 'warning');
+          return;
+        }
+
+        let scriptCode = '';
+        const entryFile = zip.file(manifest.entrypoint || 'module.js');
+        if (entryFile) {
+          scriptCode = await entryFile.async('string');
+        }
+
+        installModule(manifest, scriptCode);
+      } catch (err) {
+        console.error('Error al instalar paquete .pcm:', err);
+        addSystemNotification('Error de Instalación', `No se pudo instalar el paquete: ${err.message}`, 'warning');
+      }
+    }
+
+    function installModule(manifest, scriptCode) {
+      if (installedModules.has(manifest.id)) {
+        addSystemNotification('Módulo Existente', `El módulo "${manifest.name}" ya se encuentra instalado.`, 'warning');
+        return;
+      }
+
+      installedModules.set(manifest.id, { manifest, scriptCode, active: true });
+
+      // 1. Añadir a la lista de instalados
+      const list = document.getElementById('installed-modules-list');
+      const emptyNotice = document.getElementById('empty-installed-notice');
+      if (emptyNotice) emptyNotice.style.display = 'none';
+
+      const modCard = document.createElement('div');
+      modCard.className = 'settings-card';
+      modCard.id = `installed-mod-${manifest.id}`;
+      modCard.style.padding = '16px';
+      modCard.style.flexDirection = 'row';
+      modCard.style.alignItems = 'center';
+      modCard.style.justifyContent = 'space-between';
+      modCard.innerHTML = `
+        <div style="display: flex; gap: 14px; align-items: center;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+          </div>
+          <div>
+            <h4 style="font-size: 14px; font-weight: 600;">${manifest.name}</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">${manifest.description || ''}</p>
+            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-success);">v${manifest.version || '1.0.0'} // Grupo: ${manifest.group || 'General'}</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <label class="switch" title="Activar / Desactivar módulo">
+            <input type="checkbox" checked onchange="toggleModuleActive('${manifest.id}', this.checked)">
+            <span class="slider"></span>
+          </label>
+          <button class="btn btn-secondary" style="color: var(--accent-danger); padding: 6px 12px; font-size: 12px;" onclick="uninstallModule('${manifest.id}')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+            <span>Desinstalar</span>
+          </button>
+        </div>
+      `;
+      list.appendChild(modCard);
+
+      // 2. Actualizar contadores
+      updateModuleCounts();
+
+      // 3. Añadir navegación al Sidebar bajo su grupo
+      const groupName = manifest.group || 'General';
+      ensureSidebarGroup(groupName);
+      const groupContainer = document.getElementById(`sidebar-group-items-${groupName}`);
+      if (groupContainer) {
+        const navBtn = document.createElement('button');
+        navBtn.className = 'nav-button';
+        navBtn.id = `nav-module-${manifest.id}`;
+        navBtn.title = manifest.name;
+        navBtn.onclick = () => switchView(`module-${manifest.id}`);
+        navBtn.innerHTML = `
+          <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>${manifest.name}</span>
+        `;
+        groupContainer.appendChild(navBtn);
+      }
+
+      // 4. Inyectar vista dedicada del módulo
+      if (manifest.views && manifest.views.length > 0) {
+        manifest.views.forEach(v => {
+          const viewSec = document.createElement('section');
+          viewSec.className = 'view-content hidden';
+          viewSec.id = `view-module-${manifest.id}`;
+          viewSec.innerHTML = v.html || `<div class="settings-card"><h4>${manifest.name}</h4><p>${manifest.description || ''}</p></div>`;
+          document.querySelector('.main-stage').appendChild(viewSec);
+
+          VIEW_METADATA[`module-${manifest.id}`] = {
+            title: manifest.name,
+            desc: manifest.description || 'Vista operativa del módulo instalado.'
+          };
+        });
+      }
+
+      // 5. Inyectar widgets en el Dashboard
+      if (manifest.widgets && manifest.widgets.length > 0) {
+        const emptyHero = document.querySelector('.empty-dashboard-hero');
+        if (emptyHero) emptyHero.style.display = 'none';
+
+        manifest.widgets.forEach(w => {
+          const card = document.createElement('article');
+          card.className = `card card-size-${w.size || '2x1'}`;
+          card.id = w.id || `card-${manifest.id}`;
+          card.draggable = true;
+          card.innerHTML = w.html;
+          document.getElementById('grid-board').appendChild(card);
+        });
+        updateDashboardCardsCount();
+      }
+
+      // 6. Ejecutar script del módulo si existe
+      if (scriptCode) {
+        try {
+          const runFn = new Function(scriptCode);
+          runFn();
+        } catch (e) {
+          console.error(`Error ejecutando script de módulo ${manifest.id}:`, e);
+        }
+      }
+
+      addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success');
+    }
+
+    function toggleModuleActive(moduleId, isActive) {
+      const mod = installedModules.get(moduleId);
+      if (!mod) return;
+      mod.active = isActive;
+
+      const navBtn = document.getElementById(`nav-module-${moduleId}`);
+      if (navBtn) navBtn.style.display = isActive ? 'flex' : 'none';
+
+      if (mod.manifest.widgets) {
+        mod.manifest.widgets.forEach(w => {
+          const card = document.getElementById(w.id || `card-${moduleId}`);
+          if (card) card.style.display = isActive ? 'flex' : 'none';
+        });
+        updateDashboardCardsCount();
+      }
+
+      checkSidebarGroupsVisibility();
+      addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info');
+    }
+
+    function uninstallModule(moduleId) {
+      const mod = installedModules.get(moduleId);
+      if (!mod) return;
+
+      if (!confirm(`¿Confirmas la desinstalación de "${mod.manifest.name}"?`)) return;
+
+      const cardEl = document.getElementById(`installed-mod-${moduleId}`);
+      if (cardEl) cardEl.remove();
+
+      const navBtn = document.getElementById(`nav-module-${moduleId}`);
+      if (navBtn) navBtn.remove();
+
+      const viewEl = document.getElementById(`view-module-${moduleId}`);
+      if (viewEl) viewEl.remove();
+
+      if (mod.manifest.widgets) {
+        mod.manifest.widgets.forEach(w => {
+          const widgetEl = document.getElementById(w.id || `card-${moduleId}`);
+          if (widgetEl) widgetEl.remove();
+        });
+      }
+
+      installedModules.delete(moduleId);
+      updateModuleCounts();
+      updateDashboardCardsCount();
+      checkSidebarGroupsVisibility();
+
+      if (installedModules.size === 0) {
+        const emptyNotice = document.getElementById('empty-installed-notice');
+        if (emptyNotice) emptyNotice.style.display = 'block';
+
+        const emptyHero = document.querySelector('.empty-dashboard-hero');
+        if (emptyHero) emptyHero.style.display = 'flex';
+
+        if (currentView.startsWith('module-')) {
+          switchView('dashboard');
+        }
+      }
+
+      addSystemNotification('Módulo Desinstalado', `"${mod.manifest.name}" ha sido eliminado del sistema.`, 'warning');
+    }
+
+    function ensureSidebarGroup(groupName) {
+      let groupEl = document.getElementById(`sidebar-group-${groupName}`);
+      if (!groupEl) {
+        const navArea = document.getElementById('modules-nav-area');
+        const emptyNotice = document.querySelector('.empty-modules-sidebar-notice');
+        if (emptyNotice) emptyNotice.style.display = 'none';
+
+        groupEl = document.createElement('div');
+        groupEl.className = 'sidebar-group-box';
+        groupEl.id = `sidebar-group-${groupName}`;
+        groupEl.style.marginTop = '6px';
+        groupEl.innerHTML = `
+          <div class="group-header" onclick="this.parentElement.querySelector('.group-items').classList.toggle('collapsed'); this.classList.toggle('collapsed');">
+            <span>${groupName}</span>
+            <svg class="svg-icon group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="group-items" id="sidebar-group-items-${groupName}"></div>
+        `;
+        navArea.appendChild(groupEl);
+      }
+    }
+
+    function checkSidebarGroupsVisibility() {
+      document.querySelectorAll('.sidebar-group-box').forEach(gBox => {
+        const visibleItems = Array.from(gBox.querySelectorAll('.nav-button')).filter(btn => btn.style.display !== 'none');
+        gBox.style.display = visibleItems.length > 0 ? 'block' : 'none';
+      });
+
+      const emptyNotice = document.querySelector('.empty-modules-sidebar-notice');
+      if (emptyNotice) {
+        const hasActive = Array.from(installedModules.values()).some(m => m.active);
+        emptyNotice.style.display = hasActive ? 'none' : 'block';
+      }
+    }
+
+    function updateModuleCounts() {
+      const count = installedModules.size;
+      const badgeNav = document.getElementById('badge-total-modules');
+      const badgeTab = document.getElementById('tab-installed-count');
+      if (badgeNav) badgeNav.textContent = count;
+      if (badgeTab) badgeTab.textContent = count;
+    }
+
+    function updateDashboardCardsCount() {
+      const visibleCards = Array.from(document.querySelectorAll('#grid-board .card')).filter(c => c.style.display !== 'none').length;
+      const badge = document.getElementById('badge-active-cards');
+      if (badge) badge.textContent = visibleCards;
     }
 
     function syncRemoteCatalog() {
@@ -1938,6 +2203,36 @@
         }
       } catch (err) {
         console.warn('Ejecutando en entorno webview desacoplado:', err);
+      }
+
+      // Drag & Drop de paquetes .pcm sobre la zona de arrastre
+      const dropzone = document.getElementById('dropzone-pcm');
+      if (dropzone) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.style.borderColor = 'var(--accent-primary)';
+            dropzone.style.backgroundColor = 'var(--accent-primary-dim)';
+          }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.style.borderColor = '';
+            dropzone.style.backgroundColor = '';
+          }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          const dt = e.dataTransfer;
+          const files = dt.files;
+          if (files && files.length > 0) {
+            handlePcmPackage(files[0]);
+          }
+        }, false);
       }
     });
   </script>
