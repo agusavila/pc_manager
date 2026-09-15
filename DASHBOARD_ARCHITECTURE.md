@@ -152,27 +152,32 @@ Al confirmarse el arrastre:
     indicator.style.gridRow = `${targetRow} / span ${spanRow}`;
     ```
 
-### 4.3 Cálculo Matemático de Snapping (Proyección Puntero $\to$ Celda Matricial)
+### 4.3 Cálculo Matemático de Snapping y Acoplamiento Vertical Coherente
 
-En cada evento `pointermove`, se proyecta la posición del puntero dentro de la cuadrícula:
+En cada evento `pointermove`, se proyecta la posición del puntero dentro de la cuadrícula respetando las dimensiones físicas de la ventana para evitar desplazamientos al vacío:
 
 1. Se obtiene el rectángulo del `#grid-board` mediante `grid.getBoundingClientRect()`.
 2. Se descuenta el desplazamiento de scroll del contenedor principal (`dashboardSection.scrollTop`).
 3. Se calculan las dimensiones efectivas de una celda:
-   $$W_{\text{cell}} = \frac{W_{\text{grid}} - (C_{\text{cols}} - 1) \cdot \text{gap}}{C_{\text{cols}}}$$
+   $$W_{\text{cell}} = \frac{W_{\text{grid}} - \text{pad}_{\text{left}} - \text{pad}_{\text{right}} - (C_{\text{cols}} - 1) \cdot \text{gap}}{C_{\text{cols}}}$$
    $$H_{\text{cell}} = 110\text{ px}$$
 4. Coordenada relativa del puntero respecto al origen de la tarjeta:
-   $$X_{\text{rel}} = X_{\text{pointer}} - \text{rect}_{\text{grid}}.left - X_{\text{grabOffset}}$$
-   $$Y_{\text{rel}} = Y_{\text{pointer}} - \text{rect}_{\text{grid}}.top + \text{scroll}_{\text{top}} - Y_{\text{grabOffset}}$$
-5. Determinación de fila y columna por truncamiento de celda con límites de seguridad:
+   $$X_{\text{rel}} = X_{\text{pointer}} - \text{rect}_{\text{grid}}.left - \text{pad}_{\text{left}} - X_{\text{grabOffset}}$$
+   $$Y_{\text{rel}} = Y_{\text{pointer}} - \text{rect}_{\text{grid}}.top - \text{pad}_{\text{top}} - Y_{\text{grabOffset}}$$
+5. **Acoplamiento Magnético al Área Visible (`maxAllowedRow`)**:
+   Para impedir que un widget se desplace a filas arbitrarias en el vacío generando barras de desplazamiento gigantescas y descontroladas, se calcula el límite vertical dinámico:
+   $$\text{maxOccupiedRow} = \max_{c \in \text{OtherCards}} (c_{\text{row}} + c_{\text{spanRow}} - 1)$$
+   $$\text{visibleRows} = \max\left( 2, \; \left\lfloor \frac{H_{\text{viewport}} - 2 \cdot \text{pad} + \text{gap}}{H_{\text{cell}} + \text{gap}} \right\rfloor \right)$$
+   $$\text{maxAllowedRow} = \max\left( 1, \; \max(\text{visibleRows} - \text{spanRow} + 1, \; \text{maxOccupiedRow} + 1) \right)$$
+6. Determinación de fila y columna por truncamiento de celda con límites de seguridad:
    $$\text{targetCol} = \text{clamp}\left( \left\lfloor \frac{X_{\text{rel}}}{W_{\text{cell}} + \text{gap}} \right\rfloor + 1, \; 1, \; C_{\text{cols}} - \text{spanCol} + 1 \right)$$
-   $$\text{targetRow} = \max\left( 1, \; \left\lfloor \frac{Y_{\text{rel}}}{H_{\text{cell}} + \text{gap}} \right\rfloor + 1 \right)$$
+   $$\text{targetRow} = \text{clamp}\left( \left\lfloor \frac{Y_{\text{rel}}}{H_{\text{cell}} + \text{gap}} \right\rfloor + 1, \; 1, \; \text{maxAllowedRow} \right)$$
 
 ---
 
-## 5. Detección y Resolución de Colisiones (AABB)
+## 5. Detección y Resolución de Colisiones (Matriz de Ocupación Estricta)
 
-Cuando el usuario suelta la tarjeta (`pointerup`), el sistema debe acomodar las tarjetas preexistentes para evitar solapamientos visuales ilegítimos. Se emplea el modelo de **Cajas Delimitadoras Alineadas a los Ejes (AABB - Axis-Aligned Bounding Box)** en coordenadas enteras de la cuadrícula.
+Cuando el usuario suelta la tarjeta (`pointerup`), el sistema debe acomodar las tarjetas preexistentes garantizando **cero superposiciones**. Se emplea una matriz de ocupación bidimensional combinada con el modelo AABB.
 
 ### 5.1 Test de Intersección
 
@@ -184,17 +189,24 @@ Donde:
 $$A_{\text{col1}} = A_{\text{col}}, \quad A_{\text{col2}} = A_{\text{col}} + A_{\text{spanCol}}$$
 $$A_{\text{row1}} = A_{\text{row}}, \quad A_{\text{row2}} = A_{\text{row}} + A_{\text{spanRow}}$$
 
-### 5.2 Estrategia de Resolución: Swap Inteligente y Cascada
+### 5.2 Estrategia de Resolución: Swap Bidireccional Verificado y Cascada Libre
 
-1. **Intercambio Directo (1 a 1)**:
-   Si la tarjeta arrastrada cae sobre **una única tarjeta existente**, el motor intenta realizar un *swap* o intercambio simétrico: la tarjeta receptora toma la posición anterior de la tarjeta arrastrada si sus dimensiones lo permiten.
-2. **Desplazamiento en Cascada (Múltiples Colisiones)**:
-   Si la tarjeta arrastrada ocupa el espacio de múltiples elementos, los elementos afectados son desplazados hacia abajo en el eje $Y$:
-   $$B_{\text{row}} = A_{\text{row}} + A_{\text{spanRow}}$$
+1. **Prioridad Absoluta del Usuario**:
+   La tarjeta arrastrada ocupa inmediatamente $(targetCol, targetRow)$ y todas sus celdas se bloquean en la matriz `occupied`.
+2. **Intercambio Verificado (1 a 1)**:
+   Si la tarjeta arrastrada colisiona con **exactamente una tarjeta existente**:
+   - Se evalúa si dicha tarjeta cabe limpiamente en la posición de origen $(origCol, origRow)$ de la tarjeta arrastrada.
+   - Si no colisiona con ninguna celda ya ocupada ni con vecinos preexistentes, se ejecuta el *swap* simétrico.
+3. **Reubicación en Cascada sin Superposiciones (`findNextFreeSlot`)**:
+   - Si no es viable un swap limpio o si existen múltiples tarjetas en conflicto, las tarjetas afectadas se ordenan de arriba hacia abajo y de izquierda a derecha.
+   - Cada tarjeta busca de forma determinista el primer hueco libre en la matriz `occupied` mediante `findNextFreeSlot`.
+   - Se asegura que **ninguna celda pertenezca a más de una tarjeta**, eliminando al 100% las superposiciones.
+4. **Contracción Dinámica del Contenedor**:
+   Al mover widgets hacia arriba, las filas inferiores se colapsan automáticamente en CSS Grid y el sistema limpia cualquier scroll residual (`scrollTop = maxScroll`), asegurando que no queden áreas colgadas.
 
 ### 5.3 Asentamiento con Animación de Retorno (`.card-drop`)
 
-Al soltar la tarjeta, se le añade temporalmente la clase `.card-drop` que aplica una función de aceleración `cubic-bezier(0.2, 0, 0, 1)` a nivel CSS durante 250ms, produciendo una desaceleración fluida al ocupar su celda definitiva.
+Al soltar la tarjeta o al ser reubicada por colisión, se le añade temporalmente la clase `.card-drop` que aplica una función de aceleración `cubic-bezier(0.2, 0, 0, 1)` a nivel CSS durante 300ms, produciendo una desaceleración fluida y visualmente atractiva al asentarse en su celda definitiva.
 
 ---
 

@@ -556,7 +556,7 @@
     .grid-board {
       display: grid;
       grid-template-columns: repeat(10, minmax(0, 1fr));
-      grid-auto-rows: 90px;
+      grid-auto-rows: 110px;
       gap: 14px;
       background-color: rgba(22, 27, 38, 0.4);
       border: 1px solid var(--border-subtle);
@@ -585,6 +585,7 @@
       overflow: hidden;
       user-select: none;
       touch-action: none;
+      box-sizing: border-box;
     }
 
     .card:active {
@@ -634,7 +635,7 @@
       transition: all 0.12s cubic-bezier(0.2, 0, 0, 1) !important;
       box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2) !important;
       z-index: 5 !important;
-      min-height: 90px;
+      min-height: 110px;
     }
 
     /* SELECTOR DE PERFILES DEL DASHBOARD */
@@ -2486,18 +2487,18 @@
               clone.style.top = `${moveEvent.clientY - grabOffsetY}px`;
             }
 
-            // Auto-scroll si el puntero se acerca a los bordes verticales del contenedor
+            // Auto-scroll controlado solo si el contenedor realmente desborda en altura
             const viewContent = document.querySelector('.view-content');
-            if (viewContent) {
+            if (viewContent && viewContent.scrollHeight > viewContent.clientHeight + 20) {
               const viewRect = viewContent.getBoundingClientRect();
-              if (moveEvent.clientY > viewRect.bottom - 45) {
-                viewContent.scrollTop += 9;
-              } else if (moveEvent.clientY < viewRect.top + 45) {
-                viewContent.scrollTop -= 9;
+              if (moveEvent.clientY > viewRect.bottom - 40 && viewContent.scrollTop < viewContent.scrollHeight - viewContent.clientHeight - 5) {
+                viewContent.scrollTop += 5;
+              } else if (moveEvent.clientY < viewRect.top + 40 && viewContent.scrollTop > 5) {
+                viewContent.scrollTop -= 5;
               }
             }
 
-            // Calcular columna y fila objetivo en la cuadrícula
+            // Calcular columna y fila objetivo en la cuadrícula de forma coherente
             const boardRect = grid.getBoundingClientRect();
             const gridCols = getGridCols();
             const effSpanCol = Math.min(spanCol, gridCols);
@@ -2511,7 +2512,21 @@
             const innerWidth = boardRect.width - padLeft - padRight;
             const colWidth = (innerWidth - (gap * (gridCols - 1))) / gridCols;
             const stepX = colWidth + gap;
-            const stepY = 90 + gap;
+            const stepY = 110 + gap;
+
+            // Determinar límite máximo de fila coherente con el área visible y las tarjetas existentes
+            const otherCards = Array.from(grid.querySelectorAll('.card')).filter(c => c !== card && c.style.display !== 'none');
+            let maxOccupiedRow = 0;
+            otherCards.forEach(c => {
+              const r = parseInt(c.dataset.row || '1', 10);
+              const { spanRow: sR } = getCardSpan(c);
+              if (r + sR - 1 > maxOccupiedRow) maxOccupiedRow = r + sR - 1;
+            });
+
+            const gridVisibleHeight = grid.clientHeight - (padTop * 2);
+            const visibleRowsInViewport = Math.max(2, Math.floor((gridVisibleHeight + gap) / stepY));
+            // La tarjeta puede colocarse en las filas del área visible o a lo sumo en la fila inmediatamente siguiente a la más baja
+            const maxAllowedRow = Math.max(1, Math.max(visibleRowsInViewport - spanRow + 1, maxOccupiedRow + 1));
 
             const cardLeft = moveEvent.clientX - grabOffsetX;
             const cardTop = moveEvent.clientY - grabOffsetY;
@@ -2522,7 +2537,7 @@
             targetCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, targetCol));
 
             let targetRow = Math.round(relY / stepY) + 1;
-            targetRow = Math.max(1, Math.min(25, targetRow));
+            targetRow = Math.max(1, Math.min(maxAllowedRow, targetRow));
 
             if (indicator) {
               indicator.style.gridColumn = `${targetCol} / span ${effSpanCol}`;
@@ -2562,9 +2577,30 @@
             const gridCols = getGridCols();
             const effSpanCol = Math.min(spanCol, gridCols);
 
-            // Verificar colisiones con otras tarjetas activas
+            // Matriz de ocupación estricta para garantizar 0 superposiciones
+            const occupied = {};
+
+            // 1. Asignar la posición deseada a la tarjeta arrastrada
+            card.style.gridColumn = `${targetCol} / span ${effSpanCol}`;
+            card.style.gridRow = `${targetRow} / span ${spanRow}`;
+            card.dataset.col = targetCol;
+            card.dataset.row = targetRow;
+
+            for (let r = targetRow; r < targetRow + spanRow; r++) {
+              if (!occupied[r]) occupied[r] = {};
+              for (let c = targetCol; c < targetCol + effSpanCol; c++) {
+                occupied[r][c] = card.id;
+              }
+            }
+
+            card.classList.remove('card-drop');
+            void card.offsetWidth;
+            card.classList.add('card-drop');
+            setTimeout(() => card.classList.remove('card-drop'), 300);
+
+            // 2. Evaluar colisiones con las demás tarjetas activas
             const otherCards = Array.from(grid.querySelectorAll('.card')).filter(c => c !== card && c.style.display !== 'none');
-            const overlappingCards = otherCards.filter(other => {
+            const collidingCards = otherCards.filter(other => {
               const oCol = parseInt(other.dataset.col || '1', 10);
               const oRow = parseInt(other.dataset.row || '1', 10);
               const { spanCol: oSpanCol, spanRow: oSpanRow } = getCardSpan(other);
@@ -2574,45 +2610,122 @@
               return xOverlap && yOverlap;
             });
 
-            if (overlappingCards.length === 1) {
-              // Intercambiar posición con la tarjeta existente
-              const other = overlappingCards[0];
+            // Si hay exactamente una tarjeta colisionando, intentar un swap limpio a la posición de origen
+            let swappedCleanly = false;
+            if (collidingCards.length === 1 && origCol && origRow) {
+              const other = collidingCards[0];
               const { spanCol: oSpanCol, spanRow: oSpanRow } = getCardSpan(other);
               const oEffSpanCol = Math.min(oSpanCol, gridCols);
               const clampedOrigCol = Math.max(1, Math.min(gridCols - oEffSpanCol + 1, origCol));
 
-              other.style.gridColumn = `${clampedOrigCol} / span ${oEffSpanCol}`;
-              other.style.gridRow = `${origRow} / span ${oSpanRow}`;
-              other.dataset.col = clampedOrigCol;
-              other.dataset.row = origRow;
-              other.classList.remove('card-drop');
-              void other.offsetWidth;
-              other.classList.add('card-drop');
-              setTimeout(() => other.classList.remove('card-drop'), 300);
-            } else if (overlappingCards.length > 1) {
-              // Desplazar tarjetas en conflicto hacia filas inferiores
-              overlappingCards.forEach(other => {
-                const { spanRow: oSpanRow } = getCardSpan(other);
-                const newRow = targetRow + spanRow;
-                other.style.gridRow = `${newRow} / span ${oSpanRow}`;
-                other.dataset.row = newRow;
+              // Verificar si cabe exactamente en la posición original sin solapar con nadie
+              let canSwap = true;
+              for (let r = origRow; r < origRow + oSpanRow; r++) {
+                for (let c = clampedOrigCol; c < clampedOrigCol + oEffSpanCol; c++) {
+                  if (occupied[r] && occupied[r][c]) {
+                    canSwap = false;
+                    break;
+                  }
+                }
+                if (!canSwap) break;
+              }
+
+              if (canSwap) {
+                for (const nonCol of otherCards) {
+                  if (nonCol === other) continue;
+                  const nCol = parseInt(nonCol.dataset.col || '1', 10);
+                  const nRow = parseInt(nonCol.dataset.row || '1', 10);
+                  const { spanCol: nSpanCol, spanRow: nSpanRow } = getCardSpan(nonCol);
+                  const nEffSpanCol = Math.min(nSpanCol, gridCols);
+                  const xOver = (clampedOrigCol < nCol + nEffSpanCol) && (clampedOrigCol + oEffSpanCol > nCol);
+                  const yOver = (origRow < nRow + nSpanRow) && (origRow + oSpanRow > nRow);
+                  if (xOver && yOver) {
+                    canSwap = false;
+                    break;
+                  }
+                }
+              }
+
+              if (canSwap) {
+                other.style.gridColumn = `${clampedOrigCol} / span ${oEffSpanCol}`;
+                other.style.gridRow = `${origRow} / span ${oSpanRow}`;
+                other.dataset.col = clampedOrigCol;
+                other.dataset.row = origRow;
+                for (let r = origRow; r < origRow + oSpanRow; r++) {
+                  if (!occupied[r]) occupied[r] = {};
+                  for (let c = clampedOrigCol; c < clampedOrigCol + oEffSpanCol; c++) {
+                    occupied[r][c] = other.id;
+                  }
+                }
                 other.classList.remove('card-drop');
                 void other.offsetWidth;
                 other.classList.add('card-drop');
                 setTimeout(() => other.classList.remove('card-drop'), 300);
-              });
+                swappedCleanly = true;
+              }
             }
 
-            // Asignar nuevas coordenadas fijas a la tarjeta arrastrada
-            card.style.gridColumn = `${targetCol} / span ${effSpanCol}`;
-            card.style.gridRow = `${targetRow} / span ${spanRow}`;
-            card.dataset.col = targetCol;
-            card.dataset.row = targetRow;
+            // 3. Procesar las tarjetas restantes ordenadas para garantizar cero huecos y cero superposiciones
+            const remainingCards = otherCards.filter(c => !swappedCleanly || c !== collidingCards[0]);
+            remainingCards.sort((a, b) => {
+              const rA = parseInt(a.dataset.row || '1', 10);
+              const rB = parseInt(b.dataset.row || '1', 10);
+              if (rA !== rB) return rA - rB;
+              const cA = parseInt(a.dataset.col || '1', 10);
+              const cB = parseInt(b.dataset.col || '1', 10);
+              return cA - cB;
+            });
 
-            card.classList.remove('card-drop');
-            void card.offsetWidth;
-            card.classList.add('card-drop');
-            setTimeout(() => card.classList.remove('card-drop'), 300);
+            remainingCards.forEach(other => {
+              const { spanCol: oSpanCol, spanRow: oSpanRow } = getCardSpan(other);
+              const oEffSpanCol = Math.min(oSpanCol, gridCols);
+              let curCol = parseInt(other.dataset.col || '1', 10);
+              curCol = Math.max(1, Math.min(gridCols - oEffSpanCol + 1, curCol));
+              let curRow = parseInt(other.dataset.row || '1', 10);
+
+              let collides = false;
+              for (let r = curRow; r < curRow + oSpanRow; r++) {
+                for (let c = curCol; c < curCol + oEffSpanCol; c++) {
+                  if (occupied[r] && occupied[r][c]) {
+                    collides = true;
+                    break;
+                  }
+                }
+                if (collides) break;
+              }
+
+              if (collides) {
+                // Encontrar el primer slot libre hacia abajo sin colisiones
+                const slot = findNextFreeSlot(gridCols, oEffSpanCol, oSpanRow, occupied);
+                other.style.gridColumn = `${slot.col} / span ${oEffSpanCol}`;
+                other.style.gridRow = `${slot.row} / span ${oSpanRow}`;
+                other.dataset.col = slot.col;
+                other.dataset.row = slot.row;
+                curCol = slot.col;
+                curRow = slot.row;
+
+                other.classList.remove('card-drop');
+                void other.offsetWidth;
+                other.classList.add('card-drop');
+                setTimeout(() => other.classList.remove('card-drop'), 300);
+              }
+
+              // Registrar celdas ocupadas
+              for (let r = curRow; r < curRow + oSpanRow; r++) {
+                if (!occupied[r]) occupied[r] = {};
+                for (let c = curCol; c < curCol + oEffSpanCol; c++) {
+                  occupied[r][c] = other.id;
+                }
+              }
+            });
+
+            // Si la cuadrícula se contrajo al mover elementos hacia arriba, ajustar el scroll residual
+            if (viewContent) {
+              const maxScroll = Math.max(0, viewContent.scrollHeight - viewContent.clientHeight);
+              if (viewContent.scrollTop > maxScroll) {
+                viewContent.scrollTop = maxScroll;
+              }
+            }
 
             persistDashboardLayout();
           }
@@ -2837,14 +2950,32 @@
         if (layout && layout[card.id] && layout[card.id].col && layout[card.id].row) {
           const baseCol = Math.max(1, layout[card.id].col);
           const baseRow = Math.max(1, layout[card.id].row);
-          const displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
-          
-          card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
-          card.style.gridRow = `${baseRow} / span ${spanRow}`;
-          card.dataset.col = baseCol; // Preservar la coordenada real original
-          card.dataset.row = baseRow;
+          let displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
+          let displayRow = baseRow;
 
-          for (let r = baseRow; r < baseRow + spanRow; r++) {
+          let collides = false;
+          for (let r = displayRow; r < displayRow + spanRow; r++) {
+            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
+              if (occupiedMatrix[r] && occupiedMatrix[r][c]) {
+                collides = true;
+                break;
+              }
+            }
+            if (collides) break;
+          }
+
+          if (collides) {
+            const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
+            displayCol = slot.col;
+            displayRow = slot.row;
+          }
+
+          card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
+          card.style.gridRow = `${displayRow} / span ${spanRow}`;
+          card.dataset.col = displayCol;
+          card.dataset.row = displayRow;
+
+          for (let r = displayRow; r < displayRow + spanRow; r++) {
             if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
             for (let c = displayCol; c < displayCol + effSpanCol; c++) {
               occupiedMatrix[r][c] = true;
@@ -3115,18 +3246,57 @@
       const grid = document.getElementById('grid-board');
       if (!grid) return;
       const gridCols = getGridCols();
-      const cards = Array.from(grid.querySelectorAll('.card'));
+      const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none');
+
+      // Ordenar por fila y columna original
+      cards.sort((a, b) => {
+        const rA = parseInt(a.dataset.row || '1', 10);
+        const rB = parseInt(b.dataset.row || '1', 10);
+        if (rA !== rB) return rA - rB;
+        const cA = parseInt(a.dataset.col || '1', 10);
+        const cB = parseInt(b.dataset.col || '1', 10);
+        return cA - cB;
+      });
+
+      const occupied = {};
       cards.forEach(card => {
         if (card.dataset.col) {
           const { spanCol, spanRow } = getCardSpan(card);
           const effSpanCol = Math.min(spanCol, gridCols);
           const baseCol = parseInt(card.dataset.col, 10);
-          const row = parseInt(card.dataset.row || '1', 10);
-          // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización en columnas estrechas
-          // SIN sobrescribir dataset.col para que al maximizar vuelva limpiamente a su columna original.
-          const displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
+          const baseRow = parseInt(card.dataset.row || '1', 10);
+          
+          let displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
+          let displayRow = baseRow;
+
+          let collides = false;
+          for (let r = displayRow; r < displayRow + spanRow; r++) {
+            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
+              if (occupied[r] && occupied[r][c]) {
+                collides = true;
+                break;
+              }
+            }
+            if (collides) break;
+          }
+
+          if (collides) {
+            const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
+            displayCol = slot.col;
+            displayRow = slot.row;
+          }
+
+          // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización
+          // SIN sobrescribir dataset.col ni dataset.row para que al maximizar vuelva limpiamente a su celda original.
           card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
-          card.style.gridRow = `${row} / span ${spanRow}`;
+          card.style.gridRow = `${displayRow} / span ${spanRow}`;
+
+          for (let r = displayRow; r < displayRow + spanRow; r++) {
+            if (!occupied[r]) occupied[r] = {};
+            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
+              occupied[r][c] = card.id;
+            }
+          }
         }
       });
     }

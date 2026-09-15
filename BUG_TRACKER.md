@@ -643,7 +643,37 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+### [BUG-024] Superposición de widgets en el Dashboard, expansión desmedida del área vertical hacia el vacío al arrastrar abajo y bloqueo de movimiento
+- **Fecha**: 2026-09-15
+- **Severidad**: `Alta`
+- **Componente**: `UI / Dashboard (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)`)`
+- **Descripción del Fallo**: 
+  1. Al arrastrar y soltar widgets en la cuadrícula, en determinados escenarios las tarjetas se superponían unas encima de otras (solapamiento parcial o total de celdas).
+  2. Al intentar colocar un widget hacia la parte inferior del área de visualización, el sistema no lo acoplaba al final de las tarjetas ni al área visible, sino que calculaba filas astronómicas (`targetRow` hasta 25 en el vacío), forzando a CSS Grid a instanciar decenas de filas vacías y creando una barra de desplazamiento vertical gigantesca.
+  3. Al quedar un widget colocado en una fila lejana inferior, el usuario no podía moverlo un poco más arriba para desacoplarlo debido a la existencia de filas intermedias vacías que sostenían la cuadrícula estirada, requiriendo arrastrarlo forzosamente hasta arriba del todo.
+  4. Disparidad dimensional entre la altura base de fila en CSS (`90px`), la altura requerida por los widgets (`~106-118px`) y la calibración del paso en JavaScript (`stepY`), produciendo un desfase progresivo acumulado entre el puntero y la celda de snapping.
+- **Causa Raíz**: 
+  1. La resolución de colisiones ejecutaba swaps unidireccionales sin comprobar si la tarjeta desplazada colisionaba a su vez con terceras tarjetas adyacentes a la posición de origen; en colisiones múltiples, desplazaba todas las tarjetas en conflicto a la misma fila sin comprobar disponibilidad espacial ni registrar ocupación estricta en una matriz global.
+  2. `targetRow` no disponía de un límite coherente con la geometría del área ni con la fila máxima ocupada (`maxOccupiedRow`), permitiendo valores de hasta 25 en el vacío estelar; sumado a un auto-scroll en `.view-content` que se disparaba sin validar si existía desbordamiento real de contenido.
+  3. Inconsistencia entre `grid-auto-rows: 90px;` y los requerimientos físicos de los widgets, lo que provocaba que el navegador estirase las filas dinámicamente descalibrando el paso de cálculo $Y$.
+- **Solución Implementada**: 
+  1. Se calibró la altura base de fila canónica en CSS a `grid-auto-rows: 110px;` y `min-height: 110px;` en el indicador de drop, asegurando que todos los widgets quepan holgadamente sin forzar estiramientos arbitrarios en el motor de diseño del navegador.
+  2. Se implementó el **Acoplamiento Magnético Vertical Coherente (`maxAllowedRow`)**: el cálculo de `targetRow` ahora se acota por `Math.max(visibleRowsInViewport - spanRow + 1, maxOccupiedRow + 1)`, permitiendo soltar widgets libremente dentro del área visible de la pantalla o a lo sumo en la fila inmediatamente contigua a las tarjetas existentes, erradicando la creación de filas vacías en el vacío y scrollbars desmedidos.
+  3. Se diseñó el **Algoritmo de Matriz de Ocupación Estricta con Swap Bidireccional Verificado**:
+     - La tarjeta arrastrada por el usuario reclama su posición con prioridad absoluta y bloquea sus celdas en `occupied`.
+     - Si hay un conflicto 1 a 1, se verifica exhaustivamente si la tarjeta afectada cabe limpiamente en la posición de origen sin rozar ninguna celda ocupada ni vecinos preexistentes antes de autorizar el swap.
+     - Si hay múltiples tarjetas o el swap no cabe limpiamente, cada tarjeta desplazada busca el siguiente hueco libre de forma secuencial con `findNextFreeSlot`, garantizando **0 superposiciones matemáticas** bajo cualquier circunstancia.
+  4. Se acondicionó el auto-scroll durante el arrastre para activarse únicamente si el contenedor realmente desborda (`scrollHeight > clientHeight + 20`) y con velocidad suave (5px).
+  5. Se implementó la contracción dinámica del contenedor y limpieza de `scrollTop` residual (`scrollTop = maxScroll`), permitiendo que al mover cualquier widget hacia arriba, el área inferior vacía colapse inmediatamente y la barra de desplazamiento se contraiga al instante.
+  6. Se perfeccionó `restoreDashboardLayout` y `adjustCardsForCurrentGridCols` para verificar colisiones con `occupiedMatrix` tanto al cargar perfiles como al redimensionar la ventana hacia anchos reducidos.
+  7. Se actualizó [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md) con las fórmulas geométricas y diagramas de la nueva arquitectura de acoplamiento y colisiones.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
+
 
 
 
