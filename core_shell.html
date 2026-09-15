@@ -615,6 +615,41 @@
       box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2) !important;
       z-index: 5 !important;
       min-height: 90px;
+    /* SELECTOR DE PERFILES DEL DASHBOARD */
+    .topbar-profile-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-surface);
+      padding: 3px 8px 3px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .topbar-profile-box:hover {
+      border-color: var(--border-medium);
+      background: var(--bg-elevated);
+    }
+    .profile-select-inline {
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      padding: 2px 4px;
+    }
+    .profile-select-inline option {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    .btn-icon-xs {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-radius: var(--radius-sm);
     }
 
     /* CATÁLOGO DE WIDGETS (DRAWER LATERAL) */
@@ -1318,6 +1353,12 @@
         <div class="topbar-actions">
           <!-- Botones contextuales dinámicos según la vista activa -->
           <div id="topbar-contextual-actions" style="display: flex; align-items: center; gap: 8px;">
+            <div class="topbar-profile-box" title="Perfil activo de Dashboard">
+              <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
+              <select id="select-topbar-profile" class="profile-select-inline" onchange="switchDashboardProfile(this.value)">
+                <option value="default">Predeterminado</option>
+              </select>
+            </div>
             <button class="btn-icon" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" data-tooltip="Auto-organizar Dashboard" title="Auto-organizar Dashboard">
               <svg class="svg-icon" viewBox="0 0 24 24">
                 <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -1888,7 +1929,16 @@
 
       if (viewId === 'dashboard') {
         container.style.display = 'flex';
+        const profileOptions = (typeof dashboardProfilesState !== 'undefined' && dashboardProfilesState.profiles) ? Object.values(dashboardProfilesState.profiles).map(p => 
+          `<option value="${p.id}" ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}>${p.name}</option>`
+        ).join('') : '<option value="default">Predeterminado</option>';
         container.innerHTML = `
+          <div class="topbar-profile-box" title="Perfil activo de Dashboard">
+            <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
+            <select id="select-topbar-profile" class="profile-select-inline" onchange="switchDashboardProfile(this.value)">
+              ${profileOptions}
+            </select>
+          </div>
           <button class="btn-icon" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" data-tooltip="Auto-organizar Dashboard" title="Auto-organizar Dashboard">
             <svg class="svg-icon" viewBox="0 0 24 24">
               <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -1957,6 +2007,48 @@
       const container = document.getElementById('drawer-catalog-body');
       if (!container) return;
 
+      const currentProfile = getCurrentDashboardProfile();
+      const profileOptions = Object.values(dashboardProfilesState.profiles).map(p => 
+        `<option value="${p.id}" ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}>${p.name}</option>`
+      ).join('');
+
+      const profileSectionHtml = `
+        <div class="drawer-profile-card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
+              <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Perfil Activo</span>
+            </div>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <button class="btn btn-secondary" style="font-size: 11px; padding: 3px 8px; height: 26px;" onclick="showNewProfilePrompt()" title="Crear nuevo perfil">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+                <span>Nuevo</span>
+              </button>
+              <button class="btn-icon btn-icon-xs" onclick="duplicateCurrentDashboardProfile()" data-tooltip="Duplicar Perfil" title="Duplicar Perfil">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+              <button class="btn-icon btn-icon-xs" id="btn-delete-profile" onclick="deleteCurrentDashboardProfile()" data-tooltip="Eliminar Perfil" title="Eliminar Perfil" style="color: var(--accent-danger); ${dashboardProfilesState.activeProfileId === 'default' ? 'display: none;' : 'display: inline-flex;'}">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div>
+            <select id="select-drawer-profile" class="form-select" style="font-size: 12.5px; padding: 6px 10px; width: 100%; font-weight: 500;" onchange="switchDashboardProfile(this.value)">
+              ${profileOptions}
+            </select>
+          </div>
+          <!-- Panel para creación de nuevo perfil -->
+          <div id="panel-new-profile" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-subtle);">
+            <div style="font-size: 11.5px; color: var(--text-secondary);">Nombre del nuevo perfil:</div>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" id="input-new-profile-name" class="form-control" style="font-size: 12px; padding: 6px 10px;" placeholder="Ej: Monitoreo, Minimalista..." onkeydown="if(event.key==='Enter') submitNewProfile()">
+              <button class="btn btn-primary" style="font-size: 11.5px; padding: 5px 10px;" onclick="submitNewProfile()">Guardar</button>
+              <button class="btn btn-secondary" style="font-size: 11.5px; padding: 5px 10px;" onclick="cancelNewProfilePrompt()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      `;
+
       const activeWidgets = [];
       installedModules.forEach(mod => {
         if (mod.active && mod.manifest && mod.manifest.widgets && mod.manifest.widgets.length > 0) {
@@ -1971,7 +2063,8 @@
 
       if (activeWidgets.length === 0) {
         container.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px;">
+          ${profileSectionHtml}
+          <div style="text-align: center; padding: 30px 20px;">
             <svg class="svg-icon svg-icon-xl" style="color: var(--text-muted); margin-bottom: 14px; opacity: 0.5;" viewBox="0 0 24 24">
               <rect width="7" height="9" x="3" y="3" rx="1"></rect>
               <rect width="7" height="5" x="14" y="3" rx="1"></rect>
@@ -1992,11 +2085,16 @@
       }
 
       container.innerHTML = `
+        ${profileSectionHtml}
+        <div style="display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 2px;">
+          <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Widgets en este Perfil</span>
+          <span style="font-size: 11px; color: var(--text-muted);">${activeWidgets.length} disponible(s)</span>
+        </div>
         <div style="display: flex; flex-direction: column; gap: 10px;">
           ${activeWidgets.map(item => {
             const cardId = item.widget.id || `card-${item.module.id}`;
             const cardEl = document.getElementById(cardId);
-            const isVisible = cardEl ? cardEl.style.display !== 'none' : true;
+            const isVisible = cardEl ? cardEl.style.display !== 'none' : !(currentProfile.hiddenWidgets || []).includes(cardId);
             const iconSvg = item.widget.icon || item.module.icon || (item.module.views && item.module.views[0] && item.module.views[0].icon) || `
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
                 <rect width="7" height="9" x="3" y="3" rx="1"></rect>
@@ -2044,6 +2142,19 @@
         }
       }
 
+      const current = getCurrentDashboardProfile();
+      current.hiddenWidgets = current.hiddenWidgets || [];
+      if (!isVisible) {
+        if (!current.hiddenWidgets.includes(cardId)) {
+          current.hiddenWidgets.push(cardId);
+        }
+      } else {
+        current.hiddenWidgets = current.hiddenWidgets.filter(id => id !== cardId);
+        if (card && !card.dataset.col) {
+          restoreDashboardLayout();
+        }
+      }
+
       // Comprobar si todas las tarjetas están ocultas
       const allCards = Array.from(document.querySelectorAll('#grid-board .card'));
       const visibleCards = allCards.filter(c => c.style.display !== 'none');
@@ -2052,24 +2163,14 @@
         if (allCards.length > 0 && visibleCards.length === 0) {
           emptyHero.style.display = 'flex';
           const p = emptyHero.querySelector('p');
-          if (p) p.textContent = 'Todas las tarjetas instaladas se encuentran ocultas. Pulsa en "Widgets" para activarlas.';
+          if (p) p.textContent = 'Todas las tarjetas instaladas se encuentran ocultas en este perfil. Pulsa en "Widgets" para activarlas.';
         } else if (visibleCards.length > 0) {
           emptyHero.style.display = 'none';
         }
       }
 
       updateDashboardCardsCount();
-
-      // Persistir tarjetas ocultas en disco con Rust
-      const invokeFn = getTauriInvoke();
-      if (invokeFn) {
-        const hiddenIds = allCards.filter(c => c.style.display === 'none').map(c => c.id);
-        invokeFn('save_module_setting', {
-          moduleId: 'core_dashboard',
-          key: 'hidden_widgets',
-          value: JSON.stringify(hiddenIds)
-        }).catch(e => console.warn(e));
-      }
+      persistDashboardProfilesState();
     }
 
     function closeAllDrawers() {
@@ -2410,6 +2511,116 @@
       });
     }
 
+    // GESTIÓN DE PERFILES DE DASHBOARD
+    const DEFAULT_DASHBOARD_PROFILE_ID = 'default';
+    let dashboardProfilesState = {
+      activeProfileId: DEFAULT_DASHBOARD_PROFILE_ID,
+      profiles: {
+        [DEFAULT_DASHBOARD_PROFILE_ID]: {
+          id: DEFAULT_DASHBOARD_PROFILE_ID,
+          name: 'Predeterminado',
+          layout: {},
+          hiddenWidgets: []
+        }
+      }
+    };
+
+    function getCurrentDashboardProfile() {
+      if (!dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId]) {
+        dashboardProfilesState.activeProfileId = DEFAULT_DASHBOARD_PROFILE_ID;
+      }
+      if (!dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID]) {
+        dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID] = {
+          id: DEFAULT_DASHBOARD_PROFILE_ID,
+          name: 'Predeterminado',
+          layout: {},
+          hiddenWidgets: []
+        };
+      }
+      return dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId];
+    }
+
+    function updateProfileSelectorsUI() {
+      const topSelect = document.getElementById('select-topbar-profile');
+      const drawerSelect = document.getElementById('select-drawer-profile');
+      const btnDelete = document.getElementById('btn-delete-profile');
+      const optionsHtml = Object.values(dashboardProfilesState.profiles).map(p =>
+        `<option value="${p.id}" ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}>${p.name}</option>`
+      ).join('');
+
+      if (topSelect) topSelect.innerHTML = optionsHtml;
+      if (drawerSelect) drawerSelect.innerHTML = optionsHtml;
+      if (btnDelete) {
+        btnDelete.style.display = dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID ? 'none' : 'inline-flex';
+      }
+    }
+
+    async function loadDashboardProfiles() {
+      const invokeFn = getTauriInvoke();
+      let saved = null;
+      if (invokeFn) {
+        try {
+          const res = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
+          if (res && res.profiles_state) {
+            saved = typeof res.profiles_state === 'string' ? JSON.parse(res.profiles_state) : res.profiles_state;
+          }
+        } catch(e) {
+          console.warn('Error al cargar perfiles de dashboard desde backend:', e);
+        }
+      }
+      if (!saved) {
+        try {
+          const local = localStorage.getItem('pcm_dashboard_profiles_state');
+          if (local) saved = JSON.parse(local);
+        } catch(e) {}
+      }
+
+      if (saved && saved.profiles && typeof saved.profiles === 'object') {
+        dashboardProfilesState = saved;
+        if (!dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID]) {
+          dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID] = {
+            id: DEFAULT_DASHBOARD_PROFILE_ID,
+            name: 'Predeterminado',
+            layout: {},
+            hiddenWidgets: []
+          };
+        }
+        if (!dashboardProfilesState.activeProfileId || !dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId]) {
+          dashboardProfilesState.activeProfileId = DEFAULT_DASHBOARD_PROFILE_ID;
+        }
+      }
+      updateProfileSelectorsUI();
+    }
+
+    function persistDashboardProfilesState() {
+      try {
+        localStorage.setItem('pcm_dashboard_profiles_state', JSON.stringify(dashboardProfilesState));
+      } catch(e) {}
+
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        invokeFn('save_module_setting', {
+          moduleId: 'core_dashboard',
+          optionId: 'profiles_state',
+          value: JSON.stringify(dashboardProfilesState)
+        }).catch(e => console.warn(e));
+
+        // Compatibilidad retroactiva: persistir también layout y hidden_widgets del perfil activo
+        const curr = getCurrentDashboardProfile();
+        invokeFn('save_module_setting', {
+          moduleId: 'core_dashboard',
+          optionId: 'layout',
+          value: JSON.stringify(curr.layout || {})
+        }).catch(e => console.warn(e));
+
+        invokeFn('save_module_setting', {
+          moduleId: 'core_dashboard',
+          optionId: 'hidden_widgets',
+          value: JSON.stringify(curr.hiddenWidgets || [])
+        }).catch(e => console.warn(e));
+      }
+    }
+
     function persistDashboardLayout() {
       const grid = document.getElementById('grid-board');
       if (!grid) return;
@@ -2426,6 +2637,9 @@
         }
       });
 
+      const current = getCurrentDashboardProfile();
+      current.layout = layout;
+
       try {
         localStorage.setItem('pcm_dashboard_layout', JSON.stringify(layout));
       } catch(e) {}
@@ -2433,24 +2647,24 @@
       const invokeFn = getTauriInvoke();
       if (invokeFn) {
         invokeFn('save_dashboard_order', { cardOrder: order }).catch(e => console.warn(e));
-        invokeFn('save_module_setting', {
-          moduleId: 'core_dashboard',
-          optionId: 'layout',
-          value: JSON.stringify(layout)
-        }).catch(e => console.warn(e));
       }
+      persistDashboardProfilesState();
     }
 
     async function restoreDashboardLayout() {
-      let layout = null;
-      const invokeFn = getTauriInvoke();
-      if (invokeFn) {
-        try {
-          const saved = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
-          if (saved && saved.layout) {
-            layout = typeof saved.layout === 'string' ? JSON.parse(saved.layout) : saved.layout;
-          }
-        } catch(e) {}
+      const current = getCurrentDashboardProfile();
+      let layout = current.layout && Object.keys(current.layout).length > 0 ? current.layout : null;
+
+      if (!layout) {
+        const invokeFn = getTauriInvoke();
+        if (invokeFn) {
+          try {
+            const saved = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
+            if (saved && saved.layout) {
+              layout = typeof saved.layout === 'string' ? JSON.parse(saved.layout) : saved.layout;
+            }
+          } catch(e) {}
+        }
       }
       if (!layout) {
         try {
@@ -2465,21 +2679,33 @@
       const gridCols = getGridCols();
       const occupiedMatrix = {};
 
-      // 1. Asignar posiciones previamente guardadas
+      // 0. Aplicar visibilidad según perfil actual
+      const hiddenIds = current.hiddenWidgets || [];
+      cards.forEach(card => {
+        if (hiddenIds.includes(card.id)) {
+          card.style.display = 'none';
+        } else {
+          card.style.display = 'flex';
+        }
+      });
+
+      // 1. Asignar posiciones previamente guardadas respetando base original
       cards.forEach(card => {
         const { spanCol, spanRow } = getCardSpan(card);
         const effSpanCol = Math.min(spanCol, gridCols);
         if (layout && layout[card.id] && layout[card.id].col && layout[card.id].row) {
-          let col = Math.max(1, Math.min(gridCols - effSpanCol + 1, layout[card.id].col));
-          let row = Math.max(1, layout[card.id].row);
-          card.style.gridColumn = `${col} / span ${effSpanCol}`;
-          card.style.gridRow = `${row} / span ${spanRow}`;
-          card.dataset.col = col;
-          card.dataset.row = row;
+          const baseCol = Math.max(1, layout[card.id].col);
+          const baseRow = Math.max(1, layout[card.id].row);
+          const displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
+          
+          card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
+          card.style.gridRow = `${baseRow} / span ${spanRow}`;
+          card.dataset.col = baseCol; // Preservar la coordenada real original
+          card.dataset.row = baseRow;
 
-          for (let r = row; r < row + spanRow; r++) {
+          for (let r = baseRow; r < baseRow + spanRow; r++) {
             if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
-            for (let c = col; c < col + effSpanCol; c++) {
+            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
               occupiedMatrix[r][c] = true;
             }
           }
@@ -2505,10 +2731,142 @@
           }
         }
       });
+
+      // Actualizar conteo y estado empty
+      const visibleCards = cards.filter(c => c.style.display !== 'none');
+      const emptyHero = document.querySelector('.empty-dashboard-hero');
+      if (emptyHero) {
+        if (cards.length > 0 && visibleCards.length === 0) {
+          emptyHero.style.display = 'flex';
+          const p = emptyHero.querySelector('p');
+          if (p) p.textContent = 'Todas las tarjetas instaladas se encuentran ocultas en este perfil. Pulsa en "Widgets" para activarlas.';
+        } else if (visibleCards.length > 0) {
+          emptyHero.style.display = 'none';
+        }
+      }
+      updateDashboardCardsCount();
     }
 
     function initGridBoardDragDrop() {
       restoreDashboardLayout();
+    }
+
+    async function switchDashboardProfile(profileId) {
+      if (!dashboardProfilesState.profiles[profileId]) return;
+      dashboardProfilesState.activeProfileId = profileId;
+      updateProfileSelectorsUI();
+
+      // Limpiar dataset de tarjetas para que se reposicionen limpiamente según el perfil
+      const grid = document.getElementById('grid-board');
+      if (grid) {
+        grid.querySelectorAll('.card').forEach(c => {
+          delete c.dataset.col;
+          delete c.dataset.row;
+        });
+      }
+
+      await restoreDashboardLayout();
+      persistDashboardProfilesState();
+      renderDashboardCustomizationCatalog();
+      const profile = dashboardProfilesState.profiles[profileId];
+      addSystemNotification('Perfil Cambiado', `Se activó el perfil "${profile.name}".`, 'info');
+    }
+
+    function showNewProfilePrompt() {
+      const panel = document.getElementById('panel-new-profile');
+      if (panel) {
+        panel.style.display = 'flex';
+        const input = document.getElementById('input-new-profile-name');
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    function cancelNewProfilePrompt() {
+      const panel = document.getElementById('panel-new-profile');
+      if (panel) panel.style.display = 'none';
+    }
+
+    function submitNewProfile() {
+      const input = document.getElementById('input-new-profile-name');
+      if (!input) return;
+      const name = input.value.trim();
+      if (!name) {
+        addSystemNotification('Perfil Inválido', 'Debe ingresar un nombre para el nuevo perfil.', 'warning');
+        return;
+      }
+
+      const id = 'prof_' + Date.now();
+      dashboardProfilesState.profiles[id] = {
+        id,
+        name,
+        layout: {},
+        hiddenWidgets: []
+      };
+      dashboardProfilesState.activeProfileId = id;
+
+      cancelNewProfilePrompt();
+      updateProfileSelectorsUI();
+
+      const grid = document.getElementById('grid-board');
+      if (grid) {
+        grid.querySelectorAll('.card').forEach(c => {
+          delete c.dataset.col;
+          delete c.dataset.row;
+        });
+      }
+
+      restoreDashboardLayout();
+      persistDashboardProfilesState();
+      renderDashboardCustomizationCatalog();
+      addSystemNotification('Perfil Creado', `Nuevo perfil "${name}" creado exitosamente.`, 'success');
+    }
+
+    function duplicateCurrentDashboardProfile() {
+      const current = getCurrentDashboardProfile();
+      const id = 'prof_' + Date.now();
+      const name = `${current.name} (Copia)`;
+
+      dashboardProfilesState.profiles[id] = {
+        id,
+        name,
+        layout: JSON.parse(JSON.stringify(current.layout || {})),
+        hiddenWidgets: [...(current.hiddenWidgets || [])]
+      };
+      dashboardProfilesState.activeProfileId = id;
+
+      updateProfileSelectorsUI();
+      persistDashboardProfilesState();
+      renderDashboardCustomizationCatalog();
+      addSystemNotification('Perfil Duplicado', `Se creó una copia activa con el nombre "${name}".`, 'success');
+    }
+
+    function deleteCurrentDashboardProfile() {
+      if (dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID) {
+        addSystemNotification('Acción No Permitida', 'El perfil "Predeterminado" es canónico y no puede eliminarse.', 'warning');
+        return;
+      }
+
+      const deletedName = getCurrentDashboardProfile().name;
+      delete dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId];
+      dashboardProfilesState.activeProfileId = DEFAULT_DASHBOARD_PROFILE_ID;
+
+      updateProfileSelectorsUI();
+
+      const grid = document.getElementById('grid-board');
+      if (grid) {
+        grid.querySelectorAll('.card').forEach(c => {
+          delete c.dataset.col;
+          delete c.dataset.row;
+        });
+      }
+
+      restoreDashboardLayout();
+      persistDashboardProfilesState();
+      renderDashboardCustomizationCatalog();
+      addSystemNotification('Perfil Eliminado', `El perfil "${deletedName}" fue eliminado. Se restauró el perfil Predeterminado.`, 'info');
     }
 
     function autoOrganizeDashboard() {
@@ -2568,13 +2926,12 @@
         if (card.dataset.col) {
           const { spanCol, spanRow } = getCardSpan(card);
           const effSpanCol = Math.min(spanCol, gridCols);
-          let col = parseInt(card.dataset.col, 10);
+          const baseCol = parseInt(card.dataset.col, 10);
           const row = parseInt(card.dataset.row || '1', 10);
-          if (col + effSpanCol - 1 > gridCols) {
-            col = Math.max(1, gridCols - effSpanCol + 1);
-            card.dataset.col = col;
-          }
-          card.style.gridColumn = `${col} / span ${effSpanCol}`;
+          // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización en columnas estrechas
+          // SIN sobrescribir dataset.col para que al maximizar vuelva limpiamente a su columna original.
+          const displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
+          card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
           card.style.gridRow = `${row} / span ${spanRow}`;
         }
       });
@@ -3582,6 +3939,7 @@
                 if (card) grid.appendChild(card);
               });
             }
+            await loadDashboardProfiles();
             await restoreDashboardLayout();
 
             // Restaurar estado de visibilidad de tarjetas ocultas en el Dashboard
@@ -3629,7 +3987,8 @@
         console.warn('Ejecutando en entorno webview desacoplado:', err);
       }
 
-      // Inicializar botones contextuales de la barra superior y drag and drop de cuadrícula
+      // Inicializar perfiles, botones contextuales de la barra superior y drag and drop de cuadrícula
+      await loadDashboardProfiles();
       updateTopbarContextualActions('dashboard');
       initGridBoardDragDrop();
 

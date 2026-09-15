@@ -548,6 +548,40 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-021] Pérdida de Coordenadas de Tarjetas en Cuadrícula al Redimensionar la Ventana e Implementación Canónica de Perfiles de Dashboard en el Core Shell
+- **Fecha**: 2026-09-14
+- **Severidad**: `Media`
+- **Componente**: `Dashboard / Grid System / Responsive Layout / Perfiles de Dashboard (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Al ubicar una tarjeta en una columna lateral o esquina con la ventana maximizada y desmaximizar la ventana a un tamaño menor, la tarjeta se desplazaba hacia la izquierda para ajustarse a las 6 o 4 columnas reducidas. No obstante, al volver a maximizar la ventana a pantalla completa, la tarjeta no retornaba a su posición original de la esquina, quedando desplazada de manera irreversible.
+  2. El Core carecía de un gestor de Perfiles de Dashboard que permitiera al usuario guardar, duplicar, alternar y eliminar distintas configuraciones de tarjetas y visibilidad de widgets (ej. monitoreo de hardware intensivo, modo minimalista, vista de trabajo) de manera independiente y con persistencia en disco.
+- **Causa Raíz**: 
+  1. En la función `adjustCardsForCurrentGridCols()`, cuando las columnas disponibles decrecían, se ejecutaba `card.dataset.col = col;`, sobrescribiendo de forma destructiva la coordenada de origen de la tarjeta con el valor recortado temporal. Al volver a expandir la ventana, la tarjeta ya no conocía su coordenada base original.
+  2. Inexistencia en la arquitectura de la carcasa Core de una entidad de perfiles de Dashboard (`dashboardProfilesState`), carencia de selectores contextuales sincronizados en la barra superior y panel lateral, y falta de persistencia modular desacoplada por perfil.
+- **Solución Implementada**: 
+  1. **Adaptación Responsive No Destructiva**:
+     - Se modificó `adjustCardsForCurrentGridCols()` y `restoreDashboardLayout()` para mantener siempre inmutable la coordenada de origen en `card.dataset.col = baseCol`.
+     - El clamp restrictivo para anchos de pantalla reducidos se calcula y aplica únicamente en caliente a la regla CSS `card.style.gridColumn = ${displayCol} / span ${effSpanCol}`.
+     - Al volver a maximizar la ventana, el cálculo utiliza la coordenada base intacta, restituyendo de forma inmediata y matemática la tarjeta a su columna o esquina original sin desajustes.
+  2. **Arquitectura y Motor de Perfiles de Dashboard en el Core**:
+     - Se implementó el estado central `dashboardProfilesState` con perfiles independientes, cada uno con su propio mapa de posiciones `{ col, row }` (`layout`) y lista de widgets ocultos (`hiddenWidgets`).
+     - **Perfil Canónico "Predeterminado"**: Inmutable, predeterminado por diseño y protegido contra eliminación conforme a la directiva de la Regla 3.
+     - **Selector Contextual en Barra Superior**: Selector tipo combobox discreto y alineado con Material Expressive (`#select-topbar-profile`) dentro del contenedor de acciones contextuales del Dashboard.
+     - **Gestión Integral en el Drawer Lateral ("Widgets")**: Tarjeta superior con selector sincronizado, botón de creación de nuevos perfiles (`#panel-new-profile`), botón de duplicación rápida del perfil activo y botón de eliminación (oculto de forma transparente en el perfil Predeterminado).
+     - **Visibilidad y Posicionamiento Desacoplado por Perfil**: Al alternar de perfil, se limpian las coordenadas en pantalla, se restauran las posiciones del perfil elegido y se aplican los estados de visibilidad de las tarjetas con animación fluida.
+     - **Persistencia Completa y Retrocompatible**: Guardado y restauración en disco con el comando Tauri Rust `save_module_setting` (`moduleId: 'core_dashboard'`, opción `profiles_state`), manteniendo compatibilidad retroactiva con `layout` y `hidden_widgets`.
+  3. **Sincronización y Compilación**:
+     - Sincronizado en la maqueta canónica [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y recompilado en el binario nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
