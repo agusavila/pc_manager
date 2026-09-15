@@ -54,6 +54,29 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+    }
+
+    /* Scrollbars delgadas y elegantes Material Expressive en todos los elementos */
+    *::-webkit-scrollbar,
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-thumb,
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius-pill);
+      transition: background 0.2s ease;
+    }
+    *::-webkit-scrollbar-thumb:hover,
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-primary);
     }
 
     body {
@@ -504,6 +527,56 @@
       align-items: center;
       justify-content: center;
       border: 2px solid var(--bg-surface);
+    }
+
+    /* MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE) */
+    .custom-context-menu {
+      position: fixed;
+      z-index: 1000000;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-floating);
+      padding: 6px;
+      min-width: 190px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+    .custom-context-menu.active {
+      display: flex;
+      animation: contextMenuPop 0.12s cubic-bezier(0, 0, 0.2, 1);
+    }
+    .context-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .context-menu-item:hover {
+      background: var(--bg-elevated);
+      color: var(--accent-primary);
+    }
+    .context-menu-item.danger:hover {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-danger);
+    }
+    .context-menu-separator {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 4px 0;
+    }
+    @keyframes contextMenuPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     /* PESTAÑAS (TABS) */
@@ -1179,12 +1252,88 @@
       right: auto;
     }
 
-    /* VISTA DE CONFIGURACIONES HOMOGÉNEA (ANCHO COMPLETO 100% Y SISTEMA POR PESTAÑAS) */
+    /* VISTA DE CONFIGURACIONES HOMOGÉNEA (CUADRÍCULA DE 2 COLUMNAS Y SISTEMA POR PESTAÑAS) */
     .settings-content-stack {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 20px;
       width: 100%;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .settings-content-stack {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE) */
+    .custom-context-menu {
+      position: fixed;
+      z-index: 9999999;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      padding: 6px;
+      min-width: 220px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      animation: ctxMenuFadeIn 0.12s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    @keyframes ctxMenuFadeIn {
+      from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.12s ease, color 0.12s ease;
+      background: transparent;
+      border: none;
+      width: 100%;
+      text-align: left;
+      user-select: none;
+    }
+
+    .ctx-item:hover {
+      background: var(--bg-elevated);
+      color: var(--accent-primary);
+    }
+
+    .ctx-item.danger {
+      color: var(--accent-danger);
+    }
+
+    .ctx-item.danger:hover {
+      background: var(--accent-danger-dim);
+      color: var(--accent-danger);
+    }
+
+    .ctx-separator {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 4px 6px;
+    }
+
+    .ctx-header {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 6px 12px 2px 12px;
     }
 
     .settings-card {
@@ -1817,71 +1966,55 @@
             </div>
           </div>
 
-          <!-- GESTIÓN Y PERMISOS DE NOTIFICACIONES -->
-          <div class="settings-card" id="card-notification-settings">
+          <!-- NOTIFICACIONES DEL SISTEMA -->
+          <div class="settings-card" id="card-notification-system">
             <div class="settings-header">
               <svg class="svg-icon" viewBox="0 0 24 24">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
               </svg>
-              <h4>Gestión y Permisos de Notificaciones</h4>
+              <h4>Notificaciones del Sistema</h4>
             </div>
-            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px;">
-              Control de emisión de alertas, avisos del núcleo del sistema e integración con el centro de notificaciones de Windows.
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 4px;">
+              Avisos del núcleo operativo, alertas de seguridad, estado del host e integración nativa con Windows.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
-              <!-- 1. Notificaciones del Núcleo (Maestro) -->
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-elevated); padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
                 <div>
-                  <strong style="font-size: 13.5px;">Notificaciones del Núcleo del Sistema</strong>
-                  <div style="font-size: 11.5px; color: var(--text-muted);">Interruptor maestro para todos los avisos y alertas del sistema</div>
+                  <div style="font-size: 13px; font-weight: 600;" id="txt-system-notif-status-badge">Avisos del Sistema Activos</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted);" id="txt-system-events-summary">7 de 7 eventos activos</div>
                 </div>
-                <label class="switch">
-                  <input type="checkbox" id="chk-notif-system" checked onchange="toggleSystemNotifPermission(this.checked)">
-                  <span class="slider"></span>
-                </label>
+                <button class="btn btn-secondary" onclick="openSystemNotifModal()" style="font-size: 12px; padding: 7px 14px;">
+                  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                  <span>Configurar Alertas...</span>
+                </button>
               </div>
+            </div>
+          </div>
 
-              <!-- 2. Integración con Notificaciones Nativas de Windows 10/11 -->
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+          <!-- NOTIFICACIONES DE EXTENSIONES MODULARES -->
+          <div class="settings-card" id="card-notification-modules">
+            <div class="settings-header">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              </svg>
+              <h4>Notificaciones de Módulos</h4>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 4px;">
+              Permisos individuales y globales concedidos a extensiones y plugins instalados para emitir avisos.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-elevated); padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
                 <div>
-                  <strong style="font-size: 13.5px;">Notificaciones Nativas de Windows (10/11)</strong>
-                  <div style="font-size: 11.5px; color: var(--text-muted);">Mostrar avisos emergentes nativos en el Centro de Notificaciones de Windows</div>
+                  <div style="font-size: 13px; font-weight: 600;" id="txt-modules-notif-summary">Gestión por Módulo</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted);" id="txt-modules-notif-count">0 módulos configurados</div>
                 </div>
-                <label class="switch">
-                  <input type="checkbox" id="chk-notif-windows" onchange="toggleWindowsNativeNotif(this.checked)">
-                  <span class="slider"></span>
-                </label>
-              </div>
-
-              <!-- 3. Eventos Granulares del Núcleo -->
-              <div style="margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                  <div>
-                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">
-                      Eventos Granulares del Núcleo
-                    </div>
-                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
-                      Activa o desactiva tipos individuales de notificaciones operativas
-                    </div>
-                  </div>
-                </div>
-                <div id="settings-system-notif-events" style="display: flex; flex-direction: column; gap: 8px;">
-                  <!-- Inyectado dinámicamente desde SYSTEM_NOTIFICATION_CATEGORIES -->
-                </div>
-              </div>
-
-              <!-- 4. Permisos por Extensión Modular -->
-              <div style="margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
-                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">
-                  Permisos de Notificación por Extensión Modular
-                </div>
-                <div id="settings-module-notif-list" style="display: flex; flex-direction: column; gap: 8px;">
-                  <div style="font-size: 12px; color: var(--text-muted); font-style: italic; padding: 4px 0;">
-                    No hay extensiones modulares instaladas actualmente.
-                  </div>
-                </div>
+                <button class="btn btn-secondary" onclick="openModuleNotifModal()" style="font-size: 12px; padding: 7px 14px;">
+                  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  <span>Permisos de Módulos...</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1966,6 +2099,95 @@
         </div>
       </div>
     </aside>
+
+    <!-- SUBMENÚ / MODAL: CONFIGURAR EVENTOS DEL SISTEMA -->
+    <div class="modal-backdrop" id="modal-system-notif" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 999999; align-items: center; justify-content: center;" onclick="if(event.target===this) closeSystemNotifModal()">
+      <div class="modal-card" style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); width: 500px; max-width: 90vw; padding: 22px; box-shadow: var(--shadow-floating); display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+            <h4 style="font-size: 15px; font-weight: 600;">Notificaciones del Núcleo y Sistema</h4>
+          </div>
+          <button class="btn-icon btn-icon-xs" onclick="closeSystemNotifModal()">
+            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <!-- Opciones maestras -->
+        <div style="display: flex; flex-direction: column; gap: 10px; background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="font-size: 12.5px;">Avisos del Núcleo Activos</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Interruptor maestro de alertas del sistema</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="chk-notif-system" checked onchange="toggleSystemNotifPermission(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border-subtle);">
+            <div>
+              <strong style="font-size: 12.5px;">Notificaciones Nativas de Windows</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Avisos en el centro de actividades de Windows</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="chk-notif-windows" onchange="toggleWindowsNativeNotif(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+          Filtrado granular por categorías operativas del Core:
+        </p>
+        <div id="settings-system-notif-events" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+          <!-- Inyectado dinámicamente -->
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+          <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="closeSystemNotifModal()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMENÚ / MODAL: PERMISOS POR MÓDULO -->
+    <div class="modal-backdrop" id="modal-module-notif" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 999999; align-items: center; justify-content: center;" onclick="if(event.target===this) closeModuleNotifModal()">
+      <div class="modal-card" style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); width: 500px; max-width: 90vw; padding: 22px; box-shadow: var(--shadow-floating); display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            <h4 style="font-size: 15px; font-weight: 600;">Permisos de Notificación por Módulo</h4>
+          </div>
+          <button class="btn-icon btn-icon-xs" onclick="closeModuleNotifModal()">
+            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <!-- Switch maestro de módulos -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div>
+            <strong style="font-size: 12.5px;">Permiso General para Módulos</strong>
+            <div style="font-size: 11px; color: var(--text-muted);">Habilitar o silenciar emisión de avisos de todas las extensiones</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-notif-modules-master" checked onchange="toggleModulesNotifMaster(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+          Permisos individuales por cada extensión instalada:
+        </p>
+        <div id="settings-module-notif-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+          <!-- Inyectado dinámicamente -->
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+          <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="closeModuleNotifModal()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE) -->
+    <div class="custom-context-menu" id="app-context-menu"></div>
 
   </div>
 
@@ -2118,6 +2340,12 @@
               <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Perfil Activo</span>
             </div>
             <div style="display: flex; gap: 4px; align-items: center;">
+              <button class="btn-icon btn-icon-xs" onclick="moveCurrentProfileUp()" data-tooltip="Mover perfil arriba" title="Mover perfil arriba" style="${dashboardProfilesState.activeProfileId === 'default' ? 'display: none;' : 'display: inline-flex;'}">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+              </button>
+              <button class="btn-icon btn-icon-xs" onclick="moveCurrentProfileDown()" data-tooltip="Mover perfil abajo" title="Mover perfil abajo" style="${dashboardProfilesState.activeProfileId === 'default' ? 'display: none;' : 'display: inline-flex;'}">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
               <button class="btn btn-secondary" style="font-size: 11px; padding: 3px 8px; height: 26px;" onclick="showNewProfilePrompt()" title="Crear nuevo perfil">
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 <span>Nuevo</span>
@@ -2140,7 +2368,12 @@
                 <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
               <div class="combobox-dropdown" id="dropdown-drawer-profile">
-                <!-- Opciones inyectadas dinámicamente -->
+                ${getOrderedDashboardProfiles().map(p => `
+                  <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
+                    <span>${p.name}${p.id === 'default' ? ' (Predeterminado)' : ''}</span>
+                    <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
+                `).join('')}
               </div>
             </div>
           </div>
@@ -2743,6 +2976,7 @@
     const DEFAULT_DASHBOARD_PROFILE_ID = 'default';
     let dashboardProfilesState = {
       activeProfileId: DEFAULT_DASHBOARD_PROFILE_ID,
+      profileOrder: [DEFAULT_DASHBOARD_PROFILE_ID],
       profiles: {
         [DEFAULT_DASHBOARD_PROFILE_ID]: {
           id: DEFAULT_DASHBOARD_PROFILE_ID,
@@ -2752,6 +2986,58 @@
         }
       }
     };
+
+    function getOrderedDashboardProfiles() {
+      if (!dashboardProfilesState.profileOrder || !Array.isArray(dashboardProfilesState.profileOrder)) {
+        dashboardProfilesState.profileOrder = [DEFAULT_DASHBOARD_PROFILE_ID];
+      }
+      // Garantizar que default siempre existe y esté de primero
+      dashboardProfilesState.profileOrder = dashboardProfilesState.profileOrder.filter(id => id !== DEFAULT_DASHBOARD_PROFILE_ID && dashboardProfilesState.profiles[id]);
+      dashboardProfilesState.profileOrder.unshift(DEFAULT_DASHBOARD_PROFILE_ID);
+
+      // Agregar cualquier perfil que no esté en el orden
+      Object.keys(dashboardProfilesState.profiles).forEach(id => {
+        if (!dashboardProfilesState.profileOrder.includes(id)) {
+          dashboardProfilesState.profileOrder.push(id);
+        }
+      });
+
+      return dashboardProfilesState.profileOrder.map(id => dashboardProfilesState.profiles[id]).filter(Boolean);
+    }
+
+    function moveCurrentProfileUp() {
+      const activeId = dashboardProfilesState.activeProfileId;
+      if (activeId === DEFAULT_DASHBOARD_PROFILE_ID) return;
+      getOrderedDashboardProfiles();
+      const order = dashboardProfilesState.profileOrder;
+      const idx = order.indexOf(activeId);
+      if (idx > 1) { // No puede desplazar a default (posición 0)
+        const temp = order[idx - 1];
+        order[idx - 1] = order[idx];
+        order[idx] = temp;
+        persistDashboardProfilesState();
+        updateProfileSelectorsUI();
+        renderDashboardCustomizationCatalog();
+        addSystemNotification('Perfil Reordenado', `Se subió la posición del perfil "${dashboardProfilesState.profiles[activeId].name}".`, 'info', 'profiles');
+      }
+    }
+
+    function moveCurrentProfileDown() {
+      const activeId = dashboardProfilesState.activeProfileId;
+      if (activeId === DEFAULT_DASHBOARD_PROFILE_ID) return;
+      getOrderedDashboardProfiles();
+      const order = dashboardProfilesState.profileOrder;
+      const idx = order.indexOf(activeId);
+      if (idx !== -1 && idx < order.length - 1) {
+        const temp = order[idx + 1];
+        order[idx + 1] = order[idx];
+        order[idx] = temp;
+        persistDashboardProfilesState();
+        updateProfileSelectorsUI();
+        renderDashboardCustomizationCatalog();
+        addSystemNotification('Perfil Reordenado', `Se bajó la posición del perfil "${dashboardProfilesState.profiles[activeId].name}".`, 'info', 'profiles');
+      }
+    }
 
     function getCurrentDashboardProfile() {
       if (!dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId]) {
@@ -2770,15 +3056,16 @@
 
     function updateProfileSelectorsUI() {
       const activeProf = getCurrentDashboardProfile();
+      const ordered = getOrderedDashboardProfiles();
 
       // 1. Actualizar Topbar Combobox
       const valTopbar = document.getElementById('val-topbar-profile');
       if (valTopbar) valTopbar.textContent = activeProf.name;
       const dropTopbar = document.getElementById('dropdown-topbar-profile');
       if (dropTopbar) {
-        dropTopbar.innerHTML = Object.values(dashboardProfilesState.profiles).map(p => `
+        dropTopbar.innerHTML = ordered.map(p => `
           <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-            <span>${p.name}</span>
+            <span>${p.name}${p.id === 'default' ? ' (Predeterminado)' : ''}</span>
             <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
         `).join('');
@@ -2789,9 +3076,9 @@
       if (valDrawer) valDrawer.textContent = activeProf.name;
       const dropDrawer = document.getElementById('dropdown-drawer-profile');
       if (dropDrawer) {
-        dropDrawer.innerHTML = Object.values(dashboardProfilesState.profiles).map(p => `
+        dropDrawer.innerHTML = ordered.map(p => `
           <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-            <span>${p.name}</span>
+            <span>${p.name}${p.id === 'default' ? ' (Predeterminado)' : ''}</span>
             <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
         `).join('');
@@ -4454,7 +4741,120 @@
           }
         }, false);
       }
+
+      // CONTROLADOR DE MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE)
+      // Desactiva menú genérico de navegador en toda la app y despliega menú propio contextual solo donde amerita
+      window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const modNav = e.target.closest('[id^="nav-module-"]');
+        const modCard = e.target.closest('[id^="installed-mod-"]');
+        const gridCard = e.target.closest('#grid-board .card');
+
+        if (modNav || modCard || gridCard) {
+          openAppContextMenu(e, { modNav, modCard, gridCard });
+        } else {
+          closeAppContextMenu();
+        }
+      });
+
+      window.addEventListener('click', (e) => {
+        if (!e.target.closest('#app-context-menu')) {
+          closeAppContextMenu();
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAppContextMenu();
+      });
     });
+
+    function closeAppContextMenu() {
+      const menu = document.getElementById('app-context-menu');
+      if (menu) {
+        menu.classList.remove('active');
+        menu.style.display = 'none';
+        menu.innerHTML = '';
+      }
+    }
+
+    function openAppContextMenu(e, targets) {
+      const menu = document.getElementById('app-context-menu');
+      if (!menu) return;
+
+      let itemsHtml = '';
+
+      if (targets.modNav || targets.modCard) {
+        let modId = '';
+        if (targets.modNav) {
+          modId = targets.modNav.id.replace('nav-module-', '');
+        } else if (targets.modCard) {
+          modId = targets.modCard.id.replace('installed-mod-', '');
+        }
+
+        const mod = registeredModules[modId];
+        const modName = mod ? mod.name : 'Módulo';
+
+        itemsHtml = `
+          <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 4px 8px; letter-spacing: 0.5px;">${modName}</div>
+          <div class="context-menu-item" onclick="closeAppContextMenu(); navigateToModule('${modId}')">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Abrir Módulo</span>
+          </div>
+          <div class="context-menu-item" onclick="closeAppContextMenu(); navigateTo('modules')">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            <span>Ver en Gestor de Módulos</span>
+          </div>
+          <div class="context-menu-separator"></div>
+          <div class="context-menu-item" onclick="closeAppContextMenu(); toggleModule('${modId}')">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"></path></svg>
+            <span>${mod && mod.enabled ? 'Desactivar' : 'Activar'}</span>
+          </div>
+          <div class="context-menu-item danger" onclick="closeAppContextMenu(); uninstallModule('${modId}')">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Desinstalar Módulo</span>
+          </div>
+        `;
+      } else if (targets.gridCard) {
+        const cardTitle = targets.gridCard.querySelector('.card-header span')?.textContent || 'Widget';
+        const cardId = targets.gridCard.id;
+
+        itemsHtml = `
+          <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 4px 8px; letter-spacing: 0.5px;">${cardTitle}</div>
+          <div class="context-menu-item" onclick="closeAppContextMenu(); autoOrganizeDashboardGrid()">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Auto-organizar Cuadrícula</span>
+          </div>
+          <div class="context-menu-item" onclick="closeAppContextMenu(); openDrawer('drawer-dashboard-custom')">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+            <span>Personalizar Widgets</span>
+          </div>
+          <div class="context-menu-separator"></div>
+          <div class="context-menu-item danger" onclick="closeAppContextMenu(); toggleDashboardWidget('${cardId}', false)">
+            <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Ocultar Widget</span>
+          </div>
+        `;
+      }
+
+      menu.innerHTML = itemsHtml;
+      menu.style.display = 'flex';
+      menu.classList.add('active');
+
+      const menuWidth = 210;
+      const menuHeight = menu.offsetHeight || 160;
+      let posX = e.clientX;
+      let posY = e.clientY;
+
+      if (posX + menuWidth > window.innerWidth) {
+        posX = window.innerWidth - menuWidth - 10;
+      }
+      if (posY + menuHeight > window.innerHeight) {
+        posY = window.innerHeight - menuHeight - 10;
+      }
+
+      menu.style.left = `${Math.max(10, posX)}px`;
+      menu.style.top = `${Math.max(10, posY)}px`;
+    }
   </script>
 </body>
 </html>

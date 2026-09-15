@@ -68,6 +68,8 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
 - **Drag and Drop Fluido y Auto-organización del Dashboard**:
   - Las tarjetas del Dashboard pueden moverse y reubicarse libremente en la cuadrícula de forma suave y continua, con animaciones fluidas (`cubic-bezier`), sombras de elevación y retroalimentación visual clara sin saltos toscos durante el arrastre.
   - El Dashboard debe contar obligatoriamente con un **botón flotante canónico de Auto-organización** (`btn-fab`) que reacomode y compacte inteligentemente las tarjetas en la cuadrícula sin dejar huecos vacíos.
+- **Barras de Desplazamiento Universales Estilizadas (Scrollbars)**: Prohibido terminantemente dejar barras de scroll genéricas o del navegador en cualquier vista, panel, modal o lista. Todas las barras deben implementar globalmente (`*::-webkit-scrollbar`) el estilo Material Expressive de la app (6px de grosor, pulgar redondeado sutil y realce dinámico con el acento en hover).
+- **Menú Contextual Canónico y Cero Menús Genéricos**: Se desactiva el menú contextual genérico del navegador en toda la aplicación (`e.preventDefault()`). Las interacciones de clic derecho se reservan exclusivamente para componentes donde aportan valor operativo real (módulos en sidebar/gestor, widgets en dashboard) mediante un menú contextual nativo estilizado.
 
 ### Regla 7: Integridad Funcional, Uso de Mockups y Cero Datos Inventados
 - **Visibilidad 100% en Tarjetas**: Los títulos y contenidos de las tarjetas del Dashboard no pueden estar truncados ni recortados con puntos suspensivos (`ellipsis`). Todo lo que el módulo diseñe para mostrar debe ser 100% legible y visible en el tamaño de celda elegido (`1x1`, `2x1`, `2x2`, etc.).

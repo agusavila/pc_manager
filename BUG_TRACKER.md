@@ -674,6 +674,41 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-025] Cuadrícula en Configuraciones, Submenús de Notificaciones, Reordenamiento de Perfiles, Scrollbars Universales y Menú Contextual Controlado
+- **Fecha**: 2026-09-15
+- **Severidad**: `Media`
+- **Componente**: `UI / Settings / Notificaciones / Perfiles / Scrollbars / Context Menu (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)`, [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md)`)`
+- **Descripción del Fallo**: 
+  1. En Configuraciones las tarjetas estaban estiradas a una sola columna horizontal en pantallas medianas/anchas perdiendo aprovechamiento espacial.
+  2. La tarjeta de notificaciones concentraba interruptores directos dentro de la tarjeta en lugar de delegar a submenús organizados.
+  3. En el panel de widgets del Dashboard el selector combobox de perfiles presentaba dificultades de renderizado de opciones.
+  4. Ausencia de un mecanismo para alterar el orden de los perfiles de Dashboard guardados, manteniendo el perfil predeterminado en primera posición.
+  5. Barras de desplazamiento con aspecto genérico de navegador en subcontenedores con desbordamiento explícito.
+  6. Activación del menú contextual genérico de navegador mediante clic derecho en cualquier punto del software.
+- **Causa Raíz**: 
+  1. `grid-template-columns: minmax(440px, 1fr)` forzaba columnas simples excesivamente anchas.
+  2. Falta de desacoplamiento entre las tarjetas de vista general y la configuración granular de eventos y módulos.
+  3. Ausencia de array de orden de perfiles (`profileOrder`) y botones interactivos de subida/bajada.
+  4. Selectores CSS de scrollbar no aplicados con selector universal `*::-webkit-scrollbar`.
+  5. Carencia de un listener global de `contextmenu` y componente visual de menú contextual personalizado.
+- **Solución Implementada**: 
+  1. Se reestructuró la pila de configuraciones a cuadrícula de dos columnas simétricas (`repeat(2, minmax(0, 1fr))`) con salto automático a 1 columna en pantallas reducidas (<980px).
+  2. Se dividió la sección de notificaciones en dos tarjetas independientes ("Notificaciones del Sistema" y "Notificaciones de Módulos"), trasladando todos los interruptores y selectores a submenús modales con `backdrop-filter`.
+  3. Se pobló el combobox de perfiles en el drawer de widgets directamente con `getOrderedDashboardProfiles()`.
+  4. Se implementaron las funciones `getOrderedDashboardProfiles()`, `moveCurrentProfileUp()` y `moveCurrentProfileDown()`, incorporando `profileOrder` con seguro inmutable para el perfil `default` en índice 0 y botones de flechas en la cabecera.
+  5. Se aplicaron estilos universales de scrollbar `*::-webkit-scrollbar` (6px, bordes redondeados y realce con `--accent-primary`) y se reforzó la directiva en [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md) y [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md).
+  6. Se anuló el menú contextual genérico del navegador (`e.preventDefault()`) e implementó el componente `.custom-context-menu` adaptativo con acciones reales en módulos (abrir, gestor, activar/desactivar, desinstalar) y widgets del dashboard (auto-organizar, personalizar, ocultar).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

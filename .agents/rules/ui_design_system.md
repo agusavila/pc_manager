@@ -155,3 +155,13 @@ Para garantizar una estética 100% coherente e inquebrantable a lo largo de toda
 3. **Reutilización de Componentes Estándar**:
    - Los módulos deben utilizar las clases utilitarias provistas por el Core: `.btn`, `.btn-primary`, `.btn-secondary`, `.switch`, `.card`, `.badge`, asegurando que todos los comboboxes, interruptores y botones tengan la misma curvatura, animaciones y comportamiento en cualquier módulo.
 
+---
+
+## 8. Barras de Desplazamiento Universales y Menús Contextuales
+1. **Scrollbars Material Expressive Obligatorios**:
+   - Prohibido dejar barras de desplazamiento por defecto de Chromium / WebView en cualquier contenedor con scroll (`*::-webkit-scrollbar`).
+   - Deben seguir el estándar del sistema: ancho de `6px`, esquinas redondeadas, pulgar discreto sobre la pista y realce en `var(--accent-primary)` durante hover o arrastre activo.
+2. **Menú Contextual Canónico (Cero Menús Genéricos de Navegador)**:
+   - Se intercepta el evento `contextmenu` globalmente con `e.preventDefault()` para suprimir menús genéricos de navegador.
+   - Únicamente se despliega el menú contextual nativo personalizado (`.custom-context-menu`) en elementos interactivos donde aporte valor operativo (módulos en menú lateral y gestor, widgets en dashboard).
+
