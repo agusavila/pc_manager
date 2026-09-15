@@ -4100,6 +4100,7 @@
     const notificationSettings = {
       systemEnabled: true,
       windowsNativeEnabled: false,
+      modulesMasterEnabled: true,
       systemEvents: {
         host: true,
         modules: true,
@@ -4137,6 +4138,7 @@
       if (!notificationSettings.systemEvents) notificationSettings.systemEvents = {};
       notificationSettings.systemEvents[catId] = enabled;
       saveNotificationSettingsToDisk();
+      updateNotificationBadgesAndSummaries();
     }
 
     function updateNotificationEmptyState() {
@@ -4220,8 +4222,13 @@
       }
 
       // 3. Filtrar por permisos de extensión modular externa
-      if (category && notificationSettings.modulePermissions && notificationSettings.modulePermissions[category] === false) {
-        return;
+      if (!isSystemEvent) {
+        if (notificationSettings.modulesMasterEnabled === false) {
+          return;
+        }
+        if (category && notificationSettings.modulePermissions && notificationSettings.modulePermissions[category] === false) {
+          return;
+        }
       }
 
       const list = document.getElementById('notif-list');
@@ -4252,9 +4259,59 @@
       dispatchWindowsNativeNotification(title, text);
     }
 
+    function openSystemNotifModal() {
+      const modal = document.getElementById('modal-system-notif');
+      if (modal) {
+        const chkSys = document.getElementById('chk-notif-system');
+        if (chkSys) chkSys.checked = notificationSettings.systemEnabled !== false;
+        const chkWin = document.getElementById('chk-notif-windows');
+        if (chkWin) chkWin.checked = !!notificationSettings.windowsNativeEnabled;
+        renderSystemNotificationEvents();
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeSystemNotifModal() {
+      const modal = document.getElementById('modal-system-notif');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      updateNotificationBadgesAndSummaries();
+    }
+
+    function openModuleNotifModal() {
+      const modal = document.getElementById('modal-module-notif');
+      if (modal) {
+        const chkMaster = document.getElementById('chk-notif-modules-master');
+        if (chkMaster) chkMaster.checked = notificationSettings.modulesMasterEnabled !== false;
+        renderModuleNotificationPermissions();
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeModuleNotifModal() {
+      const modal = document.getElementById('modal-module-notif');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      updateNotificationBadgesAndSummaries();
+    }
+
     function toggleSystemNotifPermission(enabled) {
       notificationSettings.systemEnabled = enabled;
       saveNotificationSettingsToDisk();
+      updateNotificationBadgesAndSummaries();
+    }
+
+    function toggleModulesNotifMaster(enabled) {
+      notificationSettings.modulesMasterEnabled = enabled;
+      const container = document.getElementById('settings-module-notif-list');
+      if (container) {
+        container.style.opacity = enabled ? '1' : '0.5';
+        container.style.pointerEvents = enabled ? 'auto' : 'none';
+      }
+      saveNotificationSettingsToDisk();
+      updateNotificationBadgesAndSummaries();
     }
 
     async function toggleWindowsNativeNotif(enabled) {
@@ -4279,6 +4336,37 @@
     function toggleModuleNotifPermission(moduleId, enabled) {
       notificationSettings.modulePermissions[moduleId] = enabled;
       saveNotificationSettingsToDisk();
+      updateNotificationBadgesAndSummaries();
+    }
+
+    function updateNotificationBadgesAndSummaries() {
+      const txtSysStatus = document.getElementById('txt-system-notif-status-badge');
+      const txtSysSummary = document.getElementById('txt-system-events-summary');
+      if (txtSysStatus && txtSysSummary) {
+        const sysActive = notificationSettings.systemEnabled !== false;
+        txtSysStatus.textContent = sysActive ? 'Avisos del Sistema Activos' : 'Avisos del Sistema Desactivados';
+        txtSysStatus.style.color = sysActive ? 'var(--text-primary)' : 'var(--text-muted)';
+
+        const totalEvents = SYSTEM_NOTIFICATION_CATEGORIES.length;
+        let activeEvents = 0;
+        SYSTEM_NOTIFICATION_CATEGORIES.forEach(cat => {
+          if (notificationSettings.systemEvents && notificationSettings.systemEvents[cat.id] !== false) {
+            activeEvents++;
+          }
+        });
+        txtSysSummary.textContent = sysActive ? `${activeEvents} de ${totalEvents} eventos activos` : 'Núcleo silenciado';
+      }
+
+      const txtModSummary = document.getElementById('txt-modules-notif-summary');
+      const txtModCount = document.getElementById('txt-modules-notif-count');
+      if (txtModSummary && txtModCount) {
+        const masterActive = notificationSettings.modulesMasterEnabled !== false;
+        txtModSummary.textContent = masterActive ? 'Gestión por Módulo (Activa)' : 'Módulos Silenciados Globalmente';
+        txtModSummary.style.color = masterActive ? 'var(--text-primary)' : 'var(--text-muted)';
+
+        const modCount = installedModules.size;
+        txtModCount.textContent = `${modCount} módulo(s) configurado(s)`;
+      }
     }
 
     function saveNotificationSettingsToDisk() {
@@ -4715,6 +4803,7 @@
               if (parsed) {
                 if (typeof parsed.systemEnabled === 'boolean') notificationSettings.systemEnabled = parsed.systemEnabled;
                 if (typeof parsed.windowsNativeEnabled === 'boolean') notificationSettings.windowsNativeEnabled = parsed.windowsNativeEnabled;
+                if (typeof parsed.modulesMasterEnabled === 'boolean') notificationSettings.modulesMasterEnabled = parsed.modulesMasterEnabled;
                 if (parsed.systemEvents && typeof parsed.systemEvents === 'object') {
                   notificationSettings.systemEvents = Object.assign(notificationSettings.systemEvents, parsed.systemEvents);
                 }
@@ -4729,9 +4818,12 @@
           if (chkSys) chkSys.checked = notificationSettings.systemEnabled;
           const chkWin = document.getElementById('chk-notif-windows');
           if (chkWin) chkWin.checked = notificationSettings.windowsNativeEnabled;
+          const chkModMaster = document.getElementById('chk-notif-modules-master');
+          if (chkModMaster) chkModMaster.checked = notificationSettings.modulesMasterEnabled !== false;
           renderSystemNotificationEvents();
           renderModuleNotificationPermissions();
           updateNotificationEmptyState();
+          updateNotificationBadgesAndSummaries();
         }
       } catch (err) {
         console.warn('Ejecutando en entorno webview desacoplado:', err);
@@ -4739,6 +4831,8 @@
 
       // Renderizar eventos del sistema por defecto si no se llamó antes
       renderSystemNotificationEvents();
+      renderModuleNotificationPermissions();
+      updateNotificationBadgesAndSummaries();
 
       // Inicializar perfiles, botones contextuales de la barra superior y drag and drop de cuadrícula
       await loadDashboardProfiles();

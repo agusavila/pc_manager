@@ -731,6 +731,28 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-027] Falta de Declaración de Funciones para Apertura y Cierre de Submenús Modales de Notificaciones
+- **Fecha**: 2026-09-15
+- **Severidad**: `Media`
+- **Componente**: `Configuraciones / Submenús de Notificaciones (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  Al interactuar con los botones "Configurar Alertas..." y "Permisos de Módulos..." dentro de las tarjetas de configuración de notificaciones, los submenús modales no se desplegaban ni respondían a los clics.
+- **Causa Raíz**: 
+  Los botones del HTML llamaban a `openSystemNotifModal()` y `openModuleNotifModal()`, pero dichas funciones, junto con sus contrapartes de cierre (`closeSystemNotifModal`, `closeModuleNotifModal`) y el controlador maestro `toggleModulesNotifMaster`, no habían sido implementadas en el script de la interfaz.
+- **Solución Implementada**: 
+  1. Se implementaron las funciones `openSystemNotifModal()` y `closeSystemNotifModal()`, enlazando los estados con `notificationSettings.systemEnabled` y `notificationSettings.windowsNativeEnabled` con renderizado dinámico de categorías operativas.
+  2. Se implementaron `openModuleNotifModal()`, `closeModuleNotifModal()` y `toggleModulesNotifMaster(enabled)`, permitiendo activar o silenciar globalmente o por módulo los avisos de las extensiones.
+  3. Se creó la función `updateNotificationBadgesAndSummaries()` para reflejar dinámicamente en las tarjetas de configuración el resumen de eventos del sistema activos ("X de 7 eventos activos") y el estado de módulos ("N módulo(s) configurado(s)").
+  4. Se sincronizó `core_shell.html` y se aseguró la persistencia en disco de `modulesMasterEnabled`.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
