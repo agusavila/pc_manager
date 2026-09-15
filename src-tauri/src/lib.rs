@@ -14,16 +14,22 @@ use module_manager::InstalledModuleRecord;
 pub struct SystemInfoPayload {
     pub os_name: String,
     pub arch: String,
+    pub hostname: String,
     pub version: String,
     pub status: String,
 }
 
 #[tauri::command]
 fn get_system_info() -> SystemInfoPayload {
+    let hostname = std::env::var("COMPUTERNAME")
+        .or_else(|_| std::env::var("HOSTNAME"))
+        .unwrap_or_else(|_| "HOST-PC".to_string());
+
     SystemInfoPayload {
         os_name: "Windows NT".to_string(),
         arch: std::env::consts::ARCH.to_string(),
-        version: "0.0.2-alpha".to_string(),
+        hostname,
+        version: "0.0.2".to_string(),
         status: "OPERATIONAL".to_string(),
     }
 }
@@ -115,7 +121,7 @@ pub fn run() {
             // 1. Configuración del menú contextual nativo del Tray
             let show_item = MenuItem::with_id(app, "show", "Abrir PC Manager", true, None::<&str>)?;
             let hide_item = MenuItem::with_id(app, "hide", "Ocultar a la Bandeja", true, None::<&str>)?;
-            let quit_item = MenuItem::with_id(app, "quit", "Cerrar Aplicación (Cero Huérfanos)", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "Cerrar PC Manager", true, None::<&str>)?;
 
             let tray_menu = Menu::with_items(app, &[
                 &show_item,

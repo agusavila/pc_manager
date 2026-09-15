@@ -612,6 +612,40 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-023] Desarmonía en alturas de controles superiores, selectores nativos sin estilo Material Expressive, scrollbar horizontal en panel de widgets, texto no neutral en System Tray y falta de control granular en notificaciones
+- **Fecha**: 2026-09-15
+- **Severidad**: `Media`
+- **Componente**: `UI / Shell (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`), Backend Rust (`[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`)`
+- **Descripción del Fallo**: 
+  1. Los controles de la barra superior (`topbar-actions`) presentaban alturas dispares (38px en `.btn-icon`, 32-34px en `.btn`, y 28px en `.topbar-profile-box`).
+  2. Los selectores de perfiles de dashboard en la barra superior y en el panel lateral empleaban controles `<select>` nativos del navegador con estética gris tosca, incumpliendo el sistema de diseño Material Expressive (Regla 6).
+  3. Al abrir el drawer de Widgets se generaba un scrollbar horizontal indeseado al pie del panel debido a falta de contención (`overflow-x: hidden !important`) y cajas sin `box-sizing: border-box`.
+  4. El menú contextual del System Tray empleaba la expresión `"Cerrar Aplicación (Cero Huérfanos)"`, violando la política White-Label (Regla 2).
+  5. Las notificaciones del sistema no ofrecían un control granular para activar y desactivar tipos específicos de eventos (host, módulos, ajustes, perfiles, auto-organización, etc.).
+  6. En el encabezado lateral se mostraba un texto estático `CORE // v0.0.1-alpha` en lugar del nombre de host de la máquina en uso (`COMPUTERNAME`).
+  7. Al crear un nuevo perfil de dashboard, este heredaba las tarjetas previamente activas en lugar de inicializarse como un lienzo en blanco configurable, y no existía la opción de renombrar perfiles.
+- **Causa Raíz**: 
+  Falta de estandarización dimensional fija (`36px`) en la barra superior; uso de elementos HTML por defecto en lugar del componente `.custom-combobox`; ausencia de contención de desborde horizontal en `.drawer` y `.drawer-body`; redacción con jerga interna en el System Tray; lógica de perfiles que inicializaba `hiddenWidgets: []` en nuevos perfiles; y ausencia de desglose por categoría de eventos en el gestor de notificaciones.
+- **Solución Implementada**: 
+  1. Se fijó una altura canónica de `36px` con `box-sizing: border-box` y alineación centrada para todos los botones y controles de la barra superior (`.topbar-actions .btn`, `.topbar-actions .btn-icon`, `.custom-combobox.combobox-inline .combobox-trigger`).
+  2. Se reemplazaron todos los selectores nativos por el componente `.custom-combobox` con su variante `.combobox-inline` para la barra superior, con menús flotantes translúcidos (`backdrop-filter`), bordes semánticos, chevrons animados y checkmarks de selección activa.
+  3. Se erradicó el scrollbar horizontal fijando `overflow-x: hidden !important; width: 100%; box-sizing: border-box;` en `.drawer`, `.drawer-body` y sus componentes internos.
+  4. Se saneó el texto del System Tray en Rust (`src-tauri/src/lib.rs`) a `"Cerrar PC Manager"`, alineado estrictamente con la política de Marca Blanca.
+  5. Se implementó la arquitectura `SYSTEM_NOTIFICATION_CATEGORIES` con interruptores individuales en la pestaña General de Configuraciones y filtrado granular por categoría (`host`, `modules`, `profiles`, `organize`, `settings`, `windows_integration`, `security`) en `addSystemNotification`.
+  6. Se extendió `get_system_info` en Rust para obtener `hostname` dinámicamente (`COMPUTERNAME` o `HOSTNAME`) y se actualizó `#sidebar-core-version` a `${sysInfo.hostname} // v${sysInfo.version}`.
+  7. Se actualizó `submitNewProfile()` para iniciar como lienzo en blanco (`hiddenWidgets = [todos los widgets disponibles]`) y se añadió el botón y panel de renombrado (`#panel-rename-profile`, `submitRenameProfile()`).
+  8. Se sincronizaron al 100% las maquetas [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) y [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html).
+- **Archivos Afectados**: 
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

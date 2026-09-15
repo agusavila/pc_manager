@@ -344,7 +344,27 @@
     .topbar-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+    }
+
+    .topbar-actions .btn {
+      height: 36px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-size: 13px;
+    }
+
+    .topbar-actions .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* BOTÓN FLOTANTE CANÓNICO DE AUTO-ORGANIZACIÓN (FAB) */
@@ -615,6 +635,8 @@
       box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2) !important;
       z-index: 5 !important;
       min-height: 90px;
+    }
+
     /* SELECTOR DE PERFILES DEL DASHBOARD */
     .topbar-profile-box {
       display: flex;
@@ -646,10 +668,10 @@
       color: var(--text-primary);
     }
     .btn-icon-xs {
-      width: 26px;
-      height: 26px;
-      padding: 0;
-      border-radius: var(--radius-sm);
+      width: 24px !important;
+      height: 24px !important;
+      padding: 3px !important;
+      border-radius: var(--radius-sm) !important;
     }
 
     /* CATÁLOGO DE WIDGETS (DRAWER LATERAL) */
@@ -1128,6 +1150,34 @@
       display: block;
     }
 
+    /* VARIANTE INLINE COMPACTA (PARA BARRA SUPERIOR) */
+    .custom-combobox.combobox-inline {
+      width: auto;
+      min-width: 175px;
+    }
+
+    .custom-combobox.combobox-inline .combobox-trigger {
+      height: 36px;
+      padding: 0 12px;
+      font-size: 12.5px;
+      gap: 10px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-sizing: border-box;
+    }
+
+    .custom-combobox.combobox-inline .combobox-trigger:hover {
+      background-color: var(--bg-elevated);
+      border-color: var(--border-medium);
+    }
+
+    .custom-combobox.combobox-inline .combobox-dropdown {
+      min-width: 210px;
+      left: 0;
+      right: auto;
+    }
+
     /* VISTA DE CONFIGURACIONES HOMOGÉNEA (ANCHO COMPLETO 100% Y SISTEMA POR PESTAÑAS) */
     .settings-content-stack {
       display: flex;
@@ -1230,6 +1280,9 @@
       position: fixed;
       top: 0; right: -420px;
       width: 420px;
+      max-width: 100vw;
+      box-sizing: border-box;
+      overflow-x: hidden !important;
       height: 100vh;
       background-color: var(--bg-surface);
       border-left: 1px solid var(--border-subtle);
@@ -1244,14 +1297,31 @@
     }
 
     .drawer-header {
-      padding: 20px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      box-sizing: border-box;
+      width: 100%;
     }
     .drawer-header h3 { font-size: 16px; font-weight: 700; }
-    .drawer-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .drawer-body {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      overflow-x: hidden !important;
+      box-sizing: border-box;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .drawer-profile-card {
+      box-sizing: border-box;
+      width: 100%;
+    }
 
     /* ZONA DE ARRASTRE DE ARCHIVOS (.PCM) */
     .dropzone-pcm {
@@ -1287,7 +1357,7 @@
         </div>
         <div class="brand-info">
           <h1>PC MANAGER</h1>
-          <span>CORE // v0.0.1-alpha</span>
+          <span id="sidebar-core-version">CORE // v0.0.2</span>
         </div>
       </div>
 
@@ -1353,11 +1423,17 @@
         <div class="topbar-actions">
           <!-- Botones contextuales dinámicos según la vista activa -->
           <div id="topbar-contextual-actions" style="display: flex; align-items: center; gap: 8px;">
-            <div class="topbar-profile-box" title="Perfil activo de Dashboard">
-              <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
-              <select id="select-topbar-profile" class="profile-select-inline" onchange="switchDashboardProfile(this.value)">
-                <option value="default">Predeterminado</option>
-              </select>
+            <div class="custom-combobox combobox-inline" id="combo-topbar-profile" title="Perfil de Dashboard">
+              <div class="combobox-trigger" onclick="toggleCombobox('combo-topbar-profile')">
+                <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
+                  <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
+                  <span class="combobox-val" id="val-topbar-profile" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Predeterminado</span>
+                </div>
+                <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="combobox-dropdown" id="dropdown-topbar-profile">
+                <!-- Opciones generadas dinámicamente -->
+              </div>
             </div>
             <button class="btn-icon" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" data-tooltip="Auto-organizar Dashboard" title="Auto-organizar Dashboard">
               <svg class="svg-icon" viewBox="0 0 24 24">
@@ -1754,11 +1830,11 @@
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
-              <!-- 1. Notificaciones del Núcleo -->
+              <!-- 1. Notificaciones del Núcleo (Maestro) -->
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <strong style="font-size: 13.5px;">Notificaciones del Núcleo del Sistema</strong>
-                  <div style="font-size: 11.5px; color: var(--text-muted);">Alertas de ciclo de vida, estado general y eventos operativos</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted);">Interruptor maestro para todos los avisos y alertas del sistema</div>
                 </div>
                 <label class="switch">
                   <input type="checkbox" id="chk-notif-system" checked onchange="toggleSystemNotifPermission(this.checked)">
@@ -1778,7 +1854,24 @@
                 </label>
               </div>
 
-              <!-- 3. Permisos por Extensión Modular -->
+              <!-- 3. Eventos Granulares del Núcleo -->
+              <div style="margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">
+                      Eventos Granulares del Núcleo
+                    </div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+                      Activa o desactiva tipos individuales de notificaciones operativas
+                    </div>
+                  </div>
+                </div>
+                <div id="settings-system-notif-events" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Inyectado dinámicamente desde SYSTEM_NOTIFICATION_CATEGORIES -->
+                </div>
+              </div>
+
+              <!-- 4. Permisos por Extensión Modular -->
               <div style="margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
                 <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">
                   Permisos de Notificación por Extensión Modular
@@ -1929,15 +2022,18 @@
 
       if (viewId === 'dashboard') {
         container.style.display = 'flex';
-        const profileOptions = (typeof dashboardProfilesState !== 'undefined' && dashboardProfilesState.profiles) ? Object.values(dashboardProfilesState.profiles).map(p => 
-          `<option value="${p.id}" ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}>${p.name}</option>`
-        ).join('') : '<option value="default">Predeterminado</option>';
         container.innerHTML = `
-          <div class="topbar-profile-box" title="Perfil activo de Dashboard">
-            <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
-            <select id="select-topbar-profile" class="profile-select-inline" onchange="switchDashboardProfile(this.value)">
-              ${profileOptions}
-            </select>
+          <div class="custom-combobox combobox-inline" id="combo-topbar-profile" title="Perfil de Dashboard">
+            <div class="combobox-trigger" onclick="toggleCombobox('combo-topbar-profile')">
+              <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
+                <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
+                <span class="combobox-val" id="val-topbar-profile" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Predeterminado</span>
+              </div>
+              <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="combobox-dropdown" id="dropdown-topbar-profile">
+              <!-- Opciones generadas dinámicamente -->
+            </div>
           </div>
           <button class="btn-icon" id="btn-topbar-organize" onclick="autoOrganizeDashboard()" data-tooltip="Auto-organizar Dashboard" title="Auto-organizar Dashboard">
             <svg class="svg-icon" viewBox="0 0 24 24">
@@ -1952,6 +2048,7 @@
             <span>Widgets</span>
           </button>
         `;
+        updateProfileSelectorsUI();
       } else if (viewId === 'module-manager' || viewId === 'settings') {
         // En configuración y gestión de módulos: NUNCA se usan botones en la barra superior
         container.style.display = 'none';
@@ -2013,7 +2110,7 @@
       ).join('');
 
       const profileSectionHtml = `
-        <div class="drawer-profile-card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 8px;">
+        <div class="drawer-profile-card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 8px; box-sizing: border-box; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
@@ -2024,6 +2121,9 @@
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 <span>Nuevo</span>
               </button>
+              <button class="btn-icon btn-icon-xs" id="btn-rename-profile" onclick="showRenameProfilePrompt()" data-tooltip="Renombrar Perfil" title="Renombrar Perfil">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              </button>
               <button class="btn-icon btn-icon-xs" onclick="duplicateCurrentDashboardProfile()" data-tooltip="Duplicar Perfil" title="Duplicar Perfil">
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               </button>
@@ -2033,17 +2133,32 @@
             </div>
           </div>
           <div>
-            <select id="select-drawer-profile" class="form-select" style="font-size: 12.5px; padding: 6px 10px; width: 100%; font-weight: 500;" onchange="switchDashboardProfile(this.value)">
-              ${profileOptions}
-            </select>
+            <div class="custom-combobox" id="combo-drawer-profile" style="width: 100%;">
+              <div class="combobox-trigger" onclick="toggleCombobox('combo-drawer-profile')" style="padding: 7px 12px; font-size: 12.5px; border-radius: var(--radius-md);">
+                <span class="combobox-val" id="val-drawer-profile">${currentProfile.name}</span>
+                <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="combobox-dropdown" id="dropdown-drawer-profile">
+                <!-- Opciones inyectadas dinámicamente -->
+              </div>
+            </div>
           </div>
           <!-- Panel para creación de nuevo perfil -->
           <div id="panel-new-profile" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-subtle);">
             <div style="font-size: 11.5px; color: var(--text-secondary);">Nombre del nuevo perfil:</div>
             <div style="display: flex; gap: 6px;">
-              <input type="text" id="input-new-profile-name" class="form-control" style="font-size: 12px; padding: 6px 10px;" placeholder="Ej: Monitoreo, Minimalista..." onkeydown="if(event.key==='Enter') submitNewProfile()">
+              <input type="text" id="input-new-profile-name" class="form-control" style="font-size: 12px; padding: 6px 10px; flex: 1; min-width: 0; box-sizing: border-box;" placeholder="Ej: Monitoreo, Minimalista..." onkeydown="if(event.key==='Enter') submitNewProfile()">
               <button class="btn btn-primary" style="font-size: 11.5px; padding: 5px 10px;" onclick="submitNewProfile()">Guardar</button>
               <button class="btn btn-secondary" style="font-size: 11.5px; padding: 5px 10px;" onclick="cancelNewProfilePrompt()">Cancelar</button>
+            </div>
+          </div>
+          <!-- Panel para renombrado de perfil -->
+          <div id="panel-rename-profile" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-subtle);">
+            <div style="font-size: 11.5px; color: var(--text-secondary);">Renombrar perfil activo:</div>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" id="input-rename-profile-name" class="form-control" style="font-size: 12px; padding: 6px 10px; flex: 1; min-width: 0; box-sizing: border-box;" placeholder="Nuevo nombre" onkeydown="if(event.key==='Enter') submitRenameProfile()">
+              <button class="btn btn-primary" style="font-size: 11.5px; padding: 5px 10px;" onclick="submitRenameProfile()">Guardar</button>
+              <button class="btn btn-secondary" style="font-size: 11.5px; padding: 5px 10px;" onclick="cancelRenameProfilePrompt()">Cancelar</button>
             </div>
           </div>
         </div>
@@ -2212,7 +2327,7 @@
       if (!file) return;
       try {
         if (!file.name.endsWith('.pcm') && !file.name.endsWith('.zip')) {
-          addSystemNotification('Formato No Soportado', 'El paquete debe tener extensión .pcm o .zip.', 'warning');
+          addSystemNotification('Formato No Soportado', 'El paquete debe tener extensión .pcm o .zip.', 'warning', 'modules');
           return;
         }
 
@@ -2221,7 +2336,7 @@
 
         // 1. Vía Nativa Rust (Software de Escritorio)
         if (invokeFn) {
-          addSystemNotification('Instalación Nativa', `Instalando ${file.name} físicamente en el disco duro de Windows...`, 'info');
+          addSystemNotification('Instalación Nativa', `Instalando ${file.name} físicamente en el disco duro de Windows...`, 'info', 'modules');
           const packageBytes = Array.from(new Uint8Array(arrayBuffer));
           const record = await invokeFn('install_module_package', { packageBytes });
           if (record && record.manifest) {
@@ -2232,14 +2347,14 @@
 
         // 2. Fallback de descompresión en memoria si se ejecuta fuera de Tauri
         if (typeof JSZip === 'undefined') {
-          addSystemNotification('Dependencia no cargada', 'Motor de descompresión JSZip no disponible.', 'warning');
+          addSystemNotification('Dependencia no cargada', 'Motor de descompresión JSZip no disponible.', 'warning', 'modules');
           return;
         }
 
         const zip = await JSZip.loadAsync(arrayBuffer);
         const manifestFile = zip.file('manifest.json');
         if (!manifestFile) {
-          addSystemNotification('Manifiesto Ausente', 'El paquete .pcm no contiene un manifest.json válido.', 'warning');
+          addSystemNotification('Manifiesto Ausente', 'El paquete .pcm no contiene un manifest.json válido.', 'warning', 'modules');
           return;
         }
 
@@ -2247,7 +2362,7 @@
         const manifest = JSON.parse(manifestText);
 
         if (!manifest.id || !manifest.name) {
-          addSystemNotification('Manifiesto Inválido', 'Faltan campos obligatorios id o name.', 'warning');
+          addSystemNotification('Manifiesto Inválido', 'Faltan campos obligatorios id o name.', 'warning', 'modules');
           return;
         }
 
@@ -2260,7 +2375,7 @@
         installModule(manifest, scriptCode);
       } catch (err) {
         console.error('Error al instalar paquete .pcm:', err);
-        addSystemNotification('Error de Instalación', `No se pudo instalar el paquete: ${err.message}`, 'warning');
+        addSystemNotification('Error de Instalación', `No se pudo instalar el paquete: ${err.message}`, 'warning', 'modules');
       }
     }
 
@@ -2541,18 +2656,44 @@
     }
 
     function updateProfileSelectorsUI() {
-      const topSelect = document.getElementById('select-topbar-profile');
-      const drawerSelect = document.getElementById('select-drawer-profile');
-      const btnDelete = document.getElementById('btn-delete-profile');
-      const optionsHtml = Object.values(dashboardProfilesState.profiles).map(p =>
-        `<option value="${p.id}" ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}>${p.name}</option>`
-      ).join('');
+      const activeProf = getCurrentDashboardProfile();
 
-      if (topSelect) topSelect.innerHTML = optionsHtml;
-      if (drawerSelect) drawerSelect.innerHTML = optionsHtml;
+      // 1. Actualizar Topbar Combobox
+      const valTopbar = document.getElementById('val-topbar-profile');
+      if (valTopbar) valTopbar.textContent = activeProf.name;
+      const dropTopbar = document.getElementById('dropdown-topbar-profile');
+      if (dropTopbar) {
+        dropTopbar.innerHTML = Object.values(dashboardProfilesState.profiles).map(p => `
+          <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
+            <span>${p.name}</span>
+            <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        `).join('');
+      }
+
+      // 2. Actualizar Drawer Combobox
+      const valDrawer = document.getElementById('val-drawer-profile');
+      if (valDrawer) valDrawer.textContent = activeProf.name;
+      const dropDrawer = document.getElementById('dropdown-drawer-profile');
+      if (dropDrawer) {
+        dropDrawer.innerHTML = Object.values(dashboardProfilesState.profiles).map(p => `
+          <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
+            <span>${p.name}</span>
+            <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        `).join('');
+      }
+
+      // 3. Botones de acción del drawer
+      const btnDelete = document.getElementById('btn-delete-profile');
       if (btnDelete) {
         btnDelete.style.display = dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID ? 'none' : 'inline-flex';
       }
+    }
+
+    function selectDashboardProfileFromCombo(profileId) {
+      closeAllComboboxes();
+      switchDashboardProfile(profileId);
     }
 
     async function loadDashboardProfiles() {
@@ -2769,10 +2910,11 @@
       persistDashboardProfilesState();
       renderDashboardCustomizationCatalog();
       const profile = dashboardProfilesState.profiles[profileId];
-      addSystemNotification('Perfil Cambiado', `Se activó el perfil "${profile.name}".`, 'info');
+      addSystemNotification('Perfil Cambiado', `Se activó el perfil "${profile.name}".`, 'info', 'profiles');
     }
 
     function showNewProfilePrompt() {
+      cancelRenameProfilePrompt();
       const panel = document.getElementById('panel-new-profile');
       if (panel) {
         panel.style.display = 'flex';
@@ -2794,16 +2936,29 @@
       if (!input) return;
       const name = input.value.trim();
       if (!name) {
-        addSystemNotification('Perfil Inválido', 'Debe ingresar un nombre para el nuevo perfil.', 'warning');
+        addSystemNotification('Perfil Inválido', 'Debe ingresar un nombre para el nuevo perfil.', 'warning', 'profiles');
         return;
       }
+
+      // Inicializar el nuevo perfil como lienzo en blanco (todas las tarjetas desactivadas)
+      const allWidgetIds = [];
+      installedModules.forEach(mod => {
+        if (mod.manifest && mod.manifest.widgets) {
+          mod.manifest.widgets.forEach(w => {
+            allWidgetIds.push(w.id || `card-${mod.manifest.id}`);
+          });
+        }
+      });
+      document.querySelectorAll('#grid-board .card').forEach(c => {
+        if (c.id && !allWidgetIds.includes(c.id)) allWidgetIds.push(c.id);
+      });
 
       const id = 'prof_' + Date.now();
       dashboardProfilesState.profiles[id] = {
         id,
         name,
         layout: {},
-        hiddenWidgets: []
+        hiddenWidgets: allWidgetIds
       };
       dashboardProfilesState.activeProfileId = id;
 
@@ -2821,7 +2976,46 @@
       restoreDashboardLayout();
       persistDashboardProfilesState();
       renderDashboardCustomizationCatalog();
-      addSystemNotification('Perfil Creado', `Nuevo perfil "${name}" creado exitosamente.`, 'success');
+      addSystemNotification('Perfil Creado', `Nuevo perfil "${name}" creado exitosamente (lienzo en blanco).`, 'success', 'profiles');
+    }
+
+    function showRenameProfilePrompt() {
+      cancelNewProfilePrompt();
+      const panel = document.getElementById('panel-rename-profile');
+      if (panel) {
+        panel.style.display = 'flex';
+        const input = document.getElementById('input-rename-profile-name');
+        if (input) {
+          input.value = getCurrentDashboardProfile().name;
+          input.focus();
+          input.select();
+        }
+      }
+    }
+
+    function cancelRenameProfilePrompt() {
+      const panel = document.getElementById('panel-rename-profile');
+      if (panel) panel.style.display = 'none';
+    }
+
+    function submitRenameProfile() {
+      const input = document.getElementById('input-rename-profile-name');
+      if (!input) return;
+      const newName = input.value.trim();
+      if (!newName) {
+        addSystemNotification('Nombre Inválido', 'El nombre del perfil no puede estar vacío.', 'warning', 'profiles');
+        return;
+      }
+
+      const curr = getCurrentDashboardProfile();
+      const oldName = curr.name;
+      curr.name = newName;
+
+      cancelRenameProfilePrompt();
+      updateProfileSelectorsUI();
+      persistDashboardProfilesState();
+      renderDashboardCustomizationCatalog();
+      addSystemNotification('Perfil Renombrado', `El perfil "${oldName}" ahora se llama "${newName}".`, 'success', 'profiles');
     }
 
     function duplicateCurrentDashboardProfile() {
@@ -2840,12 +3034,12 @@
       updateProfileSelectorsUI();
       persistDashboardProfilesState();
       renderDashboardCustomizationCatalog();
-      addSystemNotification('Perfil Duplicado', `Se creó una copia activa con el nombre "${name}".`, 'success');
+      addSystemNotification('Perfil Duplicado', `Se creó una copia activa con el nombre "${name}".`, 'success', 'profiles');
     }
 
     function deleteCurrentDashboardProfile() {
       if (dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID) {
-        addSystemNotification('Acción No Permitida', 'El perfil "Predeterminado" es canónico y no puede eliminarse.', 'warning');
+        addSystemNotification('Acción No Permitida', 'El perfil "Predeterminado" es canónico y no puede eliminarse.', 'warning', 'profiles');
         return;
       }
 
@@ -2866,14 +3060,14 @@
       restoreDashboardLayout();
       persistDashboardProfilesState();
       renderDashboardCustomizationCatalog();
-      addSystemNotification('Perfil Eliminado', `El perfil "${deletedName}" fue eliminado. Se restauró el perfil Predeterminado.`, 'info');
+      addSystemNotification('Perfil Eliminado', `El perfil "${deletedName}" fue eliminado. Se restauró el perfil Predeterminado.`, 'info', 'profiles');
     }
 
     function autoOrganizeDashboard() {
       const grid = document.getElementById('grid-board');
       const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none');
       if (cards.length === 0) {
-        addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para auto-organizar.', 'info');
+        addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para auto-organizar.', 'info', 'organize');
         return;
       }
 
@@ -2914,7 +3108,7 @@
       });
 
       persistDashboardLayout();
-      addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula.`, 'success');
+      addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula.`, 'success', 'organize');
     }
 
     function adjustCardsForCurrentGridCols() {
@@ -2958,7 +3152,7 @@
         if (invokeFn) {
           invokeFn('save_module_setting', { moduleId, optionId, value }).catch(e => console.warn(e));
         }
-        addSystemNotification('Ajuste Guardado en Disco', `"${optionId}" guardado en el sistema.`, 'info');
+        addSystemNotification('Ajuste Guardado en Disco', `"${optionId}" guardado en el sistema.`, 'info', 'settings');
       }
     }
 
@@ -3197,9 +3391,9 @@
       }
 
       if (isUpdate) {
-        addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success');
+        addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success', 'modules');
       } else if (isActive) {
-        addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success');
+        addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success', 'modules');
       }
     }
 
@@ -3245,7 +3439,7 @@
         if (invokeFn) {
           invokeFn('toggle_module_active', { moduleId, active: isActive }).catch(e => console.warn(e));
         }
-        addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info');
+        addSystemNotification('Estado del Módulo', `"${mod.manifest.name}" ${isActive ? 'activado' : 'desactivado'}.`, 'info', 'modules');
       }
     }
 
@@ -3318,7 +3512,7 @@
         }
       }
 
-      addSystemNotification('Módulo Desinstalado', `"${mod.manifest.name}" ha sido eliminado del sistema.`, 'warning');
+      addSystemNotification('Módulo Desinstalado', `"${mod.manifest.name}" ha sido eliminado del sistema.`, 'warning', 'modules');
     }
 
     function ensureSidebarGroup(groupName) {
@@ -3371,7 +3565,7 @@
     }
 
     function syncRemoteCatalog() {
-      addSystemNotification('Catálogo Remoto', 'Consultando repositorios configurados (0 fuentes registradas).', 'info');
+      addSystemNotification('Catálogo Remoto', 'Consultando repositorios configurados (0 fuentes registradas).', 'info', 'modules');
     }
 
     function addRepositorySource() {
@@ -3399,15 +3593,61 @@
       `;
       list.appendChild(newRow);
       input.value = '';
-      addSystemNotification('Fuente Añadida', `Repositorio ${val} guardado localmente.`, 'success');
+      addSystemNotification('Fuente Añadida', `Repositorio ${val} guardado localmente.`, 'success', 'modules');
     }
 
-    // 6. GESTIÓN Y PERMISOS DE NOTIFICACIONES (WINDOWS Y MÓDULOS)
+    // 6. GESTIÓN Y PERMISOS DE NOTIFICACIONES (WINDOWS, NÚCLEO Y MÓDULOS)
+    const SYSTEM_NOTIFICATION_CATEGORIES = [
+      { id: 'host', label: 'Conexión de Host y Estado Operativo', desc: 'Avisos de conexión con el host de Windows y arranque del sistema' },
+      { id: 'modules', label: 'Gestión de Módulos (.pcm)', desc: 'Instalación, actualización, cambio de estado y desinstalación de extensiones' },
+      { id: 'profiles', label: 'Perfiles de Dashboard', desc: 'Creación, cambio, duplicación, renombrado y borrado de perfiles' },
+      { id: 'organize', label: 'Auto-organización de Cuadrícula', desc: 'Compactación y reubicación inteligente de widgets en el Dashboard' },
+      { id: 'settings', label: 'Configuración y Personalización', desc: 'Guardado de preferencias en disco, temas y colores semánticos' },
+      { id: 'windows_integration', label: 'Integración con Windows', desc: 'Cambios en bandeja (tray), inicio con Windows y modo servicio' },
+      { id: 'security', label: 'Seguridad y Modo Simulación', desc: 'Alertas de protección del sistema y dry-run previo' }
+    ];
+
     const notificationSettings = {
       systemEnabled: true,
       windowsNativeEnabled: false,
+      systemEvents: {
+        host: true,
+        modules: true,
+        profiles: true,
+        organize: true,
+        settings: true,
+        windows_integration: true,
+        security: true
+      },
       modulePermissions: {} // moduleId: boolean
     };
+
+    function renderSystemNotificationEvents() {
+      const container = document.getElementById('settings-system-notif-events');
+      if (!container) return;
+
+      container.innerHTML = SYSTEM_NOTIFICATION_CATEGORIES.map(cat => {
+        const isAllowed = notificationSettings.systemEvents && notificationSettings.systemEvents[cat.id] !== false;
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-subtle);">
+            <div>
+              <strong style="font-size: 12.5px;">${cat.label}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${cat.desc}</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="chk-notif-event-${cat.id}" ${isAllowed ? 'checked' : ''} onchange="toggleSystemEventNotifPermission('${cat.id}', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSystemEventNotifPermission(catId, enabled) {
+      if (!notificationSettings.systemEvents) notificationSettings.systemEvents = {};
+      notificationSettings.systemEvents[catId] = enabled;
+      saveNotificationSettingsToDisk();
+    }
 
     function updateNotificationEmptyState() {
       const list = document.getElementById('notif-list');
@@ -3474,12 +3714,24 @@
       }
     }
 
-    function addSystemNotification(title, text, type, sourceId = 'system') {
-      // 1. Filtrar por permisos configurados
-      if (sourceId === 'system' || !sourceId) {
-        if (!notificationSettings.systemEnabled) return;
-      } else {
-        if (notificationSettings.modulePermissions[sourceId] === false) return;
+    function addSystemNotification(title, text, type, category = 'system') {
+      // 1. Filtrar por interruptor maestro del núcleo
+      const isSystemEvent = !category || category === 'system' || category.startsWith('system_') || SYSTEM_NOTIFICATION_CATEGORIES.some(c => c.id === category);
+      if (isSystemEvent && !notificationSettings.systemEnabled) {
+        return;
+      }
+
+      // 2. Filtrar por tipo granular de evento del sistema
+      if (category && notificationSettings.systemEvents) {
+        const cleanCat = category.startsWith('system_') ? category.replace('system_', '') : category;
+        if (notificationSettings.systemEvents[cleanCat] === false) {
+          return;
+        }
+      }
+
+      // 3. Filtrar por permisos de extensión modular externa
+      if (category && notificationSettings.modulePermissions && notificationSettings.modulePermissions[category] === false) {
+        return;
       }
 
       const list = document.getElementById('notif-list');
@@ -3506,7 +3758,7 @@
         badge.textContent = parseInt(badge.textContent || '0') + 1;
       }
 
-      // 2. Emisión nativa a Windows 10/11 si está autorizada
+      // 4. Emisión nativa a Windows 10/11 si está autorizada
       dispatchWindowsNativeNotification(title, text);
     }
 
@@ -3630,11 +3882,11 @@
 
     // 8. CICLO DE VIDA EN WINDOWS
     function toggleStartupWindows(isEnabled) {
-      addSystemNotification('Arranque del Sistema', isEnabled ? 'Inicio con Windows activado.' : 'Inicio con Windows desactivado.', 'info');
+      addSystemNotification('Arranque del Sistema', isEnabled ? 'Inicio con Windows activado.' : 'Inicio con Windows desactivado.', 'info', 'windows_integration');
     }
 
     function toggleTrayMinimize(isEnabled) {
-      addSystemNotification('Bandeja del Sistema', isEnabled ? 'Minimizar al Tray activo (predeterminado).' : 'Minimizar al Tray desactivado.', 'info');
+      addSystemNotification('Bandeja del Sistema', isEnabled ? 'Minimizar al Tray activo (predeterminado).' : 'Minimizar al Tray desactivado.', 'info', 'windows_integration');
       if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
         window.__TAURI_INTERNALS__.invoke('minimize_to_tray');
       } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
@@ -3643,18 +3895,18 @@
     }
 
     function toggleWindowsService(isEnabled) {
-      addSystemNotification('Servicio de Windows', isEnabled ? 'Modo servicio headless pre-logon habilitado.' : 'Modo servicio deshabilitado.', 'warning');
+      addSystemNotification('Servicio de Windows', isEnabled ? 'Modo servicio headless pre-logon habilitado.' : 'Modo servicio deshabilitado.', 'warning', 'windows_integration');
     }
 
     function shutdownApplication() {
-      if (confirm('¿Confirmas el cierre total de PC Manager?\n\nSe detendrán todos los servicios y colectores de fondo sin dejar procesos huérfanos.')) {
-        addSystemNotification('Cierre Total del Core', 'Todos los servicios han sido detenidos limpiamente.', 'warning');
+      if (confirm('¿Confirmas el cierre total de PC Manager?\n\nSe detendrán todos los servicios y colectores de fondo.')) {
+        addSystemNotification('Cierre Total del Core', 'Todos los servicios han sido detenidos limpiamente.', 'warning', 'windows_integration');
         if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
           window.__TAURI_INTERNALS__.invoke('quit_app');
         } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
           window.__TAURI__.core.invoke('quit_app');
         } else {
-          alert('PC Manager: Parada completa ejecutada con éxito (Cero procesos huérfanos).');
+          alert('PC Manager: Parada completa ejecutada con éxito.');
         }
       }
     }
@@ -3886,7 +4138,7 @@
         root.style.setProperty(prop, val);
       }
 
-      addSystemNotification('Tema Visual Aplicado', `Esquema "${preset.name}" activado en caliente.`, 'info');
+      addSystemNotification('Tema Visual Aplicado', `Esquema "${preset.name}" activado en caliente.`, 'info', 'settings');
     }
 
     function applyAccent(colorHex, hoverHex, dimRgba, swatchEl) {
@@ -3898,7 +4150,7 @@
       root.style.setProperty('--accent-primary-hover', hoverHex);
       root.style.setProperty('--accent-primary-dim', dimRgba);
 
-      addSystemNotification('Color de Acento Actualizado', `Paleta primaria cambiada a ${colorHex}.`, 'success');
+      addSystemNotification('Color de Acento Actualizado', `Paleta primaria cambiada a ${colorHex}.`, 'success', 'settings');
     }
 
     // 10. INICIALIZACIÓN Y VINCULACIÓN CON HOST NATIVO TAURI (SOFTWARE DE ESCRITORIO)
@@ -3909,7 +4161,11 @@
           const sysInfo = await invokeFn('get_system_info');
           if (sysInfo) {
             console.log('PC Manager Core conectado al host nativo:', sysInfo);
-            addSystemNotification('Host Nativo Windows Conectado', `${sysInfo.os_name} (${sysInfo.arch}) // Core v${sysInfo.version} operacional.`, 'info');
+            const brandSpan = document.getElementById('sidebar-core-version');
+            if (brandSpan && sysInfo.hostname) {
+              brandSpan.textContent = `${sysInfo.hostname} // v${sysInfo.version}`;
+            }
+            addSystemNotification('Host Nativo Windows Conectado', `${sysInfo.hostname || 'Host'} • ${sysInfo.os_name} (${sysInfo.arch}) // Core v${sysInfo.version} operacional.`, 'info', 'host');
           }
 
           // Cargar módulos previamente instalados en Windows desde disco
@@ -3958,7 +4214,7 @@
             } catch(e) {}
 
             renderDashboardCustomizationCatalog();
-            addSystemNotification('Módulos Restaurados', `${installedList.length} extensión(es) cargada(s) desde el disco duro.`, 'success');
+            addSystemNotification('Módulos Restaurados', `${installedList.length} extensión(es) cargada(s) desde el disco duro.`, 'success', 'modules');
           }
 
           // Restaurar preferencias de notificaciones desde disco
@@ -3969,6 +4225,9 @@
               if (parsed) {
                 if (typeof parsed.systemEnabled === 'boolean') notificationSettings.systemEnabled = parsed.systemEnabled;
                 if (typeof parsed.windowsNativeEnabled === 'boolean') notificationSettings.windowsNativeEnabled = parsed.windowsNativeEnabled;
+                if (parsed.systemEvents && typeof parsed.systemEvents === 'object') {
+                  notificationSettings.systemEvents = Object.assign(notificationSettings.systemEvents, parsed.systemEvents);
+                }
                 if (parsed.modulePermissions) notificationSettings.modulePermissions = parsed.modulePermissions;
               }
             }
@@ -3980,12 +4239,16 @@
           if (chkSys) chkSys.checked = notificationSettings.systemEnabled;
           const chkWin = document.getElementById('chk-notif-windows');
           if (chkWin) chkWin.checked = notificationSettings.windowsNativeEnabled;
+          renderSystemNotificationEvents();
           renderModuleNotificationPermissions();
           updateNotificationEmptyState();
         }
       } catch (err) {
         console.warn('Ejecutando en entorno webview desacoplado:', err);
       }
+
+      // Renderizar eventos del sistema por defecto si no se llamó antes
+      renderSystemNotificationEvents();
 
       // Inicializar perfiles, botones contextuales de la barra superior y drag and drop de cuadrícula
       await loadDashboardProfiles();
