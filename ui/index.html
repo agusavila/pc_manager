@@ -3719,6 +3719,7 @@
           <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <span>${manifest.name}</span>
         `;
+        navBtn.style.display = isActive ? 'flex' : 'none';
       }
 
       // 4. Inyectar vista dedicada del módulo
@@ -3737,21 +3738,39 @@
         });
       }
 
-      // 5. Inyectar widgets en el Dashboard con drag & drop habilitado
+      // 5. Inyectar widgets en el Dashboard disponibles en el catálogo, pero ocultos por defecto
       if (manifest.widgets && manifest.widgets.length > 0) {
-        const emptyHero = document.querySelector('.empty-dashboard-hero');
-        if (emptyHero) emptyHero.style.display = 'none';
+        const currentProfile = getCurrentDashboardProfile();
+        currentProfile.hiddenWidgets = currentProfile.hiddenWidgets || [];
 
         manifest.widgets.forEach(w => {
-          const card = document.createElement('article');
-          card.className = `card card-size-${w.size || '2x1'}`;
-          card.id = w.id || `card-${manifest.id}`;
-          card.innerHTML = w.html;
-          makeCardDraggable(card);
-          document.getElementById('grid-board').appendChild(card);
+          const cardId = w.id || `card-${manifest.id}`;
+          let card = document.getElementById(cardId);
+          if (!card) {
+            card = document.createElement('article');
+            card.className = `card card-size-${w.size || '2x1'}`;
+            card.id = cardId;
+            card.innerHTML = w.html;
+            makeCardDraggable(card);
+            document.getElementById('grid-board').appendChild(card);
+          }
+          // Por directiva, los widgets instalados NO se colocan automáticamente en el Dashboard para no saturar el espacio.
+          // Quedan ocultos por defecto en el Dashboard y disponibles en el panel de Widgets (Drawer) para que el usuario los active cuando desee.
+          card.style.display = 'none';
+          if (!currentProfile.hiddenWidgets.includes(cardId)) {
+            currentProfile.hiddenWidgets.push(cardId);
+          }
         });
+        persistDashboardProfilesState();
         updateDashboardCardsCount();
-        restoreDashboardLayout();
+      }
+
+      // Comprobar si hay tarjetas visibles para mostrar/ocultar el mensaje de dashboard vacío
+      const allCards = Array.from(document.querySelectorAll('#grid-board .card'));
+      const visibleCards = allCards.filter(c => c.style.display !== 'none');
+      const emptyHero = document.querySelector('.empty-dashboard-hero');
+      if (emptyHero) {
+        emptyHero.style.display = visibleCards.length === 0 ? 'flex' : 'none';
       }
 
       // 6. Inyectar Pestaña y Panel de Meta-Opciones en Configuraciones
@@ -3842,6 +3861,7 @@
 
       renderDashboardCustomizationCatalog();
       renderModuleNotificationPermissions();
+      checkSidebarGroupsVisibility();
 
       if (!isActive) {
         toggleModuleActive(manifest.id, false, false);
@@ -3916,10 +3936,22 @@
       if (viewEl) viewEl.remove();
 
       if (mod.manifest.widgets) {
-        mod.manifest.widgets.forEach(w => {
-          const widgetEl = document.getElementById(w.id || `card-${moduleId}`);
+        const widgetIds = mod.manifest.widgets.map(w => w.id || `card-${moduleId}`);
+        widgetIds.forEach(wid => {
+          const widgetEl = document.getElementById(wid);
           if (widgetEl) widgetEl.remove();
         });
+        if (dashboardProfilesState && dashboardProfilesState.profiles) {
+          Object.values(dashboardProfilesState.profiles).forEach(prof => {
+            if (prof.hiddenWidgets) {
+              prof.hiddenWidgets = prof.hiddenWidgets.filter(id => !widgetIds.includes(id));
+            }
+            if (prof.layout) {
+              widgetIds.forEach(wid => delete prof.layout[wid]);
+            }
+          });
+          persistDashboardProfilesState();
+        }
       }
 
       const settingsTab = document.getElementById(`tab-btn-settings-mod-${moduleId}`);
@@ -3974,11 +4006,11 @@
 
     function ensureSidebarGroup(groupName) {
       let groupEl = document.getElementById(`sidebar-group-${groupName}`);
+      const emptyNotice = document.querySelector('.empty-modules-sidebar-notice');
+      if (emptyNotice) emptyNotice.style.display = 'none';
+
       if (!groupEl) {
         const navArea = document.getElementById('modules-nav-area');
-        const emptyNotice = document.querySelector('.empty-modules-sidebar-notice');
-        if (emptyNotice) emptyNotice.style.display = 'none';
-
         groupEl = document.createElement('div');
         groupEl.className = 'sidebar-group-box';
         groupEl.id = `sidebar-group-${groupName}`;
@@ -3992,6 +4024,7 @@
         `;
         navArea.appendChild(groupEl);
       }
+      groupEl.style.display = 'block';
     }
 
     function checkSidebarGroupsVisibility() {
@@ -4791,23 +4824,23 @@
           modId = targets.modCard.id.replace('installed-mod-', '');
         }
 
-        const mod = registeredModules[modId];
-        const modName = mod ? mod.name : 'Módulo';
+        const mod = installedModules.get(modId);
+        const modName = mod && mod.manifest ? mod.manifest.name : 'Módulo';
 
         itemsHtml = `
           <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 4px 8px; letter-spacing: 0.5px;">${modName}</div>
-          <div class="context-menu-item" onclick="closeAppContextMenu(); navigateToModule('${modId}')">
+          <div class="context-menu-item" onclick="closeAppContextMenu(); switchView('module-${modId}')">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             <span>Abrir Módulo</span>
           </div>
-          <div class="context-menu-item" onclick="closeAppContextMenu(); navigateTo('modules')">
+          <div class="context-menu-item" onclick="closeAppContextMenu(); switchView('modules')">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
             <span>Ver en Gestor de Módulos</span>
           </div>
           <div class="context-menu-separator"></div>
-          <div class="context-menu-item" onclick="closeAppContextMenu(); toggleModule('${modId}')">
+          <div class="context-menu-item" onclick="closeAppContextMenu(); toggleModuleActive('${modId}', ${!mod || !mod.active})">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"></path></svg>
-            <span>${mod && mod.enabled ? 'Desactivar' : 'Activar'}</span>
+            <span>${mod && mod.active ? 'Desactivar' : 'Activar'}</span>
           </div>
           <div class="context-menu-item danger" onclick="closeAppContextMenu(); uninstallModule('${modId}')">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>

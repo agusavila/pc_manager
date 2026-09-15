@@ -708,6 +708,30 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-026] Visibilidad Inmediata en Sidebar al Reinstalar Módulos y Ocultamiento por Defecto de Widgets al Instalar
+- **Fecha**: 2026-09-15
+- **Severidad**: `Media`
+- **Componente**: `Gestor de Módulos / Dashboard / Sidebar (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Al desinstalar un módulo y reinstalarlo posteriormente mediante un paquete `.pcm`, sus widgets se creaban pero el módulo no aparecía de inmediato en el menú lateral (sidebar).
+  2. La instalación de un módulo ubicaba automáticamente sus widgets en el lienzo del Dashboard activo, saturando el espacio del usuario en lugar de dejar que el usuario decida si desea colocarlos.
+- **Causa Raíz**: 
+  1. Al desinstalar el último módulo de un grupo, `checkSidebarGroupsVisibility()` ocultaba el contenedor del grupo (`style.display = 'none'`). Al reinstalar, `ensureSidebarGroup` encontraba el elemento existente pero no restablecía su visibilidad, y `installModule` no ejecutaba `checkSidebarGroupsVisibility()`.
+  2. `installModule` insertaba las tarjetas de widget en `#grid-board` de forma visible y ejecutaba el auto-layout, sin registrar los nuevos widgets en la lista de `hiddenWidgets` del perfil activo.
+- **Solución Implementada**: 
+  1. Se modificó `ensureSidebarGroup` para garantizar `groupEl.style.display = 'block'` y ocultar la notificación de sidebar vacío, agregando la llamada canónica a `checkSidebarGroupsVisibility()` al final de `installModule`.
+  2. En `installModule`, los widgets asociados al módulo se inicializan en estado oculto (`card.style.display = 'none'`) y se agregan a `hiddenWidgets` del perfil activo en `dashboardProfilesState`, quedando disponibles en el catálogo del drawer para su activación manual sin invadir el Dashboard.
+  3. En `uninstallModule` se depuraron las referencias residuales de widgets en los perfiles guardados (`hiddenWidgets` y `layout`) y se validó el estado de `empty-dashboard-hero`.
+  4. Se corrigieron las llamadas de acción en el menú contextual personalizado vinculándolas con `installedModules.get(modId)`, `switchView` y `toggleModuleActive`.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
