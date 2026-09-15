@@ -89,6 +89,12 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
 - **Bitácora Canónica (`BUG_TRACKER.md`)**: Es terminantemente obligatorio documentar todo error, fallo de sintaxis, bug funcional o bloqueo de entorno detectado y solucionado en [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md).
 - **Trazabilidad en Commits**: Cada commit que resuelva un problema debe registrar el identificador `BUG-XXX`, causa raíz, solución y archivos afectados en la bitácora, formando parte del commit o sincronizándose en conjunto.
 
+### Regla 10: Compilación Continua Obligatoria y Commits Atómicos
+- **Compilación Nativa Obligatoria en Cada Cambio**: Tras cualquier cambio funcional, ajuste de interfaz, corrección de bug o actualización de dependencias, es **terminantemente obligatorio compilar el binario nativo de escritorio** (`cargo build` dentro de `src-tauri`).
+  - Queda estrictamente prohibido dar por concluida una tarea de desarrollo sin haber compilado exitosamente el binario (`src-tauri/target/debug/pc_manager.exe`) y verificado que no existan advertencias o fallos de compilación.
+  - Queda prohibido delegar la compilación al usuario o solicitarle que pruebe el frontend de forma aislada en un navegador. El ejecutable debe quedar siempre listo para ser ejecutado directamente en Windows.
+- **Commits Atómicos y Sincronización Inmediata**: Toda modificación de código, documentación o resolución de error debe consolidarse de inmediato mediante un commit descriptivo en Git (`git add`, `git commit -m "..."`, `git push origin main`), manteniendo el repositorio siempre actualizado y en estado funcional verificable.
+
 ---
 
 ## 2. Estructura de Customizaciones
@@ -102,6 +108,7 @@ Las reglas y habilidades de IA están organizadas en:
   - [`ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md): Sistema de diseño Material Expressive, iconografía SVG y componentes UI.
   - [`functional_integrity.md`](file:///c:/Proyectos/pc_manager/.agents/rules/functional_integrity.md): Integridad funcional, cero opciones de adorno o hardcodeadas.
   - [`bug_and_error_tracking.md`](file:///c:/Proyectos/pc_manager/.agents/rules/bug_and_error_tracking.md): Registro continuo de errores y bug fixes por commit.
+  - [`continuous_compilation_and_commits.md`](file:///c:/Proyectos/pc_manager/.agents/rules/continuous_compilation_and_commits.md): Compilación obligatoria del binario nativo y commits atómicos.
 - Skills de IA: [`.agents/skills/`](file:///c:/Proyectos/pc_manager/.agents/skills/)
   - [`core-module-scaffolder`](file:///c:/Proyectos/pc_manager/.agents/skills/core-module-scaffolder/SKILL.md): Creación estandarizada de módulos.
   - [`white-label-auditor`](file:///c:/Proyectos/pc_manager/.agents/skills/white-label-auditor/SKILL.md): Auditoría de código limpio y neutral.
