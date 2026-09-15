@@ -581,6 +581,38 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-022] Error HRESULT 0x800700AA en WebView2 ("Ya se está usando el recurso solicitado") por Ejecución Concurrente Multi-instancia e Implementación de Mutex Nativo Pre-Runtime
+- **Fecha**: 2026-09-15
+- **Severidad**: `Alta`
+- **Componente**: `Core / Runtime de Escritorio / Ciclo de Vida / Windows Mutex (`[`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs)`, [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)`)`
+- **Descripción del Fallo**: 
+  Al intentar abrir PC Manager cuando la aplicación ya se encontraba en ejecución (por ejemplo, minimizada en la bandeja del sistema - System Tray), el segundo proceso arrojaba un error crítico al inicializar la ventana gráfica:
+  `[tauri_runtime_wry][ERROR] failed to create webview: WebView2 error: WindowsError(Error { code: HRESULT(0x800700AA), message: "Ya se está usando el recurso solicitado." })`.
+- **Causa Raíz**: 
+  El motor Microsoft Edge WebView2 en Windows emplea un directorio exclusivo de datos de usuario (`EBWebView`). Si un segundo proceso ejecutable arranca y pretende crear un entorno WebView2 sobre la misma carpeta de perfil bloqueada por la primera instancia activa, la API del sistema operativo deniega el acceso con el error Win32 `0x800700AA` (`ERROR_BUSY` / recurso en uso). La arquitectura carecía de un mecanismo de instancia única a nivel de punto de entrada (`main`), permitiendo que el segundo proceso intentara crear una ventana WebView2 en lugar de enfocarse en la existente.
+- **Solución Implementada**: 
+  1. **Control de Instancia Única Nativo Pre-Runtime (`ensure_single_instance`)**:
+     - Se implementó en [`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs) una comprobación atómica previa a cualquier inicialización de Tauri, WRY o WebView2 mediante la API de Windows `CreateMutexW` con identificador único de sesión local (`Local\PCManager_Core_SingleInstance_Mutex`).
+     - Si la llamada detecta `ERROR_ALREADY_EXISTS` (otra instancia ya está en ejecución):
+       - Localiza inmediatamente la ventana principal de la aplicación mediante `FindWindowW` (`"PC Manager"`).
+       - Restaura la ventana si estaba minimizada o en bandeja (`ShowWindow(hwnd, SW_RESTORE)` y `ShowWindow(hwnd, SW_SHOW)`).
+       - La sitúa en primer plano para el usuario (`SetForegroundWindow(hwnd)`).
+       - Termina de inmediato la segunda ejecución con código de salida `0` en 0 milisegundos, sin tocar WebView2 ni generar contención de recursos en disco.
+     - Si es la primera instancia, retiene el descriptor del Mutex durante la vida del proceso y procede normalmente al arranque de la aplicación.
+  2. **Dependencias y Compilación**:
+     - Se integró `windows-sys` (`Win32_Foundation`, `Win32_Security`, `Win32_System_Threading`, `Win32_UI_WindowsAndMessaging`) en [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml).
+     - Compilado y verificado en [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
