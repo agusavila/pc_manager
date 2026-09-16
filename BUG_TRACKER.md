@@ -798,6 +798,32 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-030] Corrección de Persistencia de Perfiles de Dashboard, Centrado Universal de la Tarjeta Central y Homogeneización de Temas Claros
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `Dashboard / Perfiles / UI & Temas (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Los perfiles de dashboard no se estaban guardando de forma consistente: al reiniciar la aplicación o cambiar perfiles, se sobreescribían con el perfil inicial predeterminado.
+  2. Al desmaximizar la ventana o reducir el ancho de pantalla, la tarjeta central del Dashboard (`.empty-dashboard-hero`) dejaba de centrarse y se desplazaba a la derecha o rompía el orden de la cuadrícula.
+  3. Los temas claros presentaban partes negras y contrastes inconsistentes: la barra superior (`.topbar`), el pie del menú lateral (`.sidebar-footer`), el fondo de la cuadrícula (`.grid-board`), la zona de arrastre de paquetes (`.dropzone-pcm`), los scrollbars universales y las sombras se mantenían en tonalidades oscuras fijas.
+- **Causa Raíz**: 
+  1. En `DOMContentLoaded`, `installedList.forEach(installModule)` se ejecutaba antes de `loadDashboardProfiles()`, provocando que `installModule` llamara a `persistDashboardProfilesState()` con el estado en blanco predeterminado antes de leer los perfiles guardados del disco. Asimismo, faltaba persistir el layout del perfil saliente en `switchDashboardProfile` y se sobreescribía la visibilidad con una clave legada de `core_dashboard`.
+  2. `.empty-dashboard-hero` utilizaba `grid-column: 2 / span 8;` fijo; en resoluciones no maximizadas (donde el grid cambia a 6 o 4 columnas), dicho span forzaba la creación de columnas implícitas deformando el centrado.
+  3. Múltiples clases de interfaz (`.sidebar-footer`, `.topbar`, `.grid-board`, `.dropzone-pcm`, `*::-webkit-scrollbar`) tenían colores oscuros fijos (`rgba(17, 20, 28, ...)` y `rgba(22, 27, 38, ...)`) en lugar de variables semánticas (`var(--bg-surface)`, `var(--bg-elevated)`, `var(--border-medium)`), y no se sincronizaba `color-scheme` en el elemento raíz ni sombras suaves para temas claros en `THEME_PRESETS`.
+- **Solución Implementada**: 
+  1. Se anticipó la llamada a `await loadDashboardProfiles()` al inicio de `DOMContentLoaded`, se agregó el flag `isStartup` en `installModule` para evitar mutaciones erróneas durante la restauración, se sincronizó el guardado del perfil saliente en `switchDashboardProfile(profileId)` con `persistDashboardLayout()` y se actualizaron `submitNewProfile`, `duplicateCurrentDashboardProfile` y `deleteCurrentDashboardProfile` con sincronización de `profileOrder`.
+  2. Se ajustó `.empty-dashboard-hero` con `grid-column: 1 / -1; justify-self: center; align-self: center; width: 100%; max-width: 680px; margin: 20px auto;`, garantizando un centrado perfecto en cualquier resolución y número de columnas (10, 6, 4).
+  3. Se purgaron todos los colores oscuros hardcodeados, asignando variables semánticas en `.sidebar-footer`, `.topbar`, `.grid-board`, `.dropzone-pcm` y scrollbars, se incorporó el componente CSS `.form-control`, se agregaron sombras específicas para temas claros (`--shadow-surface`, `--shadow-floating`) y se conectó `document.documentElement.style.colorScheme` al conmutar entre modos oscuro y claro.
+  4. Se sincronizó `core_shell.html`.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

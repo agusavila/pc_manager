@@ -55,7 +55,7 @@
       padding: 0;
       user-select: none;
       scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+      scrollbar-color: var(--border-medium) transparent;
     }
 
     /* Scrollbars delgadas y elegantes Material Expressive en todos los elementos */
@@ -70,7 +70,7 @@
     }
     *::-webkit-scrollbar-thumb,
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.18);
+      background: var(--border-medium);
       border-radius: var(--radius-pill);
       transition: background 0.2s ease;
     }
@@ -364,7 +364,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      background-color: rgba(17, 20, 28, 0.6);
+      background-color: var(--bg-surface);
     }
 
     /* CONTENEDOR PRINCIPAL */
@@ -379,7 +379,7 @@
     /* BARRA SUPERIOR CANÓNICA */
     .topbar {
       height: 64px;
-      background-color: rgba(17, 20, 28, 0.85);
+      background-color: var(--bg-surface);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
@@ -681,14 +681,14 @@
       grid-template-columns: repeat(10, minmax(0, 1fr));
       grid-auto-rows: 110px;
       gap: 14px;
-      background-color: rgba(22, 27, 38, 0.4);
+      background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
       padding: 16px;
       min-height: 100%;
       flex: 1;
       position: relative;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-image: radial-gradient(var(--border-medium) 1px, transparent 1px);
       background-size: 20px 20px;
       align-content: start;
     }
@@ -1035,8 +1035,13 @@
 
     /* HERO VACÍO DEL DASHBOARD (SIN MÓDULOS) */
     .empty-dashboard-hero {
-      grid-column: 2 / span 8;
+      grid-column: 1 / -1;
       grid-row: 2 / span 4;
+      justify-self: center;
+      align-self: center;
+      width: 100%;
+      max-width: 680px;
+      margin: 20px auto;
       background-color: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
@@ -1529,13 +1534,30 @@
       border-radius: var(--radius-lg);
       padding: 36px 20px;
       text-align: center;
-      background-color: rgba(22, 27, 38, 0.3);
+      background-color: var(--bg-elevated);
       cursor: pointer;
       transition: var(--transition-smooth);
     }
     .dropzone-pcm:hover {
       border-color: var(--accent-primary);
       background-color: var(--accent-primary-dim);
+    }
+
+    /* CONTROLES DE FORMULARIO CANÓNICOS (MATERIAL EXPRESSIVE) */
+    .form-control {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      transition: var(--transition-smooth);
+    }
+    .form-control:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-primary-dim);
     }
   </style>
 </head>
@@ -3359,6 +3381,9 @@
 
     async function switchDashboardProfile(profileId) {
       if (!dashboardProfilesState.profiles[profileId]) return;
+      // Guardar el layout y tarjetas del perfil actual saliente
+      persistDashboardLayout();
+
       dashboardProfilesState.activeProfileId = profileId;
       updateProfileSelectorsUI();
 
@@ -3423,6 +3448,12 @@
         layout: {},
         hiddenWidgets: allWidgetIds
       };
+      if (!dashboardProfilesState.profileOrder || !Array.isArray(dashboardProfilesState.profileOrder)) {
+        dashboardProfilesState.profileOrder = [DEFAULT_DASHBOARD_PROFILE_ID];
+      }
+      if (!dashboardProfilesState.profileOrder.includes(id)) {
+        dashboardProfilesState.profileOrder.push(id);
+      }
       dashboardProfilesState.activeProfileId = id;
 
       cancelNewProfilePrompt();
@@ -3492,6 +3523,12 @@
         layout: JSON.parse(JSON.stringify(current.layout || {})),
         hiddenWidgets: [...(current.hiddenWidgets || [])]
       };
+      if (!dashboardProfilesState.profileOrder || !Array.isArray(dashboardProfilesState.profileOrder)) {
+        dashboardProfilesState.profileOrder = [DEFAULT_DASHBOARD_PROFILE_ID];
+      }
+      if (!dashboardProfilesState.profileOrder.includes(id)) {
+        dashboardProfilesState.profileOrder.push(id);
+      }
       dashboardProfilesState.activeProfileId = id;
 
       updateProfileSelectorsUI();
@@ -3506,8 +3543,12 @@
         return;
       }
 
+      const deletedId = dashboardProfilesState.activeProfileId;
       const deletedName = getCurrentDashboardProfile().name;
-      delete dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId];
+      delete dashboardProfilesState.profiles[deletedId];
+      if (Array.isArray(dashboardProfilesState.profileOrder)) {
+        dashboardProfilesState.profileOrder = dashboardProfilesState.profileOrder.filter(id => id !== deletedId);
+      }
       dashboardProfilesState.activeProfileId = DEFAULT_DASHBOARD_PROFILE_ID;
 
       updateProfileSelectorsUI();
@@ -3655,7 +3696,7 @@
       }
     }
 
-    function installModule(manifest, scriptCode, isActive = true) {
+    function installModule(manifest, scriptCode, isActive = true, isStartup = false) {
       const isUpdate = installedModules.has(manifest.id);
       let oldVersion = '1.0.0';
 
@@ -3799,11 +3840,15 @@
           // Por directiva, los widgets instalados NO se colocan automáticamente en el Dashboard para no saturar el espacio.
           // Quedan ocultos por defecto en el Dashboard y disponibles en el panel de Widgets (Drawer) para que el usuario los active cuando desee.
           card.style.display = 'none';
-          if (!currentProfile.hiddenWidgets.includes(cardId)) {
-            currentProfile.hiddenWidgets.push(cardId);
+          if (!isStartup) {
+            if (!currentProfile.hiddenWidgets.includes(cardId)) {
+              currentProfile.hiddenWidgets.push(cardId);
+            }
           }
         });
-        persistDashboardProfilesState();
+        if (!isStartup) {
+          persistDashboardProfilesState();
+        }
         updateDashboardCardsCount();
       }
 
@@ -4550,7 +4595,9 @@
           '--text-secondary': '#94a3b8',
           '--text-muted': '#64748b',
           '--border-subtle': 'rgba(255, 255, 255, 0.07)',
-          '--border-medium': 'rgba(255, 255, 255, 0.14)'
+          '--border-medium': 'rgba(255, 255, 255, 0.14)',
+          '--shadow-surface': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
+          '--shadow-floating': '0 16px 40px -4px rgba(0, 0, 0, 0.6)'
         }
       },
       'carbon': {
@@ -4566,7 +4613,9 @@
           '--text-secondary': '#a1a1a6',
           '--text-muted': '#6e6e73',
           '--border-subtle': 'rgba(255, 255, 255, 0.06)',
-          '--border-medium': 'rgba(255, 255, 255, 0.12)'
+          '--border-medium': 'rgba(255, 255, 255, 0.12)',
+          '--shadow-surface': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
+          '--shadow-floating': '0 16px 40px -4px rgba(0, 0, 0, 0.6)'
         }
       },
       'midnight': {
@@ -4582,7 +4631,9 @@
           '--text-secondary': '#8b949e',
           '--text-muted': '#586069',
           '--border-subtle': 'rgba(96, 165, 250, 0.08)',
-          '--border-medium': 'rgba(96, 165, 250, 0.16)'
+          '--border-medium': 'rgba(96, 165, 250, 0.16)',
+          '--shadow-surface': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
+          '--shadow-floating': '0 16px 40px -4px rgba(0, 0, 0, 0.6)'
         }
       },
       'cyber': {
@@ -4598,7 +4649,9 @@
           '--text-secondary': '#a78bfa',
           '--text-muted': '#6d5d9c',
           '--border-subtle': 'rgba(167, 139, 250, 0.1)',
-          '--border-medium': 'rgba(167, 139, 250, 0.2)'
+          '--border-medium': 'rgba(167, 139, 250, 0.2)',
+          '--shadow-surface': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
+          '--shadow-floating': '0 16px 40px -4px rgba(0, 0, 0, 0.6)'
         }
       },
       'light-clean': {
@@ -4614,7 +4667,9 @@
           '--text-secondary': '#475569',
           '--text-muted': '#64748b',
           '--border-subtle': 'rgba(0, 0, 0, 0.08)',
-          '--border-medium': 'rgba(0, 0, 0, 0.16)'
+          '--border-medium': 'rgba(0, 0, 0, 0.16)',
+          '--shadow-surface': '0 2px 10px -2px rgba(0, 0, 0, 0.08)',
+          '--shadow-floating': '0 8px 24px -4px rgba(0, 0, 0, 0.12)'
         }
       },
       'light-soft-blue': {
@@ -4630,7 +4685,9 @@
           '--text-secondary': '#334e68',
           '--text-muted': '#627d98',
           '--border-subtle': 'rgba(37, 99, 235, 0.1)',
-          '--border-medium': 'rgba(37, 99, 235, 0.2)'
+          '--border-medium': 'rgba(37, 99, 235, 0.2)',
+          '--shadow-surface': '0 2px 10px -2px rgba(0, 0, 0, 0.08)',
+          '--shadow-floating': '0 8px 24px -4px rgba(0, 0, 0, 0.12)'
         }
       },
       'light-platinum': {
@@ -4646,7 +4703,9 @@
           '--text-secondary': '#455a64',
           '--text-muted': '#78909c',
           '--border-subtle': 'rgba(0, 0, 0, 0.08)',
-          '--border-medium': 'rgba(0, 0, 0, 0.15)'
+          '--border-medium': 'rgba(0, 0, 0, 0.15)',
+          '--shadow-surface': '0 2px 10px -2px rgba(0, 0, 0, 0.08)',
+          '--shadow-floating': '0 8px 24px -4px rgba(0, 0, 0, 0.12)'
         }
       },
       'light-mint': {
@@ -4662,7 +4721,9 @@
           '--text-secondary': '#23593d',
           '--text-muted': '#52836b',
           '--border-subtle': 'rgba(16, 185, 129, 0.12)',
-          '--border-medium': 'rgba(16, 185, 129, 0.22)'
+          '--border-medium': 'rgba(16, 185, 129, 0.22)',
+          '--shadow-surface': '0 2px 10px -2px rgba(0, 0, 0, 0.08)',
+          '--shadow-floating': '0 8px 24px -4px rgba(0, 0, 0, 0.12)'
         }
       }
     };
@@ -4719,6 +4780,8 @@
 
     function selectThemeModeOption(mode, label) {
       currentMode = mode;
+      document.documentElement.style.colorScheme = mode;
+      document.documentElement.setAttribute('data-theme-mode', mode);
       document.getElementById('val-theme-mode').textContent = label;
       document.querySelectorAll('#dropdown-theme-mode .combobox-option').forEach(opt => {
         opt.classList.toggle('selected', opt.getAttribute('data-value') === mode);
@@ -4754,6 +4817,11 @@
       const preset = THEME_PRESETS[presetKey];
       if (!preset) return;
 
+      const isLight = presetKey.startsWith('light-');
+      currentMode = isLight ? 'light' : 'dark';
+      document.documentElement.style.colorScheme = currentMode;
+      document.documentElement.setAttribute('data-theme-mode', currentMode);
+
       const descEl = document.getElementById('theme-preset-desc');
       if (descEl) descEl.textContent = preset.desc;
 
@@ -4777,6 +4845,10 @@
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         const invokeFn = getTauriInvoke();
+
+        // 1. Cargar perfiles de dashboard primero desde disco o almacenamiento local
+        await loadDashboardProfiles();
+
         if (invokeFn) {
           const sysInfo = await invokeFn('get_system_info');
           if (sysInfo) {
@@ -4787,12 +4859,12 @@
             }
           }
 
-          // Cargar módulos previamente instalados en Windows desde disco
+          // Cargar módulos previamente instalados en Windows desde disco en modo isStartup = true
           const installedList = await invokeFn('get_installed_modules');
           if (installedList && installedList.length > 0) {
             console.log(`Restaurando ${installedList.length} módulo(s) persistentes desde disco.`);
             installedList.forEach(rec => {
-              installModule(rec.manifest, rec.script_code, rec.active);
+              installModule(rec.manifest, rec.script_code, rec.active, true);
             });
 
             // Restaurar configuraciones guardadas
@@ -4805,7 +4877,7 @@
               }
             }
 
-            // Restaurar orden de tarjetas en el Dashboard
+            // Restaurar orden de tarjetas en el Dashboard si existe
             const savedOrder = await invokeFn('get_dashboard_order');
             if (savedOrder && savedOrder.length > 0) {
               const grid = document.getElementById('grid-board');
@@ -4814,24 +4886,9 @@
                 if (card) grid.appendChild(card);
               });
             }
-            await loadDashboardProfiles();
+
+            // Restaurar diseño y visibilidad del perfil activo cargado
             await restoreDashboardLayout();
-
-            // Restaurar estado de visibilidad de tarjetas ocultas en el Dashboard
-            try {
-              const savedHidden = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
-              if (savedHidden && savedHidden.hidden_widgets) {
-                const hiddenIds = JSON.parse(savedHidden.hidden_widgets);
-                if (Array.isArray(hiddenIds)) {
-                  hiddenIds.forEach(id => {
-                    const c = document.getElementById(id);
-                    if (c) c.style.display = 'none';
-                  });
-                  updateDashboardCardsCount();
-                }
-              }
-            } catch(e) {}
-
             renderDashboardCustomizationCatalog();
           }
 
@@ -4874,8 +4931,7 @@
       renderModuleNotificationPermissions();
       updateNotificationBadgesAndSummaries();
 
-      // Inicializar perfiles, botones contextuales de la barra superior y drag and drop de cuadrícula
-      await loadDashboardProfiles();
+      // Inicializar botones contextuales de la barra superior y drag and drop de cuadrícula
       updateTopbarContextualActions('dashboard');
       initGridBoardDragDrop();
 
