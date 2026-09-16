@@ -1100,7 +1100,36 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/capabilities/default.json`](file:///c:/Proyectos/pc_manager/src-tauri/capabilities/default.json)
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+---
+
+### [BUG-039] Regresión Dimensional en Tarjetas de Configuración y Widgets, y Formalización de la Regla 11 de No Regresiones
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `UI / Settings / Dashboard Grid / Normativa (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)`, [`.agents/rules/preservation_of_working_features.md`](file:///c:/Proyectos/pc_manager/.agents/rules/preservation_of_working_features.md)`)`
+- **Descripción del Fallo**: 
+  1. Las tarjetas de la sección de Configuraciones se apreciaban reducidas, comprimidas y apretadas en comparación con el día anterior, apiñando interruptores, comboboxes y textos largos.
+  2. La cuadrícula de widgets del Dashboard presentaba una altura base de fila incrementada (`110px` en lugar de los `90px` canónicos aprobados del día anterior), alterando las proporciones compactas originales de las tarjetas `2x1` y `2x2`.
+  3. Necesidad obligatoria de blindar el proyecto contra regresiones de funciones o interfaces que ya operan adecuadamente.
+- **Causa Raíz**: 
+  1. En commits anteriores se reestructuró la clase `.settings-content-stack` a una cuadrícula CSS de dos columnas (`repeat(2, minmax(0, 1fr))`), dividiendo el ancho disponible al 50% y reduciendo a la mitad el espacio horizontal de todas las tarjetas de configuración (General, Windows, Temas y módulos dinámicos). En el diseño canónico original del día anterior, dichas tarjetas se disponían en una pila vertical de ancho completo (`100% flex column`), garantizando holgura y simetría.
+  2. Se había alterado `grid-auto-rows: 90px;` a `110px;` junto con `min-height: 110px;` y `stepY = 110 + gap;` en el algoritmo de arrastre, descalibrando la altura base original con la que se concibieron los widgets `2x1` y `2x2`.
+- **Solución Implementada**: 
+  1. **Restauración de Configuraciones al Ancho Completo (100%)**:
+     - Se restableció `.settings-content-stack` a `display: flex; flex-direction: column; gap: 20px; width: 100%;` en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) y [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html), erradicando la compresión de dos columnas y devolviendo a cada tarjeta su amplitud ergonómica completa del día anterior.
+  2. **Restauración de Dimensiones del Dashboard**:
+     - Se restituyó `grid-auto-rows: 90px;` en `.grid-board`.
+     - Se restituyó `min-height: 90px;` en el indicador de drop `.grid-drop-indicator`.
+     - Se calibró el paso de arrastre en JavaScript a `const stepY = 90 + gap;`.
+  3. **Formalización de la Regla 11 en [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md) y [`.agents/rules/preservation_of_working_features.md`](file:///c:/Proyectos/pc_manager/.agents/rules/preservation_of_working_features.md)**:
+     - Se decretó la **Regla 11: Preservación de Funciones e Interfaces Operativas (Prohibición Estricta de Regresiones)**: prohíbe terminantemente degradar o romper lo que ya funciona, imponiendo que si un cambio exige intervenir componentes existentes, este debe justificarse técnicamente, documentarse exhaustivamente en la bitácora y validarse sin efectos colaterales.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/preservation_of_working_features.md`](file:///c:/Proyectos/pc_manager/.agents/rules/preservation_of_working_features.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
+
 
 
 

@@ -101,7 +101,13 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
 - **Compilación Nativa Obligatoria en Cada Cambio**: Tras cualquier cambio funcional, ajuste de interfaz, corrección de bug o actualización de dependencias, es **terminantemente obligatorio compilar el binario nativo de escritorio** (`cargo build` dentro de `src-tauri`).
   - Queda estrictamente prohibido dar por concluida una tarea de desarrollo sin haber compilado exitosamente el binario (`src-tauri/target/debug/pc_manager.exe`) y verificado que no existan advertencias o fallos de compilación.
   - Queda prohibido delegar la compilación al usuario o solicitarle que pruebe el frontend de forma aislada en un navegador. El ejecutable debe quedar siempre listo para ser ejecutado directamente en Windows.
-- **Commits Atómicos y Sincronización Inmediata**: Toda modificación de código, documentación o resolución de error debe consolidarse de inmediato mediante un commit descriptivo en Git (`git add`, `git commit -m "..."`, `git push origin main`), manteniendo el repositorio siempre actualizado y en estado funcional verificable.
+### Regla 11: Preservación de Funciones e Interfaces Operativas (Prohibición Estricta de Regresiones)
+- **No Romper lo que Funciona**: Queda terminantemente prohibido alterar, romper, degradar, encoger o comprimir funciones, geometrías, dimensiones o interfaces que ya funcionan correctamente y fueron verificadas o aprobadas previamente.
+- **Documentación Obligatoria al Modificar Componentes Preexistentes**: Si para implementar una nueva funcionalidad, cumplir un requerimiento o reparar un bug es estrictamente indispensable tocar o modificar un componente, vista, layout o comportamiento que ya estaba operativo, es **obligatorio documentarlo exhaustivamente** en [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md), explicando:
+  1. La causa técnica y necesidad justificada de tocar el componente existente.
+  2. Qué interfaces, archivos o dimensiones fueron intervenidas.
+  3. La validación rigurosa de que la estética, ergonomía, proporciones y funcionalidades previas no sufrieron regresiones ni deformaciones indeseadas.
+- **Transparencia con el Usuario**: Cualquier ajuste visual o funcional a elementos que ya estaban operativos debe comunicarse con total claridad en el reporte al usuario.
 
 ---
 
@@ -115,11 +121,13 @@ Las reglas y habilidades de IA están organizadas en:
   - [`documentation_triad.md`](file:///c:/Proyectos/pc_manager/.agents/rules/documentation_triad.md): Requisitos para la tríada de documentación.
   - [`ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md): Sistema de diseño Material Expressive, iconografía SVG y componentes UI.
   - [`functional_integrity.md`](file:///c:/Proyectos/pc_manager/.agents/rules/functional_integrity.md): Integridad funcional, cero opciones de adorno o hardcodeadas.
+  - [`preservation_of_working_features.md`](file:///c:/Proyectos/pc_manager/.agents/rules/preservation_of_working_features.md): Preservación de funciones e interfaces operativas (cero regresiones).
   - [`bug_and_error_tracking.md`](file:///c:/Proyectos/pc_manager/.agents/rules/bug_and_error_tracking.md): Registro continuo de errores y bug fixes por commit.
   - [`continuous_compilation_and_commits.md`](file:///c:/Proyectos/pc_manager/.agents/rules/continuous_compilation_and_commits.md): Compilación obligatoria del binario nativo y commits atómicos.
 - Skills de IA: [`.agents/skills/`](file:///c:/Proyectos/pc_manager/.agents/skills/)
   - [`core-module-scaffolder`](file:///c:/Proyectos/pc_manager/.agents/skills/core-module-scaffolder/SKILL.md): Creación estandarizada de módulos.
   - [`white-label-auditor`](file:///c:/Proyectos/pc_manager/.agents/skills/white-label-auditor/SKILL.md): Auditoría de código limpio y neutral.
   - [`documentation-triad-sync`](file:///c:/Proyectos/pc_manager/.agents/skills/documentation-triad-sync/SKILL.md): Sincronización de manuales de usuario, IA y desarrollador.
+
 
 

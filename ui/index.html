@@ -704,7 +704,7 @@
     .grid-board {
       display: grid;
       grid-template-columns: repeat(10, minmax(0, 1fr));
-      grid-auto-rows: 110px;
+      grid-auto-rows: 90px;
       gap: 14px;
       background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
@@ -783,7 +783,7 @@
       transition: all 0.12s cubic-bezier(0.2, 0, 0, 1) !important;
       box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2) !important;
       z-index: 5 !important;
-      min-height: 110px;
+      min-height: 90px;
     }
 
     /* SELECTOR DE PERFILES DEL DASHBOARD */
@@ -1411,19 +1411,12 @@
       border-radius: 4px;
     }
 
-    /* VISTA DE CONFIGURACIONES HOMOGÉNEA (CUADRÍCULA DE 2 COLUMNAS Y SISTEMA POR PESTAÑAS) */
+    /* VISTA DE CONFIGURACIONES HOMOGÉNEA (ANCHO COMPLETO 100% Y SISTEMA POR PESTAÑAS) */
     .settings-content-stack {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      display: flex;
+      flex-direction: column;
       gap: 20px;
       width: 100%;
-      align-items: start;
-    }
-
-    @media (max-width: 980px) {
-      .settings-content-stack {
-        grid-template-columns: 1fr;
-      }
     }
 
     /* MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE) */
@@ -2952,7 +2945,7 @@
             const innerWidth = boardRect.width - padLeft - padRight;
             const colWidth = (innerWidth - (gap * (gridCols - 1))) / gridCols;
             const stepX = colWidth + gap;
-            const stepY = 110 + gap;
+            const stepY = 90 + gap;
 
             // Determinar límite máximo de fila coherente con el área visible y las tarjetas existentes
             const otherCards = Array.from(grid.querySelectorAll('.card')).filter(c => c !== card && c.style.display !== 'none');
