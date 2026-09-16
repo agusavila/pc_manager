@@ -1,4 +1,4 @@
-# Manual de Usuario: PC Manager Core (Alpha 0.0.1)
+# Manual de Usuario: PC Manager Core (v0.0.4-alpha)
 
 Bienvenido a la guía oficial de usuario de **PC Manager**. Este documento describe el funcionamiento, navegación y opciones del núcleo central del sistema sin tecnicismos innecesarios.
 
@@ -22,12 +22,17 @@ Su diseño basado en un núcleo ligero (**Core**) permite que cada herramienta e
 - Muestra el nombre de la sección actual y una descripción sintética de su función.
 - Contiene los accesos rápidos a:
   - **Buscador global**: Para localizar rápidamente herramientas o métricas.
+  - **Catálogo de Widgets**: Despliega el panel lateral para elegir qué tarjetas ver en el Dashboard.
   - **Notificaciones del Sistema**: Indicador con el número de eventos pendientes. Al pulsarlo, se despliega un panel lateral con opciones para *Marcar todas como leídas* y *Borrar historial*.
   - **Configuraciones Globales**: Acceso al panel de personalización y ajustes del sistema.
 
 ### 2.3. Dashboard (Panel Principal)
-- **Tarjetas Dinámicas y Totalizadores**: Presentan métricas, accesos directos, widgets interactivos y totalizadores unitarios (1x1 de 70×70px) provistos por los módulos habilitados.
-- **Cuadrícula Isométrica y Lienzo Acotado**: Las tarjetas se desplazan con pasos simétricos idénticos en ambos ejes sobre celdas de 70×70px. El lienzo está estrictamente acotado a la pantalla, impidiendo desbordamientos verticales o scrollbars indeseados.
+- **Tarjetas Dinámicas y Totalizadores**: Presentan métricas, accesos directos, widgets interactivos y totalizadores unitarios provistos por los módulos habilitados.
+- **Cuadrícula Adaptativa (Horizontal y Vertical)**:
+  - **En monitores convencionales (16:9)**: Se organiza en 12 columnas $\times$ 8 filas.
+  - **En monitores verticales (9:16 / retrato)**: Se adapta automáticamente a 6 columnas $\times$ 14 filas, garantizando celdas ergonómicas sin deformar las alturas de las tarjetas.
+- **Control de Capacidad Inteligente**: Si el tablero está lleno o no hay espacio suficiente para ubicar una tarjeta, el sistema avisa con un mensaje claro y revierte el interruptor en el panel lateral, impidiendo colisiones y desórdenes.
+- **Insignias de Orientación en el Catálogo**: Cada tarjeta informa en el panel lateral si es óptima para pantallas horizontales (↔ Horiz), verticales (↕ Vert) o universal (⊞ Univ).
 - **Perfiles de Dashboard**: Permite crear, renombrar, duplicar y alternar entre distintas configuraciones y disposiciones de tarjetas con selección de widgets independientes.
 - **Botón de Auto-organización**: Ubicado en la barra superior del Dashboard, permite compactar y reacomodar automáticamente todas las tarjetas activas para eliminar espacios vacíos.
 

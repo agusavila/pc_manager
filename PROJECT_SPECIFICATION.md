@@ -82,19 +82,54 @@ El proyecto cuenta con dos prototipos de referencia en la raíz del repositorio,
 3. **Botón de Personalización del Dashboard**:
    - Permite desplegar el panel lateral (drawer) de selección y activación de tarjetas disponibles.
 
-### 3.3 El Dashboard (Cuadrícula Isométrica 70x70 y Lienzo Acotado)
+### 3.3 El Dashboard (Cuadrícula Proporcional Adaptativa, Modos Horizontal/Vertical y Capacidad Rígida)
 1. **Nombre Canónico**:
    - Se denomina estrictamente **"Dashboard"** (prohibido "Pizarra Central" u otras variantes).
-2. **Eficiencia Visual (Cero Relleno Informativo)**:
-   - Prohibido saturar con insignias irrelevantes como *"Sistema Central"*, *"Núcleo Operativo"* o chips dentro de las tarjetas como *"Servicio Compartido: x"*.
-3. **Integridad de las Tarjetas (Cero Recortes)**:
-   - Los títulos y contenidos de las tarjetas deben ser **100% legibles y visibles** en el tamaño asignado (`1x1`, `2x1`, `2x2`, `4x2`, etc.). Queda prohibido el truncamiento con puntos suspensivos (`ellipsis`).
-   - Las tarjetas pueden incorporar opciones interactivas directas (botones de acción rápida, switches, enlaces para abrir la vista completa del módulo).
-4. **Drag and Drop Fluido y Botón FAB de Auto-organización**:
+2. **Topología Adaptativa según Orientación de Pantalla**:
+   - **Modo Horizontal (Landscape 16:9 / Escritorio Estándar)**:
+     - Cuadrícula de **12 columnas × 8 filas** (con escala responsive a 8x6 y 6x6 en ventanas compactas).
+     - Altura acotada al contenedor visible sin desbordamiento vertical.
+   - **Modo Vertical (Portrait 9:16 / Monitores Verticales 1080x1920)**:
+     - Cuadrícula de **6 columnas × 14 filas**.
+     - Celdas proporcionales ergonómicas (~113px ancho × ~110px alto), eliminando hipertrofias donde banners de 2 filas antes se expandían a 580px de alto.
+     - Límite rígido de 14 filas para garantizar contención física total.
+3. **Control Estricto de Capacidad y Cero Colisiones (`canWidgetFitOnDashboard`)**:
+   - Al intentar activar un widget en el Drawer lateral, el sistema valida que exista un espacio libre contiguo donde quepa su tamaño (`spanCol × spanRow`) dentro de las filas visibles.
+   - Si no hay espacio, se bloquea la activación, el switch se revierte inmediatamente y se notifica al usuario con un toast de advertencia.
+   - En Drag & Drop, si el destino desborda los límites físicos, la tarjeta retorna a su posición previa sin desplazar caóticamente a los vecinos.
+4. **Clasificación e Iconografía de Widgets en el Drawer Lateral**:
+   - Todo widget expone metadata de orientación e icono vectorial SVG en el catálogo:
+     - ↔ **Horizontal (`spanCol > spanRow`)**: Sugerido para monitores estándar apaisados.
+     - ↕ **Vertical (`spanRow > spanCol`)**: Diseñado específicamente para monitores en modo retrato / columnas verticales.
+     - ⊞ **Universal (`spanCol == spanRow`)**: Formato simétrico (`1x1`, `2x2`, `4x4`) adaptable a cualquier orientación.
+5. **Matriz Canónica de 19 Tamaños de Widgets**:
+   - `1x1`: Micro-totalizador (Universal).
+   - `1x2`: Torre métrica compacta (Vertical).
+   - `1x3`: Torre métrica mediana (Vertical).
+   - `1x4`: Torre métrica alta (Vertical).
+   - `2x1`: Chip métrico (Horizontal).
+   - `2x2`: Cuadrado mediano (Universal).
+   - `2x3`: Columna vertical mediana (Vertical).
+   - `2x4`: Columna vertical alta (Vertical).
+   - `3x2`: Estándar 16:9 (Horizontal).
+   - `3x4`: Columna ancha vertical (Vertical).
+   - `4x2`: Control extendido (Horizontal).
+   - `4x3`: Historial mediano (Horizontal).
+   - `4x4`: Cuadrado grande (Universal).
+   - `4x6`: Consola vertical extendida (Vertical).
+   - `6x2`: Panorámico medio (Horizontal).
+   - `6x4`: Cuadrante 50% (Horizontal).
+   - `8x2`: Panorámico ancho (Horizontal).
+   - `12x2`: Ancho completo (Horizontal).
+   - `banner`: Banner panorámico 12x2 (Horizontal).
+6. **Integridad de las Tarjetas (Cero Recortes)**:
+   - Los títulos y contenidos de las tarjetas deben ser **100% legibles y visibles** en el tamaño asignado. Prohibido el truncamiento con puntos suspensivos (`ellipsis`).
+7. **Drag and Drop Fluido y Botón FAB de Auto-organización**:
    - Arrastre suave con elevación de sombras y animaciones con curvas `cubic-bezier(0.2, 0, 0, 1)`.
-   - **Botón Canónico de Auto-organización (`#btn-topbar-organize`)**: Ubicado en la barra superior del Dashboard, permite con un solo clic reordenar y compactar las tarjetas activas de forma inteligente para eliminar huecos vacíos en la cuadrícula.
-5. **Lienzo Acotado (Cero Estiramiento Vertical)**:
+   - **Botón Canónico de Auto-organización (`#btn-topbar-organize`)**: Ubicado en la barra superior del Dashboard, reordena y compacta las tarjetas activas de forma inteligente para eliminar huecos vacíos en la cuadrícula.
+8. **Lienzo Acotado (Cero Estiramiento Vertical)**:
    - El contenedor del Dashboard posee límite visual estricto (`overflow: hidden`). Ninguna tarjeta puede sobrepasar el alto visible del contenedor ni inducir scrollbars residuales al arrastrarse hacia el fondo.
+
 
 ### 3.4 Centro de Notificaciones (Drawer Lateral)
 - Desplegable desde el margen derecho con desenfoque de fondo (`backdrop-filter: blur`).

@@ -1,18 +1,22 @@
-# Módulo Muestrario de Tamaños de Widgets (v1.0.0)
+# Módulo Muestrario de Tamaños de Widgets (v1.1.0)
 
-Módulo demostrativo que exporta 15 widgets vacíos cubriendo todos los factores de forma del Dashboard de PC Manager:
-- 1x1: Micro-totalizador
-- 1x2: Torre métrica compacta (vertical)
-- 2x1: Chip métrico
-- 2x2: Cuadrado mediano
-- 2x3: Columna vertical mediana
-- 2x4: Columna vertical alta
-- 3x2: Estándar 16:9
-- 4x2: Control extendido
-- 4x3: Historial mediano
-- 4x4: Cuadrado grande
-- 6x2: Panorámico medio
-- 6x4: Cuadrante 50%
-- 8x2: Panorámico ancho
-- 12x2: Ancho completo
-- banner: Banner panorámico 12x2
+Módulo demostrativo que exporta 19 widgets vacíos cubriendo todos los factores de forma del Dashboard de PC Manager para pantallas horizontales (16:9) y verticales (9:16):
+- 1x1: Micro-totalizador (Universal)
+- 1x2: Torre métrica compacta (Vertical)
+- 1x3: Torre métrica mediana (Vertical)
+- 1x4: Torre métrica alta (Vertical)
+- 2x1: Chip métrico (Horizontal)
+- 2x2: Cuadrado mediano (Universal)
+- 2x3: Columna vertical mediana (Vertical)
+- 2x4: Columna vertical alta (Vertical)
+- 3x2: Estándar 16:9 (Horizontal)
+- 3x4: Columna ancha vertical (Vertical)
+- 4x2: Control extendido (Horizontal)
+- 4x3: Historial mediano (Horizontal)
+- 4x4: Cuadrado grande (Universal)
+- 4x6: Consola vertical extendida (Vertical)
+- 6x2: Panorámico medio (Horizontal)
+- 6x4: Cuadrante 50% (Horizontal)
+- 8x2: Panorámico ancho (Horizontal)
+- 12x2: Ancho completo (Horizontal)
+- banner: Banner panorámico 12x2 (Horizontal)

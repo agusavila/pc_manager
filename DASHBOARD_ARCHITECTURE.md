@@ -18,14 +18,17 @@ El sistema de visualización principal (denominado canónicamente **Dashboard**)
 
 ## 2. Topología de la Cuadrícula Matricial Proporcional (Top-Down Derived Matrix)
 
-### 2.1 Principio de Derivación Espacial (Cero Residuo y Cero Espacios Muertos)
-A diferencia de aproximaciones "bottom-up" basadas en píxeles fijos arbitrarios (como 70px) que provocan huecos muertos al fondo por desajustes de división, el Dashboard de **PC Manager** adopta una **matriz top-down proporcional de 12 columnas $\times$ 8 filas**.
+### 2.1 Principio de Derivación Espacial (Cero Residuo y Modos Horizontal/Vertical)
+A diferencia de aproximaciones "bottom-up" basadas en píxeles fijos arbitrarios (como 70px) que provocan huecos muertos al fondo por desajustes de división, el Dashboard de **PC Manager** adopta una **matriz top-down proporcional adaptativa**:
+
+- **Modo Horizontal (Landscape 16:9 / Escritorio Estándar)**: **12 columnas $\times$ 8 filas**.
+- **Modo Vertical (Portrait 9:16 / Monitores Verticales 1080x1920)**: **6 columnas $\times$ 14 filas**.
 
 El tamaño de la celda unitaria se deriva dinámicamente de las dimensiones físicas netas del contenedor (`#grid-board`), garantizando que la multiplicación de filas y columnas sume con precisión micrométrica el 100% del área útil disponible:
 
-$$\text{Ancho de Celda } (W_{\text{cell}}) = \frac{W_{\text{net}} - (C - 1) \times \text{gap}}{C} \quad \text{con } C = 12$$
+$$\text{Ancho de Celda } (W_{\text{cell}}) = \frac{W_{\text{net}} - (C - 1) \times \text{gap}}{C} \quad \text{con } C = 12 \text{ (Landscape) o } 6 \text{ (Portrait)}$$
 
-$$\text{Alto de Celda } (H_{\text{cell}}) = \frac{H_{\text{net}} - (R - 1) \times \text{gap}}{R} \quad \text{con } R = 8$$
+$$\text{Alto de Celda } (H_{\text{cell}}) = \frac{H_{\text{net}} - (R - 1) \times \text{gap}}{R} \quad \text{con } R = 8 \text{ (Landscape) o } 14 \text{ (Portrait)}$$
 
 ```css
 #grid-board {
@@ -39,26 +42,36 @@ $$\text{Alto de Celda } (H_{\text{cell}}) = \frac{H_{\text{net}} - (R - 1) \time
   overflow: hidden !important;
   box-sizing: border-box;
 }
+
+@media (orientation: portrait), (max-aspect-ratio: 1/1) {
+  #grid-board {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(14, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
 ```
 
-- **Divisibilidad Áurea de 12 Columnas**: Permite tarjetas de ancho completo (12 cols = 100%), mitad (6 cols = 50%), tercio (4 cols = 33.3%), cuarto (3 cols = 25%), sexto (2 cols = 16.6%) o unitarias (1 col = 8.3%).
-- **Simetría Vertical de 8 Filas**: Permite alturas de 1 fila (chips métricos y totalizadores), 2 filas (estándar cuadrado / 16:9), 4 filas (medio lienzo) y 8 filas (lienzo completo).
-- **Lienzo Bounded con Residuo Cero**: Al utilizar `grid-template-rows: repeat(8, minmax(0, 1fr))`, las 8 filas absorben el 100% del alto disponible sin dejar jamás un solo píxel muerto o hueco al fondo.
+- **Divisibilidad Áurea de 12 Columnas (Landscape)**: Permite tarjetas de ancho completo (12 cols = 100%), mitad (6 cols = 50%), tercio (4 cols = 33.3%), cuarto (3 cols = 25%), sexto (2 cols = 16.6%) o unitarias (1 col = 8.3%).
+- **Ergonomía Vertical en Modo Retrato (Portrait 6x14)**:
+  - En monitores verticales (1080x1920), 14 filas producen celdas de ~110px de alto, emparejándose con el ancho de celda de ~113px para mantener una relación de aspecto 1:1 casi perfecta.
+  - Se eliminan las hipertrofias verticales donde widgets panorámicos de 2 filas antes alcanzaban alturas gigantescas de 580px.
+- **Lienzo Bounded con Residuo Cero**: Las filas absorben el 100% del alto disponible sin dejar jamás un solo píxel muerto o hueco al fondo.
 - **Paso de Snapping Continuo**:
   - $\text{stepX} = W_{\text{cell}} + \text{gap}$
   - $\text{stepY} = H_{\text{cell}} + \text{gap}$
-- **Límite Estricto de Arrastre**: $\text{maxAllowedRow} = 8 - \text{spanRow} + 1$. Toda tarjeta se contiene dentro del rango $[1, 8]$ de filas y $[1, 12]$ de columnas.
+- **Límite Estricto de Capacidad y Arrastre**: $\text{maxAllowedRow} = R_{\text{max}} - \text{spanRow} + 1$. Toda tarjeta se contiene estrictamente dentro del límite visible ($R_{\text{max}} = 8$ en landscape, $14$ en portrait).
 
 ### 2.2 Coordenadas y Dimensiones de los Widgets
 
-Cada tarjeta (`.dashboard-card`) se define en la matriz mediante cuatro parámetros:
+Cada tarjeta (`.card`) se define en la matriz mediante cuatro parámetros:
 
 $$\text{Card} = \{ \text{col}, \text{row}, \text{spanCol}, \text{spanRow} \}$$
 
 - $\text{col} \in [1, C_{\text{max}}]$: Índice de columna inicial (1-indexed según especificación CSS Grid).
-- $\text{row} \in [1, \infty)$: Índice de fila inicial.
+- $\text{row} \in [1, R_{\text{max}}]$: Índice de fila inicial acotado.
 - $\text{spanCol} \in [1, C_{\text{max}}]$: Número de columnas que abarca la tarjeta.
-- $\text{spanRow} \in [1, \infty)$: Número de filas que abarca la tarjeta.
+- $\text{spanRow} \in [1, R_{\text{max}}]$: Número de filas que abarca la tarjeta.
 
 El posicionamiento en el DOM se aplica mediante propiedades CSS inline sobre cada elemento:
 
@@ -267,17 +280,42 @@ Este algoritmo garantiza la eliminación absoluta de huecos muertos, manteniendo
 
 ---
 
-### 2.3 Matriz de Formatos Soportados (15 Tamaños Canónicos)
+### 2.3 Matriz de Formatos Soportados (19 Tamaños Canónicos)
 
-El sistema soporta una matriz simétrica de 15 factores de forma organizados en tres categorías: horizontales, cuadrados y verticales.
+El sistema soporta una matriz simétrica de 19 factores de forma clasificados por su idoneidad de orientación (`orientation: "horizontal" | "vertical" | "universal"`):
 
-| Categoría | Formatos | Propósito |
+| Formato | Orientación | Propósito Operativo |
 | :--- | :--- | :--- |
-| **Micro-indicadores y Chips** | `1x1`, `2x1` | Métricas compactas, contadores unitarios y chips duales horizontales. |
-| **Formatos Verticales** | `1x2`, `2x3`, `2x4` | **Torre compacta (`1x2`)**, **columna mediana (`2x3`)** y **columna alta (`2x4`)** para monitores de puertos, listas apiladas o medidores verticales. |
-| **Cuadrados Estándar** | `2x2`, `4x4` | Reloj analógico, tacómetros circulares, matrices de diagnóstico o consolas. |
-| **Horizontales 16:9 y Medios** | `3x2`, `4x2`, `4x3`, `6x2` | Widgets funcionales (reloj, cronómetro, temporizador, monitores de red). |
-| **Cuadrantes y Panorámicos** | `6x4`, `8x2`, `12x2`, `banner` | Cuadrantes del 50%, barras anchas de telemetría y banners panorámicos completos. |
+| `1x1` | ⊞ Universal | Micro-totalizador, porcentaje rápido o LED de estado. |
+| `1x2` | ↕ Vertical | Torre métrica compacta vertical (2 filas). |
+| `1x3` | ↕ Vertical | Torre métrica mediana vertical (3 filas). |
+| `1x4` | ↕ Vertical | Torre métrica alta vertical (4 filas). |
+| `2x1` | ↔ Horizontal | Chip métrico horizontal dual. |
+| `2x2` | ⊞ Universal | Cuadrado estándar mediano (relojes, tacómetros). |
+| `2x3` | ↕ Vertical | Columna vertical mediana. |
+| `2x4` | ↕ Vertical | Columna vertical alta de diagnóstico. |
+| `3x2` | ↔ Horizontal | Estándar 16:9 clásico de escritorio. |
+| `3x4` | ↕ Vertical | Columna ancha vertical (ideal monitores 9:16). |
+| `4x2` | ↔ Horizontal | Control extendido, cronómetro o temporizador con barra. |
+| `4x3` | ↔ Horizontal | Historial mediano o gráfica en vivo. |
+| `4x4` | ⊞ Universal | Cuadrado grande / consola unificada. |
+| `4x6` | ↕ Vertical | Consola vertical extendida (diseñada para monitores 9:16). |
+| `6x2` | ↔ Horizontal | Panorámico medio para telemetría multihilo. |
+| `6x4` | ↔ Horizontal | Cuadrante del 50% de la pantalla. |
+| `8x2` | ↔ Horizontal | Panorámico ancho de alta densidad. |
+| `12x2` | ↔ Horizontal | Ancho completo (100% de 12 columnas en Landscape). |
+| `banner` | ↔ Horizontal | Banner panorámico `1 / -1` span 2. |
+
+---
+
+### 2.4 Control Estricto de Capacidad (`canWidgetFitOnDashboard`)
+
+Para prevenir el desorden, colisiones destructivas y redimensionamientos involuntarios al activar widgets desde el Drawer:
+
+1. **Evaluación Preventiva**: Antes de alterar la visibilidad de una tarjeta (`card.style.display = 'flex'`), el sistema invoca `canWidgetFitOnDashboard(spanCol, spanRow, cardId)`.
+2. **Matriz de Disponibilidad**: Se proyectan todas las tarjetas actualmente visibles en el perfil activo sobre la cuadrícula disponible ($C_{\text{actual}} \times R_{\text{max}}$).
+3. **Búsqueda Bounded**: Se ejecuta `findNextFreeSlot` acotado a $R_{\text{max}}$ ($8$ en horizontal, $14$ en vertical).
+4. **Bloqueo Determinista**: Si no existe ninguna celda contigua disponible donde quepa el widget sin desbordar $R_{\text{max}}$, la activación se aborta, el interruptor en el Drawer se revierte y se notifica al usuario con un toast de advertencia.
 
 ---
 

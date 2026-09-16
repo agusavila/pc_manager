@@ -1426,6 +1426,52 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-050] Control Estricto de Capacidad, Topología Portrait 6x14, Badges de Orientación, Navegación Contextual y Paquete dummy-widgets.pcm v1.1.0
+- **Fecha**: `2026-09-16`
+- **Commit**: `8664651`
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `UI / Dashboard / Control de Capacidad, Topología Portrait 6x14, Badges de Orientación, Navegación Contextual & dummy-widgets.pcm v1.1.0 (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, `[`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs)`, `[`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)`)`
+- **Descripción del Fallo**: 
+  1. Caos por falta de control de capacidad en el Dashboard: al activar widgets en el Drawer lateral o durante reorganizaciones, no se validaba si existía espacio contiguo disponible en el tablero visible; resultado: widgets empujados, desbordamientos, solapamientos y redimensionamientos en cadena.
+  2. En monitores y ventanas verticales (Portrait 9:16 / 1080x1920), al imponerse la topología de 8 filas en ~1750px de altura útil, cada fila medía entre 220-290px de alto, haciendo que widgets de 2 filas midieran 580px (hipertrofia visual desproporcionada) empujando a los demás fuera de la pantalla.
+  3. En el Drawer lateral de widgets, no se informaba al usuario si los widgets estaban concebidos para monitores horizontales o verticales.
+  4. En el menú contextual del Sidebar (clic derecho sobre un módulo), la opción "Ver en Gestor de Módulos" llamaba a `switchView('modules')` (vista inexistente), provocando una pantalla en blanco.
+  5. Al actualizar un módulo `.pcm` (`isUpdate`), los widgets recién introducidos en el paquete que no existían previamente aparecían activos de forma invasiva en el Dashboard en vez de iniciar apagados en `hiddenWidgets`.
+  6. El módulo de muestrario de widgets no contaba con versión semántica incrementada (`1.1.0`) y faltaban los formatos verticales complementarios (`1x3`, `1x4`, `3x4`, `4x6`).
+- **Causa Raíz**: 
+  1. Ausencia de algoritmo preventivo de validación de capacidad antes de `toggleWidgetVisibility` y falta de `canWidgetFitOnDashboard()`.
+  2. Ausencia de media query de orientación portrait con grid de 14 filas para equiparar la proporción de celdas a ~113px x 110px.
+  3. Falta de metadata `orientation` y badges SVG en el catálogo de personalización.
+  4. Discrepancia de identificador: la vista en el DOM es `view-module-manager`, no `view-modules`.
+  5. En `installModule`, la condición `if (!isUpdate && !isStartup)` omitía ocultar widgets nuevos introducidos en una actualización de paquete.
+- **Solución Implementada**: 
+  1. Se implementó `canWidgetFitOnDashboard()` en `ui/index.html`. Si un widget no cabe dentro del límite físico de filas del Dashboard, se bloquea su activación, se revierte el interruptor en el Drawer y se emite un toast de advertencia al usuario.
+  2. Se añadieron media queries `@media (orientation: portrait), (max-aspect-ratio: 1/1)` en CSS con `grid-template-columns: repeat(6, minmax(0, 1fr))` y `grid-template-rows: repeat(14, minmax(0, 1fr))`, junto con las funciones JS `isPortraitOrientation()`, `getGridCols()` y `getMaxVisibleRows()`.
+  3. Se incorporaron insignias vectoriales SVG en el catálogo del Drawer para ↔ Horizontal, ↕ Vertical y ⊞ Universal con tooltips explicativos.
+  4. Se corrigió el menú contextual para invocar `switchView('module-manager')`, activar la pestaña `installed` con `switchManagerTab('installed')` y enfocar suavemente la tarjeta del módulo mediante `focusModuleInManager(modId)`.
+  5. Se corrigió `installModule` para que cualquier widget nuevo o no rastreado previamente inicie siempre oculto en `hiddenWidgets` aún durante la actualización (`isUpdate`).
+  6. Se crearon las clases CSS `.card-size-1x3`, `.card-size-1x4`, `.card-size-3x4` y `.card-size-4x6`, se actualizó `build_dummy_widgets_pcm.cjs` a la versión `1.1.0` con los 19 formatos soportados y se regeneró `dummy-widgets.pcm` en la raíz.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  Los cambios refuerzan la contención matemática y la ergonomía sin alterar el comportamiento de escritorios horizontales ya verificados. Se previene la corrupción de layouts por colisiones y se garantiza navegación confiable sin pantallas en blanco.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs)
+  - [`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)
+  - [`modules/dummy-widgets/manifest.json`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/manifest.json)
+  - [`modules/dummy-widgets/module.js`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/module.js)
+  - [`modules/dummy-widgets/README.md`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/README.md)
+  - [`PROJECT_SPECIFICATION.md`](file:///c:/Proyectos/pc_manager/PROJECT_SPECIFICATION.md)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)
+  - [`docs/ai/MODULAR_SYSTEM_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md)
+  - [`docs/user/core_user_manual.md`](file:///c:/Proyectos/pc_manager/docs/user/core_user_manual.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

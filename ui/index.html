@@ -743,6 +743,23 @@
       }
     }
 
+    /* TOPOLOGÍA ADAPTATIVA PARA MONITORES Y PANTALLAS VERTICALES (PORTRAIT 9:16) */
+    @media (orientation: portrait), (max-aspect-ratio: 1/1) {
+      .grid-board {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        grid-template-rows: repeat(14, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+    }
+
+    @media (orientation: portrait) and (max-width: 650px) {
+      .grid-board {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-rows: repeat(14, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+    }
+
     /* TARJETAS DEL DASHBOARD CON DRAG & DROP FLUIDO Y ESCALA ELÁSTICA */
     .card {
       container-type: inline-size;
@@ -1044,7 +1061,7 @@
     .card-size-1x1 .metric-big { font-size: 18px; font-weight: 700; line-height: 1; }
     .card-size-1x1 .metric-label { font-size: 9.5px; margin-top: 1px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* FORMATO VERTICAL 1x2 (TORRE MÉTRICA COMPACTA) */
+    /* FORMATOS VERTICALES 1x2, 1x3 Y 1x4 (TORRES MÉTRICAS COMPACTAS Y EXTENDIDAS) */
     .card-size-1x2 {
       grid-column: span 1;
       grid-row: span 2;
@@ -1067,6 +1084,50 @@
     .card-size-1x2 .metric-big { font-size: 20px; font-weight: 700; line-height: 1; }
     .card-size-1x2 .metric-label { font-size: 9.5px; margin-top: 2px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    .card-size-1x3 {
+      grid-column: span 1;
+      grid-row: span 3;
+      min-width: 0;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .card-size-1x3 .card-header { margin-bottom: 2px; width: 100%; justify-content: center; gap: 4px; }
+    .card-size-1x3 .card-header .card-title-box { justify-content: center; gap: 4px; }
+    .card-size-1x3 .card-header .card-badge, .card-size-1x3 .card-header .card-btn { display: none; }
+    .card-size-1x3 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-1x3 .card-icon-wrap svg { width: 14px; height: 14px; }
+    .card-size-1x3 .card-title-box h4 { font-size: 11px; }
+    .card-size-1x3 .card-body { justify-content: space-between; align-items: center; gap: 4px; width: 100%; height: 100%; }
+    .card-size-1x3 .metric-big { font-size: 20px; font-weight: 700; line-height: 1; }
+    .card-size-1x3 .metric-label { font-size: 9.5px; margin-top: 2px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .card-size-1x4 {
+      grid-column: span 1;
+      grid-row: span 4;
+      min-width: 0;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .card-size-1x4 .card-header { margin-bottom: 2px; width: 100%; justify-content: center; gap: 4px; }
+    .card-size-1x4 .card-header .card-title-box { justify-content: center; gap: 4px; }
+    .card-size-1x4 .card-header .card-badge, .card-size-1x4 .card-header .card-btn { display: none; }
+    .card-size-1x4 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-1x4 .card-icon-wrap svg { width: 14px; height: 14px; }
+    .card-size-1x4 .card-title-box h4 { font-size: 11px; }
+    .card-size-1x4 .card-body { justify-content: space-between; align-items: center; gap: 4px; width: 100%; height: 100%; }
+    .card-size-1x4 .metric-big { font-size: 20px; font-weight: 700; line-height: 1; }
+    .card-size-1x4 .metric-label { font-size: 9.5px; margin-top: 2px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 0; padding: 10px 14px; }
     .card-size-2x1 .card-header { margin-bottom: 3px; }
     .card-size-2x1 .card-icon-wrap { width: 20px; height: 20px; }
@@ -1078,9 +1139,11 @@
 
     .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 0; padding: 12px; }
 
-    /* FORMATOS VERTICALES 2x3 Y 2x4 (COLUMNAS OPERATIVAS) */
+    /* FORMATOS VERTICALES 2x3, 2x4, 3x4 Y 4x6 (COLUMNAS Y CONSOLAS OPERATIVAS) */
     .card-size-2x3 { grid-column: span 2; grid-row: span 3; min-width: 0; padding: 12px 14px; }
     .card-size-2x4 { grid-column: span 2; grid-row: span 4; min-width: 0; padding: 14px 16px; }
+    .card-size-3x4 { grid-column: span 3; grid-row: span 4; min-width: 0; padding: 14px 16px; }
+    .card-size-4x6 { grid-column: span 4; grid-row: span 6; min-width: 0; padding: 16px; }
 
     .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 0; padding: 12px 14px; }
     .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 0; padding: 14px 16px; }
@@ -2874,6 +2937,36 @@
 
               const widgetIcon = w.icon || modIcon;
 
+              const sizeMatch = (w.size || '2x1').match(/(\d+)x(\d+)/);
+              let sCol = sizeMatch ? parseInt(sizeMatch[1], 10) : 2;
+              let sRow = sizeMatch ? parseInt(sizeMatch[2], 10) : 1;
+              if (w.size === 'banner') { sCol = 12; sRow = 2; }
+
+              const orientationType = w.orientation || (sCol > sRow ? 'horizontal' : (sRow > sCol ? 'vertical' : 'universal'));
+              let orientationBadge = '';
+              if (orientationType === 'horizontal') {
+                orientationBadge = `
+                  <span class="card-badge" style="display: inline-flex; align-items: center; gap: 3px; font-size: 9px; padding: 1px 5px; flex-shrink: 0;" data-tooltip="Óptimo para pantallas horizontales (16:9)" title="Óptimo para pantallas horizontales (16:9)">
+                    <svg class="svg-icon svg-icon-xs" style="width: 10px; height: 10px; color: var(--accent-primary);" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"></path><path d="M4 7h16"></path><path d="m16 21 4-4-4-4"></path><path d="M20 17H4"></path></svg>
+                    <span>Horiz</span>
+                  </span>
+                `;
+              } else if (orientationType === 'vertical') {
+                orientationBadge = `
+                  <span class="card-badge" style="display: inline-flex; align-items: center; gap: 3px; font-size: 9px; padding: 1px 5px; flex-shrink: 0;" data-tooltip="Óptimo para pantallas verticales (9:16) o columnas" title="Óptimo para pantallas verticales (9:16) o columnas">
+                    <svg class="svg-icon svg-icon-xs" style="width: 10px; height: 10px; color: var(--accent-success);" viewBox="0 0 24 24"><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path></svg>
+                    <span>Vert</span>
+                  </span>
+                `;
+              } else {
+                orientationBadge = `
+                  <span class="card-badge" style="display: inline-flex; align-items: center; gap: 3px; font-size: 9px; padding: 1px 5px; flex-shrink: 0;" data-tooltip="Universal (adaptable a cualquier pantalla)" title="Universal (adaptable a cualquier pantalla)">
+                    <svg class="svg-icon svg-icon-xs" style="width: 10px; height: 10px; color: var(--text-muted);" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+                    <span>Univ</span>
+                  </span>
+                `;
+              }
+
               return `
                 <div class="widget-catalog-item">
                   <div class="widget-catalog-info">
@@ -2884,6 +2977,7 @@
                       <div style="display: flex; align-items: center; gap: 6px;">
                         <h5>${w.name || 'Widget'}</h5>
                         <span class="card-badge" style="font-size: 9.5px; padding: 1px 5px; flex-shrink: 0;">${w.size || '2x1'}</span>
+                        ${orientationBadge}
                       </div>
                     </div>
                   </div>
@@ -2958,6 +3052,22 @@
           delete current.layout[cardId];
         }
       } else {
+        // VERIFICACIÓN ESTRICTA DE CAPACIDAD: Impedir caos y solapamientos si no cabe
+        if (card) {
+          const { spanCol, spanRow } = getCardSpan(card);
+          const fits = canWidgetFitOnDashboard(spanCol, spanRow, cardId);
+          if (!fits) {
+            renderDashboardCustomizationCatalog();
+            addSystemNotification(
+              'Espacio Insuficiente',
+              `El widget requiere ${spanCol}×${spanRow} celdas libres. No cabe en el espacio disponible del Dashboard.`,
+              'warning',
+              'dashboard'
+            );
+            return;
+          }
+        }
+
         current.hiddenWidgets = current.hiddenWidgets.filter(id => id !== cardId);
         if (card) {
           card.style.display = 'flex';
@@ -3015,6 +3125,22 @@
       } else if (tabId === 'installed') {
         renderInstalledModulesGroupSelectors();
       }
+    }
+
+    function focusModuleInManager(modId) {
+      setTimeout(() => {
+        const el = document.getElementById(`installed-mod-${modId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+          el.style.borderColor = 'var(--accent-primary)';
+          el.style.boxShadow = '0 0 0 2px var(--accent-primary-dim), 0 8px 24px -4px rgba(0, 0, 0, 0.4)';
+          setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+          }, 1500);
+        }
+      }, 100);
     }
 
     // 5. GESTIÓN E INSTALACIÓN DE PAQUETES .PCM (DYNAMIC EXTENSIBILITY)
@@ -3090,6 +3216,10 @@
     }
 
     // DRAG AND DROP FLUIDO, POSICIONAMIENTO EN CUADRÍCULA PROPORCIONAL Y RESPONSIVE
+    function isPortraitOrientation() {
+      return window.innerHeight > window.innerWidth;
+    }
+
     function getGridCols() {
       const grid = document.getElementById('grid-board');
       if (grid) {
@@ -3098,6 +3228,9 @@
           const cols = computed.trim().split(/\s+/).length;
           if (cols > 0) return cols;
         }
+      }
+      if (isPortraitOrientation()) {
+        return window.innerWidth <= 650 ? 4 : 6;
       }
       const w = window.innerWidth;
       if (w <= 1080) return 6;
@@ -3113,6 +3246,9 @@
           const rows = computed.trim().split(/\s+/).length;
           if (rows > 0) return rows;
         }
+      }
+      if (isPortraitOrientation()) {
+        return 14;
       }
       const w = window.innerWidth;
       if (w <= 1360) return 6;
@@ -3132,12 +3268,15 @@
 
     function findNextFreeSlot(gridCols, spanCol, spanRow, occupiedMatrix) {
       const maxVisibleRows = getMaxVisibleRows();
-      let row = 1;
-      while (true) {
-        for (let col = 1; col <= gridCols - spanCol + 1; col++) {
+      const effSpanCol = Math.min(spanCol, gridCols);
+      if (effSpanCol > gridCols || spanRow > maxVisibleRows) {
+        return null;
+      }
+      for (let row = 1; row <= maxVisibleRows - spanRow + 1; row++) {
+        for (let col = 1; col <= gridCols - effSpanCol + 1; col++) {
           let canFit = true;
           for (let r = row; r < row + spanRow; r++) {
-            for (let c = col; c < col + spanCol; c++) {
+            for (let c = col; c < col + effSpanCol; c++) {
               if (occupiedMatrix[r] && occupiedMatrix[r][c]) {
                 canFit = false;
                 break;
@@ -3149,12 +3288,35 @@
             return { col, row };
           }
         }
-        row++;
-        if (row > Math.max(1, maxVisibleRows - spanRow + 1)) {
-          break;
-        }
       }
-      return { col: 1, row: 1 };
+      return null;
+    }
+
+    function canWidgetFitOnDashboard(spanCol, spanRow, excludeCardId = null) {
+      const grid = document.getElementById('grid-board');
+      if (!grid) return true;
+      const gridCols = getGridCols();
+      const maxRows = getMaxVisibleRows();
+      const effSpanCol = Math.min(spanCol, gridCols);
+      if (effSpanCol > gridCols || spanRow > maxRows) return false;
+
+      const occupied = {};
+      const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none' && c.id !== excludeCardId);
+      cards.forEach(c => {
+        const col = parseInt(c.dataset.col || '1', 10);
+        const row = parseInt(c.dataset.row || '1', 10);
+        const { spanCol: sC, spanRow: sR } = getCardSpan(c);
+        const eC = Math.min(sC, gridCols);
+        for (let r = row; r < row + sR; r++) {
+          if (!occupied[r]) occupied[r] = {};
+          for (let cl = col; cl < col + eC; cl++) {
+            occupied[r][cl] = c.id;
+          }
+        }
+      });
+
+      const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
+      return slot !== null;
     }
 
     let activeDraggedCard = null;
@@ -3435,17 +3597,19 @@
               if (collides) {
                 // Encontrar el primer slot libre hacia abajo sin colisiones
                 const slot = findNextFreeSlot(gridCols, oEffSpanCol, oSpanRow, occupied);
-                other.style.gridColumn = `${slot.col} / span ${oEffSpanCol}`;
-                other.style.gridRow = `${slot.row} / span ${oSpanRow}`;
-                other.dataset.col = slot.col;
-                other.dataset.row = slot.row;
-                curCol = slot.col;
-                curRow = slot.row;
+                if (slot) {
+                  other.style.gridColumn = `${slot.col} / span ${oEffSpanCol}`;
+                  other.style.gridRow = `${slot.row} / span ${oSpanRow}`;
+                  other.dataset.col = slot.col;
+                  other.dataset.row = slot.row;
+                  curCol = slot.col;
+                  curRow = slot.row;
 
-                other.classList.remove('card-drop');
-                void other.offsetWidth;
-                other.classList.add('card-drop');
-                setTimeout(() => other.classList.remove('card-drop'), 300);
+                  other.classList.remove('card-drop');
+                  void other.offsetWidth;
+                  other.classList.add('card-drop');
+                  setTimeout(() => other.classList.remove('card-drop'), 300);
+                }
               }
 
               // Registrar celdas ocupadas
@@ -3772,19 +3936,23 @@
 
           if (collides) {
             const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
-            displayCol = slot.col;
-            displayRow = slot.row;
+            if (slot) {
+              displayCol = slot.col;
+              displayRow = slot.row;
+            }
           }
 
-          card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
-          card.style.gridRow = `${displayRow} / span ${spanRow}`;
-          card.dataset.col = displayCol;
-          card.dataset.row = displayRow;
+          if (displayCol && displayRow) {
+            card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
+            card.style.gridRow = `${displayRow} / span ${spanRow}`;
+            card.dataset.col = displayCol;
+            card.dataset.row = displayRow;
 
-          for (let r = displayRow; r < displayRow + spanRow; r++) {
-            if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
-            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
-              occupiedMatrix[r][c] = card.id;
+            for (let r = displayRow; r < displayRow + spanRow; r++) {
+              if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
+              for (let c = displayCol; c < displayCol + effSpanCol; c++) {
+                occupiedMatrix[r][c] = card.id;
+              }
             }
           }
         }
@@ -3796,15 +3964,23 @@
           const { spanCol, spanRow } = getCardSpan(card);
           const effSpanCol = Math.min(spanCol, gridCols);
           const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
-          card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
-          card.style.gridRow = `${slot.row} / span ${spanRow}`;
-          card.dataset.col = slot.col;
-          card.dataset.row = slot.row;
+          if (slot) {
+            card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
+            card.style.gridRow = `${slot.row} / span ${spanRow}`;
+            card.dataset.col = slot.col;
+            card.dataset.row = slot.row;
 
-          for (let r = slot.row; r < slot.row + spanRow; r++) {
-            if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
-            for (let c = slot.col; c < slot.col + effSpanCol; c++) {
-              occupiedMatrix[r][c] = card.id;
+            for (let r = slot.row; r < slot.row + spanRow; r++) {
+              if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
+              for (let c = slot.col; c < slot.col + effSpanCol; c++) {
+                occupiedMatrix[r][c] = card.id;
+              }
+            }
+          } else {
+            // Límite de capacidad alcanzado: ocultar de forma segura sin romper la cuadrícula
+            card.style.display = 'none';
+            if (!current.hiddenWidgets.includes(card.id)) {
+              current.hiddenWidgets.push(card.id);
             }
           }
         }
@@ -4054,22 +4230,24 @@
         const effSpanCol = Math.min(spanCol, gridCols);
         const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
 
-        for (let r = slot.row; r < slot.row + spanRow; r++) {
-          if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
-          for (let c = slot.col; c < slot.col + effSpanCol; c++) {
-            occupiedMatrix[r][c] = true;
+        if (slot) {
+          for (let r = slot.row; r < slot.row + spanRow; r++) {
+            if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
+            for (let c = slot.col; c < slot.col + effSpanCol; c++) {
+              occupiedMatrix[r][c] = true;
+            }
           }
+
+          card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
+          card.style.gridRow = `${slot.row} / span ${spanRow}`;
+          card.dataset.col = slot.col;
+          card.dataset.row = slot.row;
+
+          card.classList.remove('card-drop');
+          void card.offsetWidth;
+          card.classList.add('card-drop');
+          setTimeout(() => card.classList.remove('card-drop'), 350);
         }
-
-        card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
-        card.style.gridRow = `${slot.row} / span ${spanRow}`;
-        card.dataset.col = slot.col;
-        card.dataset.row = slot.row;
-
-        card.classList.remove('card-drop');
-        void card.offsetWidth;
-        card.classList.add('card-drop');
-        setTimeout(() => card.classList.remove('card-drop'), 350);
       });
 
       persistDashboardLayout();
@@ -4117,8 +4295,10 @@
 
           if (collides) {
             const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
-            displayCol = slot.col;
-            displayRow = slot.row;
+            if (slot) {
+              displayCol = slot.col;
+              displayRow = slot.row;
+            }
           }
 
           // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización
@@ -4319,16 +4499,21 @@
             makeCardDraggable(card);
             document.getElementById('grid-board').appendChild(card);
           }
-          // Por directiva, los widgets instalados por primera vez quedan ocultos en el Dashboard y disponibles en el panel de Widgets.
-          // Si el módulo se está ACTUALIZANDO (isUpdate), se preserva la visibilidad y posición que el usuario ya configuró.
-          if (!isUpdate && !isStartup) {
-            card.style.display = 'none';
-            if (!currentProfile.hiddenWidgets.includes(cardId)) {
-              currentProfile.hiddenWidgets.push(cardId);
+          // Por directiva estricta, los widgets recién instalados (o nuevos widgets introducidos en una actualización)
+          // deben iniciar siempre OCULTOS en el Dashboard (disponibles en el Drawer/Catálogo) para no alterar la pantalla del usuario.
+          const isPreviouslyTracked = (currentProfile.layout && currentProfile.layout[cardId]) || currentProfile.hiddenWidgets.includes(cardId);
+          if (!isStartup) {
+            if (!isPreviouslyTracked) {
+              card.style.display = 'none';
+              if (!currentProfile.hiddenWidgets.includes(cardId)) {
+                currentProfile.hiddenWidgets.push(cardId);
+              }
+            } else if (currentProfile.hiddenWidgets.includes(cardId)) {
+              card.style.display = 'none';
             }
           }
         });
-        if (!isStartup && !isUpdate) {
+        if (!isStartup) {
           persistDashboardProfilesState();
         }
         updateDashboardCardsCount();
@@ -6183,7 +6368,7 @@
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             <span>Abrir Módulo</span>
           </div>
-          <div class="context-menu-item" onclick="closeAppContextMenu(); switchView('modules')">
+          <div class="context-menu-item" onclick="closeAppContextMenu(); switchView('module-manager'); switchManagerTab('installed'); focusModuleInManager('${modId}')">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
             <span>Ver en Gestor de Módulos</span>
           </div>
