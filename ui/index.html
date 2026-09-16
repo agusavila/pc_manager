@@ -3019,8 +3019,8 @@
             });
 
             const gridVisibleHeight = grid.clientHeight - (padTop * 2);
-            const visibleRowsInViewport = Math.max(2, Math.floor((gridVisibleHeight + gap) / stepY));
-            // La tarjeta puede colocarse en las filas del área visible o a lo sumo en la fila inmediatamente siguiente a la más baja
+            // Considerar todas las filas que caben físicamente en el área visible del lienzo
+            const visibleRowsInViewport = Math.max(2, Math.floor((gridVisibleHeight + gap + (stepY * 0.5)) / stepY));
             const maxAllowedRow = Math.max(1, Math.max(visibleRowsInViewport - spanRow + 1, maxOccupiedRow + 1));
 
             const cardLeft = moveEvent.clientX - grabOffsetX;
@@ -3032,6 +3032,10 @@
             targetCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, targetCol));
 
             let targetRow = Math.round(relY / stepY) + 1;
+            // Si el cursor se aproxima al borde inferior del lienzo, permitir acoplar a la última fila disponible
+            if (moveEvent.clientY >= boardRect.bottom - padTop - 20) {
+              targetRow = Math.max(targetRow, maxAllowedRow);
+            }
             targetRow = Math.max(1, Math.min(maxAllowedRow, targetRow));
 
             if (indicator) {

@@ -1237,6 +1237,27 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-044] Calibración de Anclaje a la Última Fila Visible del Lienzo en Dashboard Drag & Drop
+- **Fecha**: 2026-09-16
+- **Severidad**: `Media`
+- **Componente**: `UI / Dashboard Drag & Drop (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  Al arrastrar widgets hacia el fondo del lienzo, las tarjetas se bloqueaban una fila por encima del borde inferior, impidiendo ocupar el espacio de la última fila disponible dentro del contenedor visual del lienzo.
+- **Causa Raíz**: 
+  El cálculo de `visibleRowsInViewport` utilizaba `Math.floor` estricto sin tolerancia de paso, truncando filas que cabían físicamente; sumado a que al arrastrar desde el centro o parte inferior de la tarjeta (`grabOffsetY`), `relY` no alcanzaba el umbral de redondeo hacia la última fila física al aproximarse al fondo.
+- **Solución Implementada**: 
+  1. Se calibró `visibleRowsInViewport` con tolerancia de medio paso (`+ stepY * 0.5`), reconociendo la última fila física disponible en el contenedor.
+  2. Se añadió detección de proximidad al borde inferior (`moveEvent.clientY >= boardRect.bottom - padTop - 20`), permitiendo el snapping directo a `maxAllowedRow` cuando el usuario arrastra hasta la base del lienzo.
+  3. Cero modificaciones dimensionales ni estiramientos artificiales del lienzo.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
