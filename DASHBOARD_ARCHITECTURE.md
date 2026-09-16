@@ -16,30 +16,38 @@ El sistema de visualización principal (denominado canónicamente **Dashboard**)
 
 ---
 
-## 2. Topología de la Cuadrícula Matricial (Grid Board)
+## 2. Topología de la Cuadrícula Matricial Proporcional (Top-Down Derived Matrix)
 
-### 2.1 Estructura Geométrica
- 
-El contenedor `#grid-board` define una cuadrícula matricial **isométrica pura** con celdas cuadradas uniformes y lienzo acotado sin desbordamiento vertical:
+### 2.1 Principio de Derivación Espacial (Cero Residuo y Cero Espacios Muertos)
+A diferencia de aproximaciones "bottom-up" basadas en píxeles fijos arbitrarios (como 70px) que provocan huecos muertos al fondo por desajustes de división, el Dashboard de **PC Manager** adopta una **matriz top-down proporcional de 12 columnas $\times$ 8 filas**.
+
+El tamaño de la celda unitaria se deriva dinámicamente de las dimensiones físicas netas del contenedor (`#grid-board`), garantizando que la multiplicación de filas y columnas sume con precisión micrométrica el 100% del área útil disponible:
+
+$$\text{Ancho de Celda } (W_{\text{cell}}) = \frac{W_{\text{net}} - (C - 1) \times \text{gap}}{C} \quad \text{con } C = 12$$
+
+$$\text{Alto de Celda } (H_{\text{cell}}) = \frac{H_{\text{net}} - (R - 1) \times \text{gap}}{R} \quad \text{con } R = 8$$
 
 ```css
 #grid-board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-  grid-auto-rows: 70px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
   gap: 12px;
   position: relative;
   height: 100%;
   max-height: 100%;
   overflow: hidden !important;
+  box-sizing: border-box;
 }
 ```
 
-- **Gap intercelular**: $12\text{ px}$ constantes en ambos ejes ($X$ e $Y$).
-- **Altura y ancho base de celda ($H_{\text{cell}} = W_{\text{cell}}$)**: $70\text{ px} \times 70\text{ px}$ (Isometría 1:1).
-- **Celda elemental base (1x1)**: Totalizador compacto para KPIs y valores únicos.
-- **Paso de arrastre uniforme ($\Delta X = \Delta Y$)**: Con paso de $\approx 82\text{ px}$ en ambos ejes, desaparece la asimetría de movimiento entre columnas y filas.
-- **Lienzo Bounded (Cero Estiramiento)**: El contenedor `#view-dashboard` y `#grid-board` tienen `overflow: hidden`. El cálculo de filas permitidas (`maxAllowedRow`) se calcula con `Math.floor((gridVisibleHeight + gap) / stepY)`, garantizando matemáticamente que ninguna tarjeta rebase la altura física visible ni active barras de desplazamiento indeseadas.
+- **Divisibilidad Áurea de 12 Columnas**: Permite tarjetas de ancho completo (12 cols = 100%), mitad (6 cols = 50%), tercio (4 cols = 33.3%), cuarto (3 cols = 25%), sexto (2 cols = 16.6%) o unitarias (1 col = 8.3%).
+- **Simetría Vertical de 8 Filas**: Permite alturas de 1 fila (chips métricos y totalizadores), 2 filas (estándar cuadrado / 16:9), 4 filas (medio lienzo) y 8 filas (lienzo completo).
+- **Lienzo Bounded con Residuo Cero**: Al utilizar `grid-template-rows: repeat(8, minmax(0, 1fr))`, las 8 filas absorben el 100% del alto disponible sin dejar jamás un solo píxel muerto o hueco al fondo.
+- **Paso de Snapping Continuo**:
+  - $\text{stepX} = W_{\text{cell}} + \text{gap}$
+  - $\text{stepY} = H_{\text{cell}} + \text{gap}$
+- **Límite Estricto de Arrastre**: $\text{maxAllowedRow} = 8 - \text{spanRow} + 1$. Toda tarjeta se contiene dentro del rango $[1, 8]$ de filas y $[1, 12]$ de columnas.
 
 ### 2.2 Coordenadas y Dimensiones de los Widgets
 

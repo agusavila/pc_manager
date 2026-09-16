@@ -1325,6 +1325,40 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-047] Cuadrícula Proporcional Top-Down (12x8), Eliminación de Residuo Vertical Muerto y Formalización de la Regla 12 de Asesoría Técnica Proactiva
+- **Fecha**: 2026-09-16
+- **Commit**: `3ab991b`
+- **Versión**: `v0.0.3-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `UI / Dashboard Grid (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`) & Directivas de IA (`[`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)`)`
+- **Descripción del Fallo**: 
+  1. Al arrastrar un widget hacia el límite inferior del lienzo en el Dashboard, se producía un espacio muerto inservible (~50px en 1080p) donde no cabía otra tarjeta completa pero que dejaba un hueco antiestético.
+  2. Al forzar celdas de 70x70, tarjetas de 2 columnas se comprimían a ~152px de ancho, provocando que títulos de widgets como "Temporizador" o "Reloj del Sistema" se quebraran en múltiples líneas de forma deforme.
+  3. Complacencia pasiva del agente de IA ante números o medidas exploratorias aportadas informalmente por el usuario durante sesiones de vibe-coding, violando el rol de consultor técnico crítico.
+- **Causa Raíz**: 
+  - Enfoque "bottom-up" con medidas fijas en píxeles ($70\text{px}$ celda $+ 12\text{px}$ gap $= 82\text{px}$). Al dividir una altura visible dinámica ($941\text{px}$ netos) por $82\text{px}$, el residuo $941 \pmod{82} = 51\text{px}$ quedaba como espacio muerto porque `grid-auto-rows` no admite `1fr`.
+  - Aceptación no contrastada de ejemplos intuitivos del usuario sin validación previa multi-resolución (720p vs 1080p vs 2K).
+- **Solución Implementada**: 
+  1. **Regla 12 en `AGENTS.md` y `.agents/rules/proactive_technical_advisory.md`**: Obliga al agente a tratar los valores del usuario como intenciones exploratorias, contrastar matemáticamente la viabilidad, asesorar proactivamente y jamás "dar la razón porque sí".
+  2. **Matriz Proporcional Top-Down (12x8)**: En lugar de forzar píxeles fijos, la cuadrícula deriva sus celdas directamente del alto y ancho disponible mediante `repeat(12, minmax(0, 1fr))` y `repeat(8, minmax(0, 1fr))`. En 1080p estándar, esto genera celdas de $\approx 120 \times 102\text{ px}$ con **residuo exactamente cero**, eliminando cualquier hueco al fondo y garantizando que el widget toque la línea de borde sin provocar scrollbars.
+  3. **Catálogo de Tamaños Finales**: Se calibraron las clases `.card-size-*` para la matriz 12x8 (`1x1` de 120x102px con espacio holgado para títulos y números; `2x1` de 252x102px; `2x2` de 252x216px; `3x2` de 384x216px; `4x2` de 516x216px; etc.).
+  4. **Adaptabilidad a 720p**: Se integró media query `@media (max-width: 1280px)` que conmuta a una matriz de $8 \times 6$, preservando la legibilidad táctil en pantallas compactas sin encoger los textos por debajo del umbral ergonómico.
+  5. **Actualización de Documentación Triad**: Se sincronizó `DASHBOARD_ARCHITECTURE.md`, `MODULAR_SYSTEM_MANUAL.md` y `MODULAR_SYSTEM_AI_SPEC.md`.
+- **Archivos Afectados**: 
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/proactive_technical_advisory.md`](file:///c:/Proyectos/pc_manager/.agents/rules/proactive_technical_advisory.md)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)
+  - [`docs/ai/MODULAR_SYSTEM_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

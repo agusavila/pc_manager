@@ -89,8 +89,8 @@ interface ModuleWidgetDefinition {
   /** Nombre del widget mostrado en el catálogo de personalización. */
   name: string;
 
-  /** Tamaño asignado en la cuadrícula isométrica 70x70 del Dashboard (cols x rows). */
-  size: "1x1" | "2x1" | "2x2" | "3x2" | "4x2" | "4x3" | "4x4" | "6x2" | "8x2" | "banner";
+  /** Tamaño asignado en la cuadrícula proporcional 12x8 del Dashboard (cols x rows). */
+  size: "1x1" | "2x1" | "2x2" | "3x2" | "4x2" | "4x3" | "4x4" | "6x2" | "6x4" | "12x2" | "banner";
 
   /** Icono vectorial SVG para el catálogo. */
   icon?: string;
@@ -201,6 +201,38 @@ Los widgets pueden incluir botones de ejecución rápida o interruptores toggle 
   <span>Optimizar</span>
 </button>
 ```
+
+### 4.3. Especificación Geométrica del Tablero Proporcional (Matriz 12x8)
+
+Todo agente de IA que genere widgets para el Dashboard debe basarse en el contrato geométrico top-down del Core:
+
+#### Matriz Canónica Proporcional (12 Columnas $\times$ 8 Filas)
+- **Lienzo Bounded**: El alto y ancho de celda se calculan directamente a partir del espacio útil del contenedor `#grid-board`, logrando **residuo cero al fondo**:
+  - $W_{\text{cell}} = (W_{\text{net}} - 11 \times \text{gap}) / 12$
+  - $H_{\text{cell}} = (H_{\text{net}} - 7 \times \text{gap}) / 8$
+- **En 1080p estándar** ($W_{\text{net}} = 1567\text{ px}$, $H_{\text{net}} = 901\text{ px}$, $\text{gap} = 12\text{ px}$):
+  - $W_{\text{cell}} \approx \mathbf{120\text{ px}}$
+  - $H_{\text{cell}} \approx \mathbf{102\text{ px}}$
+
+#### Catálogo de Tamaños Finales de Widgets
+$$\text{Ancho en px} = (\text{spanCol} \times W_{\text{cell}}) + ((\text{spanCol} - 1) \times 12\text{px})$$
+$$\text{Alto en px} = (\text{spanRow} \times H_{\text{cell}}) + ((\text{spanRow} - 1) \times 12\text{px})$$
+
+- **`1x1`** ($\approx \mathbf{120 \times 102\text{ px}}$): Micro-totalizador / KPI unitario con valor y badge.
+- **`2x1`** ($\approx \mathbf{252 \times 102\text{ px}}$): Chip métrico horizontal (RAM, disco rápido).
+- **`2x2`** ($\approx \mathbf{252 \times 216\text{ px}}$): Reloj analógico, medidores circulares.
+- **`3x2`** ($\approx \mathbf{384 \times 216\text{ px}}$): Tarjeta estándar 16:9 (Reloj digital, temporizador, cronómetro).
+- **`4x2`** ($\approx \mathbf{516 \times 216\text{ px}}$): Monitoreo extendido de red o doble disco.
+- **`4x3` / `4x4`** ($\approx \mathbf{516 \times 330\text{ px}}$ / $\approx \mathbf{516 \times 444\text{ px}}$): Historiales con scroll interno y gráficas ricas.
+- **`6x2`** ($\approx \mathbf{780 \times 216\text{ px}}$): Panel panorámico medio.
+- **`6x4`** ($\approx \mathbf{780 \times 444\text{ px}}$): Cuadrante de medio lienzo (50% de ancho $\times$ 50% de alto).
+- **`12x2` / `banner`** ($\approx \mathbf{1567 \times 216\text{ px}}$): Banner horizontal de ancho completo.
+
+#### Capas de Márgenes de Seguridad
+1. Viewport: `padding: 20px 24px;`.
+2. Tablero: `padding: 16px;` y `border: 1px`.
+3. Inter-widget: `gap: 12px;`.
+4. Contención Drag & Drop: `targetCol` en $[1, 12 - \text{spanCol} + 1]$, `targetRow` en $[1, 8 - \text{spanRow} + 1]$. Cero scrollbars.
 
 ---
 

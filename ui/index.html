@@ -707,11 +707,11 @@
       box-sizing: border-box;
     }
 
-    /* CUADRÍCULA DE CELDAS ISOMÉTRICAS (70x70) */
+    /* CUADRÍCULA PROPORCIONAL TOP-DOWN (12 COLUMNAS x 8 FILAS, CERO RESIDUO) */
     .grid-board {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-      grid-auto-rows: 70px;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-template-rows: repeat(8, minmax(0, 1fr));
       gap: 12px;
       background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
@@ -724,8 +724,15 @@
       position: relative;
       background-image: radial-gradient(var(--border-medium) 1px, transparent 1px);
       background-size: 20px 20px;
-      align-content: start;
       overflow: hidden !important;
+    }
+
+    @media (max-width: 1280px) {
+      .grid-board {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
     }
 
     /* TARJETAS DEL DASHBOARD CON DRAG & DROP FLUIDO */
@@ -920,12 +927,12 @@
       100% { transform: scale(1); }
     }
 
-    /* TAMAÑOS MODULARES ISOMÉTRICOS (MÚLTIPLOS DE CELDA 70x70) */
+    /* TAMAÑOS MODULARES PROPORCIONALES (MATRIZ 12x8) */
     .card-size-1x1 { 
       grid-column: span 1; 
       grid-row: span 1; 
       min-width: 0; 
-      padding: 6px 8px; 
+      padding: 8px 10px; 
       align-items: center; 
       justify-content: space-between; 
       text-align: center; 
@@ -934,31 +941,31 @@
     .card-size-1x1 .card-header { margin-bottom: 2px; width: 100%; justify-content: center; gap: 4px; }
     .card-size-1x1 .card-header .card-title-box { justify-content: center; gap: 4px; }
     .card-size-1x1 .card-header .card-badge, .card-size-1x1 .card-header .card-btn { display: none; }
-    .card-size-1x1 .card-icon-wrap { width: 18px; height: 18px; }
-    .card-size-1x1 .card-icon-wrap svg { width: 12px; height: 12px; }
-    .card-size-1x1 .card-title-box h4 { font-size: 10.5px; }
+    .card-size-1x1 .card-icon-wrap { width: 20px; height: 20px; }
+    .card-size-1x1 .card-icon-wrap svg { width: 13px; height: 13px; }
+    .card-size-1x1 .card-title-box h4 { font-size: 11px; }
     .card-size-1x1 .card-body { justify-content: center; align-items: center; gap: 2px; width: 100%; }
-    .card-size-1x1 .metric-big { font-size: 16px; font-weight: 700; line-height: 1; }
-    .card-size-1x1 .metric-label { font-size: 9px; margin-top: 1px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-size-1x1 .metric-big { font-size: 18px; font-weight: 700; line-height: 1; }
+    .card-size-1x1 .metric-label { font-size: 9.5px; margin-top: 1px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 0; padding: 8px 12px; }
-    .card-size-2x1 .card-header { margin-bottom: 2px; }
-    .card-size-2x1 .card-icon-wrap { width: 18px; height: 18px; }
-    .card-size-2x1 .card-icon-wrap svg { width: 12px; height: 12px; }
-    .card-size-2x1 .card-title-box h4 { font-size: 11px; }
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 0; padding: 10px 14px; }
+    .card-size-2x1 .card-header { margin-bottom: 3px; }
+    .card-size-2x1 .card-icon-wrap { width: 20px; height: 20px; }
+    .card-size-2x1 .card-icon-wrap svg { width: 13px; height: 13px; }
+    .card-size-2x1 .card-title-box h4 { font-size: 11.5px; }
     .card-size-2x1 .card-body { justify-content: center; gap: 2px; }
-    .card-size-2x1 .metric-big { font-size: 16px; line-height: 1; }
-    .card-size-2x1 .metric-label { font-size: 10px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-size-2x1 .metric-big { font-size: 18px; line-height: 1; }
+    .card-size-2x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 0; padding: 12px; }
-    .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 0; padding: 12px; }
+    .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 0; padding: 12px 14px; }
     .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 0; padding: 14px 16px; }
     .card-size-4x3 { grid-column: span 4; grid-row: span 3; min-width: 0; padding: 14px 16px; }
     .card-size-4x4 { grid-column: span 4; grid-row: span 4; min-width: 0; padding: 16px; }
     .card-size-6x2 { grid-column: span 6; grid-row: span 2; min-width: 0; padding: 14px 16px; }
+    .card-size-6x4 { grid-column: span 6; grid-row: span 4; min-width: 0; padding: 16px; }
     .card-size-8x2 { grid-column: span 8; grid-row: span 2; min-width: 0; padding: 14px 16px; }
-    .card-size-5x2 { grid-column: span 5; grid-row: span 2; min-width: 0; }
-    .card-size-5x5 { grid-column: span 5; grid-row: span 5; min-width: 0; }
+    .card-size-12x2 { grid-column: span 12; grid-row: span 2; min-width: 0; padding: 14px 16px; }
     .card-size-banner { grid-column: 1 / -1; grid-row: span 2; min-width: 0; padding: 14px 16px; }
 
     /* CABECERA DE TARJETA */
@@ -2870,7 +2877,7 @@
       }
     }
 
-    // DRAG AND DROP FLUIDO, POSICIONAMIENTO LIBRE EN CUADRÍCULA ISOMÉTRICA (70x70)
+    // DRAG AND DROP FLUIDO, POSICIONAMIENTO EN CUADRÍCULA PROPORCIONAL (12x8)
     function getGridCols() {
       const grid = document.getElementById('grid-board');
       if (grid) {
@@ -2880,20 +2887,19 @@
           if (cols > 0) return cols;
         }
       }
-      const w = window.innerWidth;
-      return Math.max(1, Math.floor((w - 300) / 82));
+      return window.innerWidth <= 1280 ? 8 : 12;
     }
 
     function getMaxVisibleRows() {
       const grid = document.getElementById('grid-board');
-      if (!grid) return 10;
-      const compStyle = window.getComputedStyle(grid);
-      const padTop = parseFloat(compStyle.paddingTop) || 16;
-      const padBottom = parseFloat(compStyle.paddingBottom) || 16;
-      const gap = parseFloat(compStyle.rowGap || compStyle.gap) || 12;
-      const stepY = 70 + gap;
-      const gridVisibleHeight = grid.clientHeight - padTop - padBottom;
-      return Math.max(1, Math.floor((gridVisibleHeight + gap) / stepY));
+      if (grid) {
+        const computed = window.getComputedStyle(grid).gridTemplateRows;
+        if (computed && computed !== 'none') {
+          const rows = computed.trim().split(/\s+/).length;
+          if (rows > 0) return rows;
+        }
+      }
+      return window.innerWidth <= 1280 ? 6 : 8;
     }
 
     function getCardSpan(card) {
@@ -2901,7 +2907,7 @@
       if (match) {
         return { spanCol: parseInt(match[1], 10), spanRow: parseInt(match[2], 10) };
       }
-      return { spanCol: 4, spanRow: 2 };
+      return { spanCol: 3, spanRow: 2 };
     }
 
     function findNextFreeSlot(gridCols, spanCol, spanRow, occupiedMatrix) {
@@ -3010,10 +3016,12 @@
               }
             }
 
-            // Calcular columna y fila objetivo en la cuadrícula de forma coherente
+            // Calcular columna y fila objetivo en la cuadrícula proporcional 12x8
             const boardRect = grid.getBoundingClientRect();
             const gridCols = getGridCols();
+            const maxVisibleRows = getMaxVisibleRows();
             const effSpanCol = Math.min(spanCol, gridCols);
+            const effSpanRow = Math.min(spanRow, maxVisibleRows);
 
             const compStyle = window.getComputedStyle(grid);
             const padLeft = parseFloat(compStyle.paddingLeft) || 16;
@@ -3023,14 +3031,14 @@
             const gap = parseFloat(compStyle.rowGap || compStyle.gap) || 12;
 
             const innerWidth = boardRect.width - padLeft - padRight;
+            const innerHeight = boardRect.height - padTop - padBottom;
             const colWidth = (innerWidth - (gap * (gridCols - 1))) / gridCols;
+            const rowHeight = (innerHeight - (gap * (maxVisibleRows - 1))) / maxVisibleRows;
             const stepX = colWidth + gap;
-            const stepY = 70 + gap;
+            const stepY = rowHeight + gap;
 
-            // Determinar límite estricto de fila: jamás superar la altura visible del lienzo
-            const gridVisibleHeight = grid.clientHeight - padTop - padBottom;
-            const maxVisibleRows = Math.max(1, Math.floor((gridVisibleHeight + gap) / stepY));
-            const maxAllowedRow = Math.max(1, maxVisibleRows - spanRow + 1);
+            // Determinar límite estricto de fila: jamás superar la altura visible del lienzo (cero residuo)
+            const maxAllowedRow = Math.max(1, maxVisibleRows - effSpanRow + 1);
 
             const cardLeft = moveEvent.clientX - grabOffsetX;
             const cardTop = moveEvent.clientY - grabOffsetY;

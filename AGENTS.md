@@ -109,6 +109,19 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
   3. La validación rigurosa de que la estética, ergonomía, proporciones y funcionalidades previas no sufrieron regresiones ni deformaciones indeseadas.
 - **Transparencia con el Usuario**: Cualquier ajuste visual o funcional a elementos que ya estaban operativos debe comunicarse con total claridad en el reporte al usuario.
 
+### Regla 12: Asesoría Técnica Proactiva y Vibe-Coding Crítico (Prohibición de Aceptación Ciega de Valores de Ejemplo)
+- **Naturaleza Exploratoria del Vibe-Coding**: En sesiones interactivas, las medidas, números o porcentajes aportados por el usuario (ej. "70x70", "casillas del 25%", "mover en bloques fijos") son ejemplos exploratorios e intuitivos, **nunca requerimientos técnicos rígidos ni especificaciones cerradas**.
+- **Prohibición Estricta de Complacencia ("Cero Dar la Razón Porque Sí")**:
+  - Queda terminantemente prohibido que el agente acepte ciegamente valores de ejemplo o proceda a codificar sin contrastar la viabilidad técnica, matemática y ergonómica.
+  - El agente tiene la **obligación ineludible de asesorar al usuario**: evaluar impactos colaterales, colapsos de texto, desbordamientos o huecos muertos antes de escribir código.
+- **Criterio de Adaptabilidad Multi-Resolución Obligatorio**:
+  - Toda propuesta o cambio espacial debe concebirse y validarse matemáticamente para funcionar de manera armónica en múltiples densidades y factores de forma:
+    1. **HD / 720p (1280x720 o ventanas compactas)**: Evitar elementos sobredimensionados o desbordamientos innecesarios.
+    2. **Full HD / 1080p (1920x1080)**: Entorno estándar de escritorio con proporciones balanceadas y legibilidad holgada.
+    3. **QHD / 2K / 4K (2560x1440, 3840x2160)**: Evitar medidas fijas en píxeles que conviertan los widgets en miniaturas; uso mandatorio de tokens adaptativos, `clamp()` o factores de escala relativos.
+    4. **Orientación Vertical y Split-Screen (Ventanas Estrechas)**: Contención obligatoria con reflow dinámico para evitar que las tarjetas se corten o queden inaccesibles fuera de pantalla.
+- **Protocolo de Consulta y Consenso Técnico**: Antes de aplicar modificaciones estructurales en la interfaz, el agente debe advertir los riesgos de la idea planteada, proponer la solución arquitectónica correcta y esperar la confirmación del usuario sin tocar el código prematuramente.
+
 ---
 
 ## 2. Estructura de Customizaciones
@@ -124,10 +137,12 @@ Las reglas y habilidades de IA están organizadas en:
   - [`preservation_of_working_features.md`](file:///c:/Proyectos/pc_manager/.agents/rules/preservation_of_working_features.md): Preservación de funciones e interfaces operativas (cero regresiones).
   - [`bug_and_error_tracking.md`](file:///c:/Proyectos/pc_manager/.agents/rules/bug_and_error_tracking.md): Registro continuo de errores y bug fixes por commit.
   - [`continuous_compilation_and_commits.md`](file:///c:/Proyectos/pc_manager/.agents/rules/continuous_compilation_and_commits.md): Compilación obligatoria del binario nativo y commits atómicos.
+  - [`proactive_technical_advisory.md`](file:///c:/Proyectos/pc_manager/.agents/rules/proactive_technical_advisory.md): Asesoría técnica proactiva y vibe-coding crítico (multi-resolución y no aceptación ciega de ejemplos).
 - Skills de IA: [`.agents/skills/`](file:///c:/Proyectos/pc_manager/.agents/skills/)
   - [`core-module-scaffolder`](file:///c:/Proyectos/pc_manager/.agents/skills/core-module-scaffolder/SKILL.md): Creación estandarizada de módulos.
   - [`white-label-auditor`](file:///c:/Proyectos/pc_manager/.agents/skills/white-label-auditor/SKILL.md): Auditoría de código limpio y neutral.
   - [`documentation-triad-sync`](file:///c:/Proyectos/pc_manager/.agents/skills/documentation-triad-sync/SKILL.md): Sincronización de manuales de usuario, IA y desarrollador.
+
 
 
 

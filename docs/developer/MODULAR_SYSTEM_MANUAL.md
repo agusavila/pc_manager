@@ -227,21 +227,74 @@ window.__CLEANUP_mi_modulo__ = function() {
 ---
 
 ### 3.6. Widgets para el Dashboard Isométrico (Isometric Modular Grid)
-Los módulos pueden exportar una o más tarjetas para la cuadrícula modular de celdas isométricas del Dashboard (`repeat(auto-fill, minmax(70px, 1fr))`, `grid-auto-rows: 70px`, `gap: 12px`):
-- **Celda Base Isométrica (1x1)**: Cuadrado unitario de 70×70px diseñado para **Totalizadores** y micro-métricas clave (ej. porcentaje de CPU, temperatura, conteo de alertas). Tanto el paso en $X$ como en $Y$ son idénticos (~82px con gap), garantizando un desplazamiento uniforme y sin desfases asimétricos.
-- **Lienzo Acotado (Cero Estiramiento Vertical)**: El Dashboard está estrictamente confinado al alto visible del contenedor (`overflow: hidden`). Ninguna tarjeta puede sobrepasar la altura visible ni provocar scrollbars residuales al arrastrarse hacia el fondo.
-- **Catálogo de Tamaños Proporcionales**:
-  - `1x1`: Totalizador cuadrado compacto (1 col x 1 fila, 70×70px).
-  - `2x1`: Chip métrico horizontal (2 cols x 1 fila, ~152×70px).
-  - `2x2`: Widget cuadrado mediano (2 cols x 2 filas, ~152×152px).
-  - `3x2`: Widget mediano extendido (3 cols x 2 filas, ~234×152px).
-  - `4x2`: Tarjeta estándar de control y monitoreo (4 cols x 2 filas, ~316×152px, tamaño canónico para Reloj, Temporizador, Cronómetro).
-  - `4x3`: Tarjeta estándar con área de registros o vueltas (4 cols x 3 filas, ~316×234px).
-  - `4x4`: Widget cuadrado grande para gráficas de series temporales (4 cols x 4 filas, ~316×316px).
-  - `6x2` / `8x2`: Paneles anchos o listas extendidas.
-  - `banner`: Banner panorámico de ancho completo (`grid-column: 1 / -1`).
-- **Regla de Cero Recortes**: Los títulos y valores deben ser 100% legibles. Prohibido recortar textos esenciales con puntos suspensivos (`ellipsis`) dentro del cuerpo de la tarjeta.
-- **Menú Contextual Integrado**: Al hacer clic derecho sobre la tarjeta, el Core despliega opciones dinámicas: acceso a configuración del módulo (si posee `meta_options`), acceso a su pantalla principal, auto-organización de la cuadrícula y ocultamiento del widget.
+
+Los módulos pueden exportar una o más tarjetas para el Dashboard de **PC Manager**. Para diseñar widgets armónicos, legibles y bien encajados, todo desarrollador debe conocer la geometría física exacta del sistema:
+
+#### A. Jerarquía Espacial y Dimensiones Reales del Lienzo Útil
+El lienzo de colocación de widgets (`#grid-board`) reside dentro de una cadena de contención espacial que descuenta elementos estructurales fijos de la ventana:
+
+1. **Sidebar lateral**: Ocupa **271 px** horizontales expandido (o **71 px** colapsado).
+2. **Barra superior (`topbar`)**: Ocupa **65 px** verticales (64px de altura + 1px de borde inferior).
+3. **Contenedor de vista (`#view-dashboard`)**: Aplica `padding: 20px 24px;` (descuenta 48px horizontales y 40px verticales).
+4. **Marco del tablero (`#grid-board`)**: Aplica `border: 1px solid var(--border-subtle);` y `padding: 16px;` perimetral (descuenta 34px horizontales y 34px verticales).
+
+**Dimensiones Físicas del Área Neta Útil (Espacio Real para Widgets con Ventana Maximizada):**
+
+| Resolución de Pantalla | Ancho Exterior `#grid-board` | Alto Exterior `#grid-board` | **Área Neta Útil (Lienzo disponible)** |
+| :--- | :--- | :--- | :--- |
+| **HD / 720p** (1280 × 720) | 961 px | 615 px | **927 px de ancho $\times$ 581 px de alto** |
+| **Full HD / 1080p** (1920 × 1080) | 1601 px | 975 px | **1567 px de ancho $\times$ 941 px de alto** *(1767 px con sidebar colapsado)* |
+| **2K / QHD** (2560 × 1440) | 2241 px | 1335 px | **2207 px de ancho $\times$ 1301 px de alto** |
+
+*(En Windows, si la barra de tareas está fija y ocupa ~40px, la altura neta disponible disminuye aproximadamente 40px).*
+
+---
+
+#### B. Matriz Proporcional Top-Down (12 Columnas $\times$ 8 Filas) y Tamaños Finales
+Para garantizar que **no sobre ni un solo píxel al fondo (cero residuo vertical)** y permitir la máxima divisibilidad armónica, el sistema adopta una matriz canónica de **12 columnas $\times$ 8 filas**:
+
+$$\text{Ancho Celda } (W_{\text{cell}}) = \frac{W_{\text{net}} - (11 \times \text{gap})}{12}$$
+
+$$\text{Alto Celda } (H_{\text{cell}}) = \frac{H_{\text{net}} - (7 \times \text{gap})}{8}$$
+
+En resolución de referencia **1080p** (con barra de tareas de Windows, $W_{\text{net}} = 1567\text{ px}$, $H_{\text{net}} = 901\text{ px}$, $\text{gap} = 12\text{ px}$):
+- **$W_{\text{cell}} \approx \mathbf{120\text{ px}}$**
+- **$H_{\text{cell}} \approx \mathbf{102\text{ px}}$**
+- **Relación de Aspecto de Celda**: $\approx 1.17$ (proporción cuasi-cuadrada ergonómica).
+
+#### Catálogo de Tamaños Finales de Widgets:
+
+| Tamaño / Clase | Proporción Matricial | Dimensión Física en 1080p | Propósito y Caso de Uso |
+| :--- | :--- | :--- | :--- |
+| **`1x1`** | 1 col $\times$ 1 fila | $\approx \mathbf{120 \times 102\text{ px}}$ | **Micro-Totalizador**: Indicador único compacto (ej. % CPU, Ping ms, Temperatura °C). Espacio holgado para icono + etiqueta + número grande sin truncar. |
+| **`2x1`** | 2 cols $\times$ 1 fila | $\approx \mathbf{252 \times 102\text{ px}}$ | **Chip Métrico Horizontal**: Panel con icono, título, métrica dual y mini barra de estado (ej. Memoria RAM usada `8.2/16 GB`, Almacenamiento rápido). |
+| **`2x2`** | 2 cols $\times$ 2 filas | $\approx \mathbf{252 \times 216\text{ px}}$ | **Widget Cuadrado Mediano**: Reloj analógico, medidor tipo tacómetro / velocímetro circular, estado de batería o clima. |
+| **`3x2`** | 3 cols $\times$ 2 filas (1/4 ancho) | $\approx \mathbf{384 \times 216\text{ px}}$ | **Tarjeta Estándar 16:9**: Tamaño canónico para Reloj digital con fecha y alarmas, Temporizador con botones de control, o Cronómetro. |
+| **`4x2`** | 4 cols $\times$ 2 filas (1/3 ancho) | $\approx \mathbf{516 \times 216\text{ px}}$ | **Tarjeta Extendida de Monitoreo**: Monitoreo de red con mini gráfica de ancho de banda, panel de audio multicanal o monitor de 2 discos duros. |
+| **`4x3`** | 4 cols $\times$ 3 filas | $\approx \mathbf{516 \times 330\text{ px}}$ | **Panel con Historial**: Controles superiores interactivos + lista inferior con scroll interno (ej. lista de vueltas del cronómetro o cola de tareas). |
+| **`4x4`** | 4 cols $\times$ 4 filas | $\approx \mathbf{516 \times 444\text{ px}}$ | **Widget Cuadrado Grande**: Gráficas de telemetría de alta resolución, visualizadores de espectro o consolas de diagnóstico. |
+| **`6x2`** | 6 cols $\times$ 2 filas (1/2 ancho) | $\approx \mathbf{780 \times 216\text{ px}}$ | **Panel Panorámico Medio**: Barra de estado extendida, múltiples contadores o monitoreo de CPU multi-core. |
+| **`6x4`** | 6 cols $\times$ 4 filas (Cuadrante) | $\approx \mathbf{780 \times 444\text{ px}}$ | **Medio Lienzo (Cuadrante)**: 50% de ancho $\times$ 50% de alto del tablero completo. Para consolas integradas de módulos de monitoreo masivo. |
+| **`12x2` (`banner`)** | 12 cols $\times$ 2 filas (100% ancho) | $\approx \mathbf{1567 \times 216\text{ px}}$ | **Banner Panorámico Completo**: Ocupa el 100% del ancho del tablero. Alertas críticas, línea de tiempo de auditoría o banners informativos. |
+
+---
+
+#### C. Las 4 Capas de Protección de Márgenes y Bordes
+Para garantizar que ningún widget tape el marco de la aplicación, choque contra bordes o solape a sus vecinos, el Core implementa 4 capas de contención perimetral:
+
+1. **Capa 1 (Colchón Exterior del Viewport)**: `#view-dashboard` aplica `padding: 20px 24px;`. Separa el tablero 20px de la topbar y del borde inferior, y 24px del sidebar y del borde derecho de Windows.
+2. **Capa 2 (Colchón Interior del Tablero)**: `#grid-board` aplica `padding: 16px;` y `border: 1px solid var(--border-subtle);` con `border-radius: var(--radius-xl)`. Toda tarjeta en `col = 1` o `row = 1` mantiene una distancia libre de **16 px del marco**. Prohibido tocar la línea de borde.
+3. **Capa 3 (Canal Inter-Widget)**: `gap: 12px;` tanto vertical como horizontalmente. Garantiza que exista siempre un pasillo visual de 12px con el fondo punteado (`radial-gradient`) entre cualquier par de widgets contiguos.
+4. **Capa 4 (Contención Matemática en Drag & Drop)**: El motor de arrastre calcula dinámicamente los topes:
+   - Horizontal: `targetCol = Math.max(1, Math.min(gridCols - spanCol + 1, targetCol))`. No permite arrastrar una tarjeta fuera del borde derecho.
+   - Vertical: `targetRow = Math.max(1, Math.min(maxAllowedRow, targetRow))`, donde `maxAllowedRow = Math.max(1, maxVisibleRows - spanRow + 1)`. Impide soltar un widget en una fila que genere scroll vertical o desborde el alto de `#grid-board`.
+
+---
+
+#### D. Reglas de Visibilidad y Adaptabilidad Ergonómica (Regla 12)
+- **Visibilidad 100% de Títulos**: Si un widget utiliza un tamaño compacto (`1x1` o `2x1`), debe diseñar su tipografía e iconos para que nada quede truncado. Si el texto o contenido requiere más de 150px de ancho para leerse con soltura, el widget debe declarar como mínimo `size: "3x2"` o `size: "4x2"`.
+- **Adaptabilidad Multi-Resolución**: Todo widget debe diseñarse pensando en cómo se comportará en pantallas pequeñas (720p, donde el ancho total útil es de 927px) y en pantallas de alta densidad (2K/4K, donde el lienzo útil supera los 2200px). Consumir siempre variables semánticas (`var(--bg-*)`, `var(--text-*)`, `var(--accent-*)`) y evitar anchos rígidos en píxeles hijos dentro de la tarjeta.
+- **Menú Contextual Integrado**: Al hacer clic derecho sobre la tarjeta, el Core despliega automáticamente opciones para configurar el módulo, abrir su pantalla principal, auto-organizar la cuadrícula u ocultar el widget.
 
 ---
 
