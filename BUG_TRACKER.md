@@ -1361,7 +1361,7 @@ Este documento registra de forma histórica, detallada y auditable todos los err
 
 ### [BUG-048] Soporte para clase card-size-banner en getCardSpan y Creación del Paquete de Muestrario Dummy con Todos los Tamaños de Widgets
 - **Fecha**: 2026-09-16
-- **Commit**: Por confirmar
+- **Commit**: `334db49`
 - **Versión**: `v0.0.4-alpha`
 - **Severidad**: `BAJA`
 - **Componente**: `UI / Dashboard (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`) & Extensiones (`[`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)`)`
