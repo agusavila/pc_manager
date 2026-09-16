@@ -2722,6 +2722,8 @@
           const record = await invokeFn('install_module_package', { packageBytes });
           if (record && record.manifest) {
             installModule(record.manifest, record.script_code);
+            await restoreDashboardLayout();
+            renderDashboardCustomizationCatalog();
             return;
           }
         }
@@ -3261,6 +3263,33 @@
         } catch(e) {}
       }
 
+      // Recuperación y sincronización de doble capa: nunca perder perfiles creados
+      try {
+        const localRaw = localStorage.getItem('pcm_dashboard_profiles_state');
+        if (localRaw) {
+          const localObj = JSON.parse(localRaw);
+          if (localObj && localObj.profiles) {
+            if (!saved) {
+              saved = localObj;
+            } else if (saved.profiles) {
+              Object.keys(localObj.profiles).forEach(pId => {
+                if (!saved.profiles[pId]) {
+                  saved.profiles[pId] = localObj.profiles[pId];
+                }
+              });
+              if (Array.isArray(localObj.profileOrder)) {
+                saved.profileOrder = saved.profileOrder || [DEFAULT_DASHBOARD_PROFILE_ID];
+                localObj.profileOrder.forEach(pId => {
+                  if (saved.profiles[pId] && !saved.profileOrder.includes(pId)) {
+                    saved.profileOrder.push(pId);
+                  }
+                });
+              }
+            }
+          }
+        }
+      } catch(e) {}
+
       if (saved && saved.profiles && typeof saved.profiles === 'object') {
         dashboardProfilesState = saved;
         if (!dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID]) {
@@ -3289,20 +3318,6 @@
           moduleId: 'core_dashboard',
           optionId: 'profiles_state',
           value: JSON.stringify(dashboardProfilesState)
-        }).catch(e => console.warn(e));
-
-        // Compatibilidad retroactiva: persistir también layout y hidden_widgets del perfil activo
-        const curr = getCurrentDashboardProfile();
-        invokeFn('save_module_setting', {
-          moduleId: 'core_dashboard',
-          optionId: 'layout',
-          value: JSON.stringify(curr.layout || {})
-        }).catch(e => console.warn(e));
-
-        invokeFn('save_module_setting', {
-          moduleId: 'core_dashboard',
-          optionId: 'hidden_widgets',
-          value: JSON.stringify(curr.hiddenWidgets || [])
         }).catch(e => console.warn(e));
       }
     }
@@ -3437,8 +3452,8 @@
         }
       });
 
-      // 3. Sincronizar el layout verificado de tarjetas visibles directamente en el perfil activo
-      const verifiedLayout = {};
+      // 3. Sincronizar el layout verificado respetando tarjetas existentes y agregando visibles
+      const verifiedLayout = Object.assign({}, current.layout || {});
       visibleCards.forEach(c => {
         if (c.dataset.col && c.dataset.row) {
           verifiedLayout[c.id] = {
@@ -3921,16 +3936,16 @@
             makeCardDraggable(card);
             document.getElementById('grid-board').appendChild(card);
           }
-          // Por directiva, los widgets instalados NO se colocan automáticamente en el Dashboard para no saturar el espacio.
-          // Quedan ocultos por defecto en el Dashboard y disponibles en el panel de Widgets (Drawer) para que el usuario los active cuando desee.
-          card.style.display = 'none';
-          if (!isStartup) {
+          // Por directiva, los widgets instalados por primera vez quedan ocultos en el Dashboard y disponibles en el panel de Widgets.
+          // Si el módulo se está ACTUALIZANDO (isUpdate), se preserva la visibilidad y posición que el usuario ya configuró.
+          if (!isUpdate && !isStartup) {
+            card.style.display = 'none';
             if (!currentProfile.hiddenWidgets.includes(cardId)) {
               currentProfile.hiddenWidgets.push(cardId);
             }
           }
         });
-        if (!isStartup) {
+        if (!isStartup && !isUpdate) {
           persistDashboardProfilesState();
         }
         updateDashboardCardsCount();
@@ -5050,11 +5065,11 @@
 
       const generalPane = document.getElementById('settings-tab-pane-general');
       if (generalPane) {
-        generalPane.style.display = (tabId === 'general') ? 'flex' : 'none';
+        generalPane.style.display = (tabId === 'general') ? '' : 'none';
       }
 
       document.querySelectorAll('#dynamic-module-settings-panes .settings-content-stack').forEach(pane => {
-        pane.style.display = (pane.id === `settings-tab-pane-${tabId}`) ? 'flex' : 'none';
+        pane.style.display = (pane.id === `settings-tab-pane-${tabId}`) ? '' : 'none';
       });
     }
 

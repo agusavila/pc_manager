@@ -88,14 +88,17 @@ pub fn get_storage_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+use std::sync::Mutex;
+
+static REGISTRY_MUTEX: Mutex<()> = Mutex::new(());
+
 /// Ruta del archivo de registro central (registry.json)
 fn get_registry_path(app: &AppHandle) -> Result<PathBuf, String> {
     let storage_dir = get_storage_dir(app)?;
     Ok(storage_dir.join("registry.json"))
 }
 
-/// Carga el estado del registro desde el disco duro de Windows
-pub fn load_registry(app: &AppHandle) -> RegistryState {
+fn load_registry_unlocked(app: &AppHandle) -> RegistryState {
     match get_registry_path(app) {
         Ok(path) => {
             if path.exists() {
@@ -113,14 +116,26 @@ pub fn load_registry(app: &AppHandle) -> RegistryState {
     RegistryState::default()
 }
 
-/// Guarda el estado del registro atómicamente en el disco
-pub fn save_registry(app: &AppHandle, state: &RegistryState) -> Result<(), String> {
+/// Carga el estado del registro desde el disco duro de Windows con exclusión mutua
+pub fn load_registry(app: &AppHandle) -> RegistryState {
+    let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    load_registry_unlocked(app)
+}
+
+fn save_registry_unlocked(app: &AppHandle, state: &RegistryState) -> Result<(), String> {
     let path = get_registry_path(app)?;
     let content = serde_json::to_string_pretty(state)
         .map_err(|e| format!("Error al serializar registry.json: {}", e))?;
     fs::write(&path, content)
         .map_err(|e| format!("Error al escribir registry.json: {}", e))?;
     Ok(())
+}
+
+/// Guarda el estado del registro atómicamente en el disco con exclusión mutua
+#[allow(dead_code)]
+pub fn save_registry(app: &AppHandle, state: &RegistryState) -> Result<(), String> {
+    let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    save_registry_unlocked(app, state)
 }
 
 /// Instala un paquete físico .pcm (descomprime en disco, persiste en registro)
@@ -198,9 +213,12 @@ pub fn install_package_bytes(app: &AppHandle, bytes: Vec<u8>) -> Result<Installe
         install_date: format!("{}", now),
     };
 
-    let mut registry = load_registry(app);
-    registry.modules.insert(manifest.id.clone(), record.clone());
-    save_registry(app, &registry)?;
+    {
+        let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let mut registry = load_registry_unlocked(app);
+        registry.modules.insert(manifest.id.clone(), record.clone());
+        save_registry_unlocked(app, &registry)?;
+    }
 
     log::info!(
         "Módulo '{}' (v{}) instalado físicamente en {:?}",
@@ -220,10 +238,13 @@ pub fn uninstall_package(app: &AppHandle, module_id: &str) -> Result<(), String>
         let _ = fs::remove_dir_all(&module_dir);
     }
 
-    let mut registry = load_registry(app);
-    registry.modules.remove(module_id);
-    registry.settings.remove(module_id);
-    save_registry(app, &registry)?;
+    {
+        let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let mut registry = load_registry_unlocked(app);
+        registry.modules.remove(module_id);
+        registry.settings.remove(module_id);
+        save_registry_unlocked(app, &registry)?;
+    }
 
     log::info!("Módulo '{}' desinstalado y eliminado del disco duro.", module_id);
     Ok(())
@@ -231,10 +252,11 @@ pub fn uninstall_package(app: &AppHandle, module_id: &str) -> Result<(), String>
 
 /// Modifica el estado activo/inactivo de un módulo en disco
 pub fn set_module_active(app: &AppHandle, module_id: &str, active: bool) -> Result<(), String> {
-    let mut registry = load_registry(app);
+    let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let mut registry = load_registry_unlocked(app);
     if let Some(record) = registry.modules.get_mut(module_id) {
         record.active = active;
-        save_registry(app, &registry)?;
+        save_registry_unlocked(app, &registry)?;
         log::info!("Módulo '{}' cambiado a active={}.", module_id, active);
         Ok(())
     } else {
@@ -249,17 +271,19 @@ pub fn set_module_setting(
     option_id: &str,
     value: Value,
 ) -> Result<(), String> {
-    let mut registry = load_registry(app);
+    let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let mut registry = load_registry_unlocked(app);
     let mod_settings = registry.settings.entry(module_id.to_string()).or_default();
     mod_settings.insert(option_id.to_string(), value);
-    save_registry(app, &registry)?;
+    save_registry_unlocked(app, &registry)?;
     Ok(())
 }
 
 /// Guarda el orden de las tarjetas en el Dashboard
 pub fn set_dashboard_order(app: &AppHandle, order: Vec<String>) -> Result<(), String> {
-    let mut registry = load_registry(app);
+    let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let mut registry = load_registry_unlocked(app);
     registry.card_order = order;
-    save_registry(app, &registry)?;
+    save_registry_unlocked(app, &registry)?;
     Ok(())
 }

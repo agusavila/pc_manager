@@ -968,6 +968,45 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-035] Pérdida de Perfiles y Coordenadas de Widgets al Actualizar Módulos y Disposición Apretada de Tarjetas en Configuración General
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `Perfiles de Dashboard / Pipeline de Actualización de Módulos / Disposición de Configuraciones (`[`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`, [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Al actualizar un paquete de módulo (`.pcm`), las tarjetas del módulo desaparecían o se ocultaban del Dashboard, y los perfiles de widgets perdían sus coordenadas o volvían al estado predeterminado.
+  2. En la vista de Configuraciones Generales, las tarjetas de opciones se mostraban estrechas y comprimidas en una sola fila horizontal en lugar de ocupar el espacio de manera organizada en su cuadrícula habitual de dos columnas.
+- **Causa Raíz**: 
+  1. En `installModule()`, cuando `isUpdate` era verdadero (actualización de un módulo existente), el sistema eliminaba las tarjetas anteriores y forzaba las nuevas con `style.display = 'none'`, agregándolas forzadamente a `hiddenWidgets`.
+  2. En `restoreDashboardLayout()`, se recreaba `current.layout = verifiedLayout` usando únicamente las tarjetas visibles en ese momento, eliminando de forma destructiva las coordenadas guardadas de cualquier widget que se encontrara oculto en ese perfil.
+  3. En `persistDashboardProfilesState()`, se ejecutaban tres llamadas asíncronas paralelas a Tauri Rust (`profiles_state`, `layout`, `hidden_widgets`). En el backend de Rust (`module_manager.rs`), la lectura y escritura de `registry.json` carecía de exclusión mutua (`Mutex`), provocando que los hilos concurrentes del runtime sobrescribieran el archivo con lecturas obsoletas y truncaran `profiles_state`.
+  4. En `switchSettingsTab('general')`, se asignaba inline `generalPane.style.display = 'flex'`, lo que anulaba la regla de cuadrícula de 2 columnas de `.settings-content-stack` (`display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));`), apretando las cuatro tarjetas como flex items en un único renglón.
+- **Solución Implementada**: 
+  1. **Exclusión Mutua Atómica en Backend Rust (`REGISTRY_MUTEX`)**:
+     - Se implementó `static REGISTRY_MUTEX: Mutex<()>` en [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs).
+     - Todas las funciones de mutación (`set_module_setting`, `set_module_active`, `install_package_bytes`, `uninstall_package`, `set_dashboard_order`) adquieren el cerrojo durante todo el ciclo de lectura, mutación y guardado en disco, impidiendo condiciones de carrera.
+  2. **Persistencia No Destructiva de Coordenadas de Widgets Ocultos**:
+     - En `restoreDashboardLayout()`, `verifiedLayout` se inicializa clonando el layout previo (`Object.assign({}, current.layout || {})`), actualizando solo las coordenadas de las tarjetas visibles sin perder las coordenadas de las tarjetas ocultas.
+  3. **Integridad de Visibilidad en Actualizaciones de Módulos**:
+     - En `installModule()`, la condición `if (!isUpdate && !isStartup)` garantiza que si un módulo ya estaba instalado y activo, sus widgets no se fuercen a ocultos ni se añadan a `hiddenWidgets`.
+     - En `handlePcmPackage()`, tras procesar el paquete se ejecutan de inmediato `restoreDashboardLayout()` y `renderDashboardCustomizationCatalog()`, manteniendo las tarjetas visibles y en sus posiciones.
+  4. **Recuperación y Sincronización de Doble Capa en `loadDashboardProfiles()`**:
+     - Se implementó una rutina de fusión segura entre el almacenamiento de disco de Windows (`registry.json`) y `localStorage`, recuperando perfiles creados por el usuario ante cualquier inconsistencia.
+     - `persistDashboardProfilesState()` ahora persiste atómicamente la clave maestra `profiles_state` de manera limpia y secuencial.
+  5. **Restauración de Cuadrícula en Configuración General**:
+     - En `switchSettingsTab()`, se cambió `generalPane.style.display = ''` (y para los paneles dinámicos), permitiendo que la clase CSS `.settings-content-stack` aplique su cuadrícula de 2 columnas (`repeat(2, minmax(0, 1fr))`), espaciosa, balanceada y responsiva.
+  6. **Sincronización y Compilación**:
+     - Se sincronizó [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se recompiló el binario nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
