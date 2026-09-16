@@ -823,6 +823,37 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-031] Persistencia de Posiciones por Perfil en Dashboard, Cero Superposiciones de Widgets y Gestión Interactiva de Notificaciones (Click-to-Read y Swipe-to-Dismiss)
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `Dashboard / Perfiles / Notificaciones / Gestos (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Las posiciones de los widgets no se guardaban de forma aislada e independiente en los diferentes perfiles del dashboard, sobreescribiéndose o perdiéndose al conmutar entre perfiles.
+  2. Los widgets volvían a superponerse al activarse y desactivarse desde el panel de Widgets (drawer): al habilitar una tarjeta, se ubicaba sobre coordenadas obsoletas sin comprobar colisiones contra las tarjetas ya visibles.
+  3. Al pulsar sobre una notificación en el panel lateral, esta no se marcaba como leída ni se actualizaba el indicador numérico de la barra superior.
+  4. No era posible deslizar (swipe) una notificación hacia la izquierda o derecha para descartarla y retirarla del historial.
+  5. La campana de la barra superior arrancaba con un "1" rojo y una notificación hardcodeada ("Sistema Inicializado"), en conflicto con la política anti-ruido y cero spam en el arranque.
+- **Causa Raíz**: 
+  1. `restoreDashboardLayout` evaluaba tarjetas ocultas dentro del cálculo de ocupación (`occupiedMatrix`) y recurría a un fallback global de `localStorage` que transfería el layout del último perfil modificado a los nuevos perfiles.
+  2. En `toggleWidgetVisibility`, la condición `if (card && !card.dataset.col)` evitaba ejecutar la reasignación de cuadrícula cuando la tarjeta ya contenía un atributo `dataset.col` previo, mostrándose exactamente sobre la misma celda que otra tarjeta ya visible.
+  3. Los elementos `.notif-item` carecían de listeners de clic y puntero para retirar la clase `.unread` y actualizar la función de conteo del badge.
+  4. Ausencia de controlador de gestos de puntero (`pointerdown`, `pointermove`, `pointerup`) con captura de eventos, cálculo de desplazamiento horizontal y animación de salida para descartar notificaciones.
+- **Solución Implementada**: 
+  1. Se refactorizó `restoreDashboardLayout` para que cada perfil opere exclusivamente sobre su propio mapa `current.layout`, limpiando coordenadas de tarjetas ocultas y calculando la matriz de colisiones únicamente con tarjetas visibles. Se garantiza la asignación del primer slot libre ante cualquier colisión detectada.
+  2. Se actualizó `toggleWidgetVisibility` para purgar coordenadas previas al activar o desactivar tarjetas y ejecutar de manera determinista `restoreDashboardLayout()`, asegurando cero superposiciones y persistencia inmediata.
+  3. Se creó la función `updateUnreadNotifBadge()` y el controlador `setupNotificationItem(item)` que detecta clics directos para marcar como leída la notificación y actualizar la campana.
+  4. Se implementó el soporte completo de deslizamiento táctil y ratón (swipe horizontal izquierda/derecha con umbral de 70px), con transición fluida (`translateX(±115%)`), reducción de opacidad y animación de colapso vertical al removerse.
+  5. Se eliminó la notificación dummy del HTML, iniciando la campana en 0 oculta y el contenedor de notificaciones en estado vacío limpio.
+  6. Se sincronizó `core_shell.html`.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

@@ -1445,10 +1445,34 @@
       display: flex;
       gap: 12px;
       position: relative;
+      cursor: pointer;
+      user-select: none;
+      touch-action: pan-y;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+    .notif-item:hover {
+      background: var(--bg-surface);
+      border-color: var(--border-medium);
     }
     .notif-item.unread {
       border-left: 3px solid var(--accent-primary);
       background: rgba(59, 130, 246, 0.04);
+    }
+    .notif-item.swiping {
+      transition: none !important;
+      will-change: transform, opacity;
+    }
+    .notif-item.dismissing {
+      pointer-events: none;
+      max-height: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      opacity: 0 !important;
+      overflow: hidden;
+      border-color: transparent !important;
+      transition: max-height 0.25s ease, padding 0.25s ease, margin 0.25s ease, opacity 0.2s ease !important;
     }
     .notif-icon {
       width: 28px;
@@ -1677,7 +1701,7 @@
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
             </svg>
-            <span class="notification-counter" id="notif-badge">1</span>
+            <span class="notification-counter" id="notif-badge" style="display: none;">0</span>
           </button>
         </div>
       </header>
@@ -2121,23 +2145,13 @@
         </button>
       </div>
       <div class="drawer-body" id="notif-list">
-        <div id="notif-empty-state" style="display: none; text-align: center; padding: 40px 20px; color: var(--text-muted);">
+        <div id="notif-empty-state" style="display: block; text-align: center; padding: 40px 20px; color: var(--text-muted);">
           <svg class="svg-icon svg-icon-lg" style="margin-bottom: 10px; opacity: 0.5;" viewBox="0 0 24 24">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
           <div style="font-size: 13px; font-weight: 500;">Sin notificaciones</div>
           <div style="font-size: 11.5px; margin-top: 4px;">El historial del sistema se encuentra vacío.</div>
-        </div>
-        <div class="notif-item unread">
-          <div class="notif-icon">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-          </div>
-          <div class="notif-body">
-            <h6>Sistema Inicializado</h6>
-            <p>El núcleo base de PC Manager se encuentra activo. Listo para instalar extensiones modulares.</p>
-            <div class="notif-time">hace un momento</div>
-          </div>
         </div>
       </div>
     </aside>
@@ -2551,30 +2565,38 @@
 
     function toggleWidgetVisibility(cardId, isVisible) {
       const card = document.getElementById(cardId);
-      if (card) {
-        if (isVisible) {
-          card.style.display = 'flex';
-          card.classList.remove('card-drop');
-          void card.offsetWidth;
-          card.classList.add('card-drop');
-          setTimeout(() => card.classList.remove('card-drop'), 300);
-        } else {
-          card.style.display = 'none';
-        }
-      }
-
       const current = getCurrentDashboardProfile();
       current.hiddenWidgets = current.hiddenWidgets || [];
+
       if (!isVisible) {
         if (!current.hiddenWidgets.includes(cardId)) {
           current.hiddenWidgets.push(cardId);
         }
+        if (card) {
+          card.style.display = 'none';
+          delete card.dataset.col;
+          delete card.dataset.row;
+          card.style.gridColumn = '';
+          card.style.gridRow = '';
+        }
+        if (current.layout && current.layout[cardId]) {
+          delete current.layout[cardId];
+        }
       } else {
         current.hiddenWidgets = current.hiddenWidgets.filter(id => id !== cardId);
-        if (card && !card.dataset.col) {
-          restoreDashboardLayout();
+        if (card) {
+          card.style.display = 'flex';
+          delete card.dataset.col;
+          delete card.dataset.row;
+          card.classList.remove('card-drop');
+          void card.offsetWidth;
+          card.classList.add('card-drop');
+          setTimeout(() => card.classList.remove('card-drop'), 300);
         }
       }
+
+      // Reorganizar y asignar posiciones libres garantizando 0 colisiones
+      restoreDashboardLayout();
 
       // Comprobar si todas las tarjetas están ocultas
       const allCards = Array.from(document.querySelectorAll('#grid-board .card'));
@@ -2591,7 +2613,7 @@
       }
 
       updateDashboardCardsCount();
-      persistDashboardProfilesState();
+      renderDashboardCustomizationCatalog();
     }
 
     function closeAllDrawers() {
@@ -3235,11 +3257,14 @@
       const grid = document.getElementById('grid-board');
       if (!grid) return;
       const cards = Array.from(grid.querySelectorAll('.card'));
-      const layout = {};
+      const current = getCurrentDashboardProfile();
+      const layout = current.layout || {};
       const order = [];
+
       cards.forEach(card => {
         order.push(card.id);
-        if (card.dataset.col && card.dataset.row) {
+        // Solo persistir coordenadas de tarjetas VISIBLES válidas en este perfil
+        if (card.style.display !== 'none' && card.dataset.col && card.dataset.row) {
           layout[card.id] = {
             col: parseInt(card.dataset.col, 10),
             row: parseInt(card.dataset.row, 10)
@@ -3247,11 +3272,12 @@
         }
       });
 
-      const current = getCurrentDashboardProfile();
       current.layout = layout;
 
       try {
-        localStorage.setItem('pcm_dashboard_layout', JSON.stringify(layout));
+        if (current.id === DEFAULT_DASHBOARD_PROFILE_ID) {
+          localStorage.setItem('pcm_dashboard_layout', JSON.stringify(layout));
+        }
       } catch(e) {}
 
       const invokeFn = getTauriInvoke();
@@ -3263,20 +3289,10 @@
 
     async function restoreDashboardLayout() {
       const current = getCurrentDashboardProfile();
-      let layout = current.layout && Object.keys(current.layout).length > 0 ? current.layout : null;
+      let layout = current.layout || {};
 
-      if (!layout) {
-        const invokeFn = getTauriInvoke();
-        if (invokeFn) {
-          try {
-            const saved = await invokeFn('get_saved_settings', { moduleId: 'core_dashboard' });
-            if (saved && saved.layout) {
-              layout = typeof saved.layout === 'string' ? JSON.parse(saved.layout) : saved.layout;
-            }
-          } catch(e) {}
-        }
-      }
-      if (!layout) {
+      // Fallback retroactivo SOLO si es el perfil predeterminado y está completamente vacío al inicio
+      if (current.id === DEFAULT_DASHBOARD_PROFILE_ID && Object.keys(layout).length === 0) {
         try {
           const local = localStorage.getItem('pcm_dashboard_layout');
           if (local) layout = JSON.parse(local);
@@ -3289,18 +3305,25 @@
       const gridCols = getGridCols();
       const occupiedMatrix = {};
 
-      // 0. Aplicar visibilidad según perfil actual
+      // 0. Aplicar visibilidad y limpiar coordenadas de tarjetas ocultas en este perfil
       const hiddenIds = current.hiddenWidgets || [];
       cards.forEach(card => {
         if (hiddenIds.includes(card.id)) {
           card.style.display = 'none';
+          delete card.dataset.col;
+          delete card.dataset.row;
+          card.style.gridColumn = '';
+          card.style.gridRow = '';
         } else {
           card.style.display = 'flex';
         }
       });
 
-      // 1. Asignar posiciones previamente guardadas respetando base original
-      cards.forEach(card => {
+      // Filtrar estrictamente solo tarjetas VISIBLES para evitar superposiciones
+      const visibleCards = cards.filter(c => c.style.display !== 'none');
+
+      // 1. Asignar posiciones previamente guardadas en el perfil respetando disponibilidad
+      visibleCards.forEach(card => {
         const { spanCol, spanRow } = getCardSpan(card);
         const effSpanCol = Math.min(spanCol, gridCols);
         if (layout && layout[card.id] && layout[card.id].col && layout[card.id].row) {
@@ -3334,14 +3357,14 @@
           for (let r = displayRow; r < displayRow + spanRow; r++) {
             if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
             for (let c = displayCol; c < displayCol + effSpanCol; c++) {
-              occupiedMatrix[r][c] = true;
+              occupiedMatrix[r][c] = card.id;
             }
           }
         }
       });
 
-      // 2. Asignar primera posición libre a tarjetas nuevas o sin posición
-      cards.forEach(card => {
+      // 2. Asignar primera posición libre a tarjetas visibles nuevas o sin posición
+      visibleCards.forEach(card => {
         if (!card.dataset.col) {
           const { spanCol, spanRow } = getCardSpan(card);
           const effSpanCol = Math.min(spanCol, gridCols);
@@ -3354,14 +3377,26 @@
           for (let r = slot.row; r < slot.row + spanRow; r++) {
             if (!occupiedMatrix[r]) occupiedMatrix[r] = {};
             for (let c = slot.col; c < slot.col + effSpanCol; c++) {
-              occupiedMatrix[r][c] = true;
+              occupiedMatrix[r][c] = card.id;
             }
           }
         }
       });
 
+      // 3. Sincronizar el layout verificado de tarjetas visibles directamente en el perfil activo
+      const verifiedLayout = {};
+      visibleCards.forEach(c => {
+        if (c.dataset.col && c.dataset.row) {
+          verifiedLayout[c.id] = {
+            col: parseInt(c.dataset.col, 10),
+            row: parseInt(c.dataset.row, 10)
+          };
+        }
+      });
+      current.layout = verifiedLayout;
+      persistDashboardProfilesState();
+
       // Actualizar conteo y estado empty
-      const visibleCards = cards.filter(c => c.style.display !== 'none');
       const emptyHero = document.querySelector('.empty-dashboard-hero');
       if (emptyHero) {
         if (cards.length > 0 && visibleCards.length === 0) {
@@ -4230,6 +4265,110 @@
       updateNotificationBadgesAndSummaries();
     }
 
+    function updateUnreadNotifBadge() {
+      const unreadCount = document.querySelectorAll('#notif-list .notif-item.unread').length;
+      const badge = document.getElementById('notif-badge');
+      if (badge) {
+        if (unreadCount > 0) {
+          badge.style.display = 'flex';
+          badge.textContent = unreadCount;
+        } else {
+          badge.style.display = 'none';
+          badge.textContent = '0';
+        }
+      }
+    }
+
+    function setupNotificationItem(item) {
+      if (!item || item.dataset.swipeInitialized) return;
+      item.dataset.swipeInitialized = 'true';
+
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let isSwiping = false;
+      let pointerId = null;
+
+      item.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        if (e.target.closest('button, a, input')) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        currentX = 0;
+        isSwiping = false;
+        pointerId = e.pointerId;
+      });
+
+      item.addEventListener('pointermove', (e) => {
+        if (pointerId === null || e.pointerId !== pointerId) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if (!isSwiping && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+          isSwiping = true;
+          item.classList.add('swiping');
+          try { item.setPointerCapture(pointerId); } catch(err) {}
+        }
+
+        if (isSwiping) {
+          e.preventDefault();
+          currentX = dx;
+          item.style.transform = `translateX(${dx}px)`;
+          const ratio = Math.min(1, Math.abs(dx) / 160);
+          item.style.opacity = `${Math.max(0.15, 1 - ratio * 0.75)}`;
+        }
+      });
+
+      const onPointerEnd = (e) => {
+        if (pointerId === null || (e && e.pointerId !== pointerId)) return;
+        const pId = pointerId;
+        pointerId = null;
+
+        if (isSwiping) {
+          isSwiping = false;
+          item.classList.remove('swiping');
+          try { item.releasePointerCapture(pId); } catch(err) {}
+
+          const threshold = 70;
+          if (Math.abs(currentX) >= threshold) {
+            const direction = currentX > 0 ? 1 : -1;
+            item.style.transition = 'transform 0.22s cubic-bezier(0.2, 0, 0, 1), opacity 0.22s cubic-bezier(0.2, 0, 0, 1)';
+            item.style.transform = `translateX(${direction * 115}%)`;
+            item.style.opacity = '0';
+
+            setTimeout(() => {
+              item.classList.add('dismissing');
+              setTimeout(() => {
+                item.remove();
+                updateNotificationEmptyState();
+                updateUnreadNotifBadge();
+              }, 250);
+            }, 200);
+            return;
+          } else {
+            item.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+            item.style.transform = '';
+            item.style.opacity = '';
+            setTimeout(() => {
+              item.style.transition = '';
+            }, 200);
+            return;
+          }
+        }
+
+        const totalDist = Math.hypot(e.clientX - startX, e.clientY - startY);
+        if (totalDist < 6) {
+          if (item.classList.contains('unread')) {
+            item.classList.remove('unread');
+            updateUnreadNotifBadge();
+          }
+        }
+      };
+
+      item.addEventListener('pointerup', onPointerEnd);
+      item.addEventListener('pointercancel', onPointerEnd);
+    }
+
     function updateNotificationEmptyState() {
       const list = document.getElementById('notif-list');
       if (!list) return;
@@ -4256,11 +4395,7 @@
 
     function markAllNotificationsAsRead() {
       document.querySelectorAll('#notif-list .notif-item').forEach(item => item.classList.remove('unread'));
-      const badge = document.getElementById('notif-badge');
-      if (badge) {
-        badge.style.display = 'none';
-        badge.textContent = '0';
-      }
+      updateUnreadNotifBadge();
     }
 
     function clearAllNotifications() {
@@ -4269,11 +4404,7 @@
         list.querySelectorAll('.notif-item').forEach(i => i.remove());
         updateNotificationEmptyState();
       }
-      const badge = document.getElementById('notif-badge');
-      if (badge) {
-        badge.style.display = 'none';
-        badge.textContent = '0';
-      }
+      updateUnreadNotifBadge();
     }
 
     function dispatchWindowsNativeNotification(title, text) {
@@ -4335,14 +4466,10 @@
           <div class="notif-time">ahora mismo</div>
         </div>
       `;
+      setupNotificationItem(item);
       list.prepend(item);
       updateNotificationEmptyState();
-
-      const badge = document.getElementById('notif-badge');
-      if (badge) {
-        badge.style.display = 'flex';
-        badge.textContent = parseInt(badge.textContent || '0') + 1;
-      }
+      updateUnreadNotifBadge();
 
       // 4. Emisión nativa a Windows 10/11 si está autorizada
       dispatchWindowsNativeNotification(title, text);
@@ -4930,6 +5057,10 @@
       renderSystemNotificationEvents();
       renderModuleNotificationPermissions();
       updateNotificationBadgesAndSummaries();
+
+      // Inicializar notificaciones existentes y contador no leído
+      document.querySelectorAll('#notif-list .notif-item').forEach(setupNotificationItem);
+      updateUnreadNotifBadge();
 
       // Inicializar botones contextuales de la barra superior y drag and drop de cuadrícula
       updateTopbarContextualActions('dashboard');
