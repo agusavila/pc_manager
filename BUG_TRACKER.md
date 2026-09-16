@@ -1356,6 +1356,31 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
   - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+
+---
+
+### [BUG-048] Soporte para clase card-size-banner en getCardSpan y Creación del Paquete de Muestrario Dummy con Todos los Tamaños de Widgets
+- **Fecha**: 2026-09-16
+- **Commit**: Por confirmar
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `BAJA`
+- **Componente**: `UI / Dashboard (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`) & Extensiones (`[`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)`)`
+- **Descripción del Fallo**: 
+  1. Al arrastrar o reposicionar widgets declarados con `size: "banner"`, la función `getCardSpan(card)` no reconocía el tamaño porque la expresión regular `card-size-(\d+)x(\d+)` esperaba dos números explícitos, haciendo que cayera en el fallback genérico (`3x2`) en lugar de ocupar las 12 columnas completas.
+  2. Ausencia de un paquete modular oficial de prueba (`.pcm`) en la raíz del proyecto para validar visualmente todos los tamaños matriciales soportados (1x1, 2x1, 2x2, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner).
+- **Causa Raíz**: 
+  La clase `.card-size-banner` usa una denominación semántica para ancho completo (100% de la cuadrícula = 12 columnas $\times$ 2 filas) en lugar del formato numérico `NxM`.
+- **Solución Implementada**: 
+  1. Se añadió detección explícita en `getCardSpan(card)` para `card-size-banner`, retornando `{ spanCol: 12, spanRow: 2 }`.
+  2. Se creó el script de empaquetado [`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs) y se generó el paquete [`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm) directamente en la raíz del proyecto. El paquete contiene los 12 tamaños disponibles, cada uno completamente vacío y con tipografía limpia indicando únicamente su tamaño.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs)
+  - [`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)
+  - [`modules/dummy-widgets/manifest.json`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/manifest.json)
+  - [`modules/dummy-widgets/module.js`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/module.js)
+  - [`modules/dummy-widgets/README.md`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/README.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
 

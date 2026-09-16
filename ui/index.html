@@ -2903,6 +2903,9 @@
     }
 
     function getCardSpan(card) {
+      if (card.classList.contains('card-size-banner')) {
+        return { spanCol: 12, spanRow: 2 };
+      }
       const match = card.className.match(/card-size-(\d+)x(\d+)/);
       if (match) {
         return { spanCol: parseInt(match[1], 10), spanRow: parseInt(match[2], 10) };
