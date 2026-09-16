@@ -226,16 +226,19 @@ window.__CLEANUP_mi_modulo__ = function() {
 
 ---
 
-### 3.6. Widgets para el Dashboard Modular (Modular Tile Grid)
-Los módulos pueden exportar una o más tarjetas para la cuadrícula modular de celdas del Dashboard (`repeat(auto-fill, minmax(130px, 1fr))`, `grid-auto-rows: 90px`):
-- **Celda Base Modular**: Unidad elemental de ~130px de ancho por 90px de alto. Las tarjetas ocupan múltiplos enteros de celdas manteniendo siempre su ergonomía sin estiramientos grotescos ni compresiones destructivas.
-- **Tamaños disponibles**:
-  - `1x1`: Micro-métrica o chip de estado compacto (1 col x 1 fila).
-  - `2x1`: Métrica horizontal con valor y tendencia (2 cols x 1 fila, ~274px ancho). Tamaño canónico por defecto.
-  - `2x2`: Tarjeta estándar cuadrada con gráfico, reloj o cronómetro (2 cols x 2 filas).
-  - `3x2`: Métrica agrupada o gráfica de serie temporal (3 cols x 2 filas, ~420px ancho).
-  - `4x2`: Paneles anchos de monitoreo o listas cortas (4 cols x 2 filas, ~560px ancho).
-  - `5x2` / `5x3`: Paneles de análisis profundo o tablas (5 cols x 2-3 filas).
+### 3.6. Widgets para el Dashboard Isométrico (Isometric Modular Grid)
+Los módulos pueden exportar una o más tarjetas para la cuadrícula modular de celdas isométricas del Dashboard (`repeat(auto-fill, minmax(70px, 1fr))`, `grid-auto-rows: 70px`, `gap: 12px`):
+- **Celda Base Isométrica (1x1)**: Cuadrado unitario de 70×70px diseñado para **Totalizadores** y micro-métricas clave (ej. porcentaje de CPU, temperatura, conteo de alertas). Tanto el paso en $X$ como en $Y$ son idénticos (~82px con gap), garantizando un desplazamiento uniforme y sin desfases asimétricos.
+- **Lienzo Acotado (Cero Estiramiento Vertical)**: El Dashboard está estrictamente confinado al alto visible del contenedor (`overflow: hidden`). Ninguna tarjeta puede sobrepasar la altura visible ni provocar scrollbars residuales al arrastrarse hacia el fondo.
+- **Catálogo de Tamaños Proporcionales**:
+  - `1x1`: Totalizador cuadrado compacto (1 col x 1 fila, 70×70px).
+  - `2x1`: Chip métrico horizontal (2 cols x 1 fila, ~152×70px).
+  - `2x2`: Widget cuadrado mediano (2 cols x 2 filas, ~152×152px).
+  - `3x2`: Widget mediano extendido (3 cols x 2 filas, ~234×152px).
+  - `4x2`: Tarjeta estándar de control y monitoreo (4 cols x 2 filas, ~316×152px, tamaño canónico para Reloj, Temporizador, Cronómetro).
+  - `4x3`: Tarjeta estándar con área de registros o vueltas (4 cols x 3 filas, ~316×234px).
+  - `4x4`: Widget cuadrado grande para gráficas de series temporales (4 cols x 4 filas, ~316×316px).
+  - `6x2` / `8x2`: Paneles anchos o listas extendidas.
   - `banner`: Banner panorámico de ancho completo (`grid-column: 1 / -1`).
 - **Regla de Cero Recortes**: Los títulos y valores deben ser 100% legibles. Prohibido recortar textos esenciales con puntos suspensivos (`ellipsis`) dentro del cuerpo de la tarjeta.
 - **Menú Contextual Integrado**: Al hacer clic derecho sobre la tarjeta, el Core despliega opciones dinámicas: acceso a configuración del módulo (si posee `meta_options`), acceso a su pantalla principal, auto-organización de la cuadrícula y ocultamiento del widget.

@@ -89,8 +89,8 @@ interface ModuleWidgetDefinition {
   /** Nombre del widget mostrado en el catálogo de personalización. */
   name: string;
 
-  /** Tamaño asignado en la cuadrícula del Dashboard (celdas modulares cols x rows). */
-  size: "1x1" | "2x1" | "2x2" | "3x2" | "4x2" | "5x2" | "5x3" | "banner";
+  /** Tamaño asignado en la cuadrícula isométrica 70x70 del Dashboard (cols x rows). */
+  size: "1x1" | "2x1" | "2x2" | "3x2" | "4x2" | "4x3" | "4x4" | "6x2" | "8x2" | "banner";
 
   /** Icono vectorial SVG para el catálogo. */
   icon?: string;

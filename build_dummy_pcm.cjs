@@ -47,9 +47,29 @@ async function buildDummyModule() {
     ],
     widgets: [
       {
+        id: "card-system-seconds",
+        name: "Segundero (Totalizador)",
+        size: "1x1",
+        icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+        html: `
+          <header class="card-header">
+            <div class="card-title-box">
+              <div class="card-icon-wrap">
+                <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <h4>Seg</h4>
+            </div>
+          </header>
+          <div class="card-body">
+            <div class="metric-big" id="clock-sec-display" style="font-size:20px;font-variant-numeric:tabular-nums;text-align:center;">--</div>
+            <div class="metric-label" style="text-align:center;color:var(--accent-success);">EN VIVO</div>
+          </div>
+        `
+      },
+      {
         id: "card-system-clock",
         name: "Reloj del Sistema",
-        size: "2x1",
+        size: "4x2",
         icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
         html: `
           <header class="card-header">
@@ -73,7 +93,7 @@ async function buildDummyModule() {
       {
         id: "card-system-stopwatch",
         name: "Cronómetro del Sistema",
-        size: "2x2",
+        size: "4x2",
         icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M5 3L2 6"></path><path d="M22 6l-3-3"></path><path d="M12 2v3"></path></svg>`,
         html: `
           <header class="card-header">
@@ -111,7 +131,7 @@ async function buildDummyModule() {
       {
         id: "card-system-timer",
         name: "Temporizador",
-        size: "2x2",
+        size: "4x2",
         icon: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg>`,
         html: `
           <header class="card-header">
@@ -254,6 +274,8 @@ async function buildDummyModule() {
     const fullUtc = document.getElementById('full-clock-utc');
 
     if (cardTime) cardTime.textContent = timeStr;
+    const cardSec = document.getElementById('clock-sec-display');
+    if (cardSec) cardSec.textContent = seconds;
     if (cardDate) cardDate.textContent = dateStr;
     if (cardBadge) cardBadge.textContent = timeFormat === '24' ? '24H' : '12H';
     if (fullTime) fullTime.textContent = timeStr;

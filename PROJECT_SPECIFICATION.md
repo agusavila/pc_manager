@@ -82,17 +82,19 @@ El proyecto cuenta con dos prototipos de referencia en la raíz del repositorio,
 3. **Botón de Personalización del Dashboard**:
    - Permite desplegar el panel lateral (drawer) de selección y activación de tarjetas disponibles.
 
-### 3.3 El Dashboard (Cuadrícula Modular Tile Grid)
+### 3.3 El Dashboard (Cuadrícula Isométrica 70x70 y Lienzo Acotado)
 1. **Nombre Canónico**:
    - Se denomina estrictamente **"Dashboard"** (prohibido "Pizarra Central" u otras variantes).
 2. **Eficiencia Visual (Cero Relleno Informativo)**:
    - Prohibido saturar con insignias irrelevantes como *"Sistema Central"*, *"Núcleo Operativo"* o chips dentro de las tarjetas como *"Servicio Compartido: x"*.
 3. **Integridad de las Tarjetas (Cero Recortes)**:
-   - Los títulos y contenidos de las tarjetas deben ser **100% legibles y visibles** en el tamaño asignado (`1x1`, `2x1`, `2x2`, etc.). Queda prohibido el truncamiento con puntos suspensivos (`ellipsis`).
+   - Los títulos y contenidos de las tarjetas deben ser **100% legibles y visibles** en el tamaño asignado (`1x1`, `2x1`, `2x2`, `4x2`, etc.). Queda prohibido el truncamiento con puntos suspensivos (`ellipsis`).
    - Las tarjetas pueden incorporar opciones interactivas directas (botones de acción rápida, switches, enlaces para abrir la vista completa del módulo).
 4. **Drag and Drop Fluido y Botón FAB de Auto-organización**:
    - Arrastre suave con elevación de sombras y animaciones con curvas `cubic-bezier(0.2, 0, 0, 1)`.
-   - **Botón Flotante Canónico de Auto-organización (`#btn-auto-organize`)**: Ubicado en la esquina inferior del Dashboard, permite con un solo clic reordenar y compactar las tarjetas activas de forma inteligente para eliminar huecos vacíos en la cuadrícula.
+   - **Botón Canónico de Auto-organización (`#btn-topbar-organize`)**: Ubicado en la barra superior del Dashboard, permite con un solo clic reordenar y compactar las tarjetas activas de forma inteligente para eliminar huecos vacíos en la cuadrícula.
+5. **Lienzo Acotado (Cero Estiramiento Vertical)**:
+   - El contenedor del Dashboard posee límite visual estricto (`overflow: hidden`). Ninguna tarjeta puede sobrepasar el alto visible del contenedor ni inducir scrollbars residuales al arrastrarse hacia el fondo.
 
 ### 3.4 Centro de Notificaciones (Drawer Lateral)
 - Desplegable desde el margen derecho con desenfoque de fondo (`backdrop-filter: blur`).

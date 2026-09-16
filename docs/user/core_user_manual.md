@@ -26,8 +26,8 @@ Su diseño basado en un núcleo ligero (**Core**) permite que cada herramienta e
   - **Configuraciones Globales**: Acceso al panel de personalización y ajustes del sistema.
 
 ### 2.3. Dashboard (Panel Principal)
-- **Tarjetas Dinámicas**: Presentan métricas, accesos directos y widgets interactivos en tiempo real provistos por los módulos habilitados sobre una cuadrícula modular inteligente.
-- **Organización Flexible y Modular Tile Grid**: Las tarjetas pueden arrastrarse y reubicarse en la cuadrícula de celdas modulares de forma suave, adaptándose a cualquier tamaño de ventana o monitor sin deformaciones.
+- **Tarjetas Dinámicas y Totalizadores**: Presentan métricas, accesos directos, widgets interactivos y totalizadores unitarios (1x1 de 70×70px) provistos por los módulos habilitados.
+- **Cuadrícula Isométrica y Lienzo Acotado**: Las tarjetas se desplazan con pasos simétricos idénticos en ambos ejes sobre celdas de 70×70px. El lienzo está estrictamente acotado a la pantalla, impidiendo desbordamientos verticales o scrollbars indeseados.
 - **Perfiles de Dashboard**: Permite crear, renombrar, duplicar y alternar entre distintas configuraciones y disposiciones de tarjetas con selección de widgets independientes.
 - **Botón de Auto-organización**: Ubicado en la barra superior del Dashboard, permite compactar y reacomodar automáticamente todas las tarjetas activas para eliminar espacios vacíos.
 

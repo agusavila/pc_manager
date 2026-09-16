@@ -19,28 +19,27 @@ El sistema de visualización principal (denominado canónicamente **Dashboard**)
 ## 2. Topología de la Cuadrícula Matricial (Grid Board)
 
 ### 2.1 Estructura Geométrica
-
-El contenedor `#grid-board` define una cuadrícula basada en **Modular Tile Grid** con auto-fill de celdas y altura de fila uniforme:
+ 
+El contenedor `#grid-board` define una cuadrícula matricial **isométrica pura** con celdas cuadradas uniformes y lienzo acotado sin desbordamiento vertical:
 
 ```css
 #grid-board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  grid-auto-rows: 90px;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  grid-auto-rows: 70px;
+  gap: 12px;
   position: relative;
-  min-height: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden !important;
 }
 ```
 
-- **Gap intercelular**: $14\text{ px}$ constantes en ambos ejes ($X$ e $Y$).
-- **Altura base de fila ($H_{\text{row}}$)**: $90\text{ px}$.
-- **Celda elemental base**: Unidad modular de $\ge 130\text{ px}$ de ancho por $90\text{ px}$ de alto.
-- **Topología Modular Auto-fill**:
-  - Las columnas se autocomputan dinámicamente según el ancho real del contenedor en el DOM (`window.getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length`).
-  - En monitores amplios (1920px): caben ~11 columnas de celdas. Una tarjeta estándar `2x1` mide ~274px.
-  - En ventanas de escritorio estándar (1180px): caben ~6 columnas de celdas. Una tarjeta `2x1` mide ~274px (mantiene exactamente sus proporciones ergonómicas sin estiramientos grotescos ni encogimientos).
-  - En pantallas verticales o compactas (900px): caben ~4 columnas de celdas. Las tarjetas se ordenan naturalmente con scroll vertical suave sin colapsar su contenido.
+- **Gap intercelular**: $12\text{ px}$ constantes en ambos ejes ($X$ e $Y$).
+- **Altura y ancho base de celda ($H_{\text{cell}} = W_{\text{cell}}$)**: $70\text{ px} \times 70\text{ px}$ (Isometría 1:1).
+- **Celda elemental base (1x1)**: Totalizador compacto para KPIs y valores únicos.
+- **Paso de arrastre uniforme ($\Delta X = \Delta Y$)**: Con paso de $\approx 82\text{ px}$ en ambos ejes, desaparece la asimetría de movimiento entre columnas y filas.
+- **Lienzo Bounded (Cero Estiramiento)**: El contenedor `#view-dashboard` y `#grid-board` tienen `overflow: hidden`. El cálculo de filas permitidas (`maxAllowedRow`) se calcula con `Math.floor((gridVisibleHeight + gap) / stepY)`, garantizando matemáticamente que ninguna tarjeta rebase la altura física visible ni active barras de desplazamiento indeseadas.
 
 ### 2.2 Coordenadas y Dimensiones de los Widgets
 

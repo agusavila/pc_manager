@@ -1291,6 +1291,41 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-046] Cuadrícula Isométrica Pura (70x70), Totalizadores Unitarios (1x1) y Acotamiento Estricto de Lienzo (Cero Estiramiento Vertical)
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `UI / Dashboard / Grid Layout & Drag and Drop (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, Documentación y Especificaciones)`
+- **Descripción del Fallo**: 
+  1. **Asimetría de Arrastre**: Al arrastrar widgets en horizontal, se desplazaban en pasos equivalentes a la mitad de su propio ancho (desfase visual intermedio), mientras que en vertical se desplazaban por alturas completas.
+  2. **Estiramiento Vertical Indeseado y Scrollbar de ~70px**: Al desplazar cualquier widget hacia el fondo de la pantalla, el motor de arrastre permitía posicionarlo en una fila que excedía la altura física del contenedor, forzando un estiramiento vertical del lienzo y la aparición de una barra de desplazamiento residual de media celda.
+- **Causa Raíz**: 
+  1. Uso de celdas rectangulares asimétricas (130px ancho × 90px alto) combinadas con widgets de 2 columnas de ancho.
+  2. El cálculo de filas permitidas (`maxAllowedRow`) incorporaba tolerancias heurísticas (`+ stepY * 0.5` y `maxOccupiedRow + 1`) que habilitaban filas fuera del área visible, sumado a que `.grid-board` y `#view-dashboard` poseían `overflow-y: auto;` permitiendo el crecimiento hacia abajo.
+- **Solución Implementada**: 
+  1. **Cuadrícula Isométrica Pura (1:1)**: Se redefinió la cuadrícula a celdas cuadradas de `70px × 70px` con `gap: 12px;`. El paso de arrastre en $X$ y en $Y$ es ahora idéntico e uniforme ($\Delta X = \Delta Y \approx 82\text{px}$).
+  2. **Widget Totalizador Unitario (1x1)**: Se formalizó el tamaño `1x1` (70×70px) para totalizadores, micro-métricas y chips de estado esenciales (ej. nuevo widget `Segundero` en tiempo real).
+  3. **Escala Armónica de Widgets**: Los widgets estándar de control (Reloj, Temporizador, Cronómetro) se adaptaron a `4x2` (~316×152px) y `4x3`, encajando exactamente en la cuadrícula sin apretujarse.
+  4. **Lienzo Acotado (Cero Estiramiento Vertical)**: Se aplicó `overflow: hidden !important; height: 100%; max-height: 100%;` a `#view-dashboard`, `.dashboard-container` y `.grid-board`.
+  5. **Cálculo Estricto de Filas Visibles**: `maxVisibleRows` se computa estrictamente con `Math.floor((gridVisibleHeight + gap) / stepY)` sin tolerancias desbordantes, y `maxAllowedRow` se fija en `Math.max(1, maxVisibleRows - spanRow + 1)`. Ninguna tarjeta puede sobrepasar la altura visible ni provocar scrollbars.
+  6. **Exclusión Estricta de Maquetas**: Las maquetas [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) e [`index.html`](file:///c:/Proyectos/pc_manager/index.html) no fueron tocadas.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La transición a la cuadrícula isométrica 70x70 con totalizadores y límite vertical rígido elimina las anomalías de arrastre y resuelve de forma definitiva el desbordamiento del lienzo solicitado por el usuario.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)
+  - [`PROJECT_SPECIFICATION.md`](file:///c:/Proyectos/pc_manager/PROJECT_SPECIFICATION.md)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`docs/ai/MODULAR_SYSTEM_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md)
+  - [`docs/ai/core_ai_spec.md`](file:///c:/Proyectos/pc_manager/docs/ai/core_ai_spec.md)
+  - [`docs/user/core_user_manual.md`](file:///c:/Proyectos/pc_manager/docs/user/core_user_manual.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
