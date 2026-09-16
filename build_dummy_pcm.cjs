@@ -62,11 +62,11 @@ async function buildDummyModule() {
             <span class="card-badge" id="clock-format-badge">24H</span>
           </header>
           <div class="card-body">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;">
-              <div class="metric-big" id="clock-time-display" style="font-size:24px;">--:--:--</div>
-              <span class="card-badge" style="color:var(--accent-success);border-color:rgba(16,185,129,0.3);">EN VIVO</span>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+              <div class="metric-big" id="clock-time-display" style="font-size:20px;white-space:nowrap;font-variant-numeric:tabular-nums;">--:--:--</div>
+              <span class="card-badge" style="color:var(--accent-success);border-color:rgba(16,185,129,0.3);flex-shrink:0;">EN VIVO</span>
             </div>
-            <div class="metric-label" id="clock-date-display">Sincronizado con tiempo local</div>
+            <div class="metric-label" id="clock-date-display" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Sincronizado con tiempo local</div>
           </div>
         `
       },

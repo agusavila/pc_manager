@@ -25,8 +25,8 @@ El contenedor `#grid-board` define una cuadrícula basada en CSS Grid con column
 ```css
 #grid-board {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: 110px;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-auto-rows: 90px;
   gap: 14px;
   position: relative;
   min-height: 100%;
@@ -34,10 +34,11 @@ El contenedor `#grid-board` define una cuadrícula basada en CSS Grid con column
 ```
 
 - **Gap intercelular**: $14\text{ px}$ constantes en ambos ejes ($X$ e $Y$).
-- **Altura base de fila ($H_{\text{row}}$)**: $110\text{ px}$.
-- **Columnas nominales ($C_{\text{max}}$)**: $6$ columnas para resoluciones de escritorio estándar ($> 1080\text{ px}$).
+- **Altura base de fila ($H_{\text{row}}$)**: $90\text{ px}$.
+- **Columnas nominales ($C_{\text{max}}$)**: $10$ columnas para resoluciones de escritorio estándar amplias ($> 1400\text{ px}$) según norma §3.6 del Manual del Desarrollador ("Dashboard 10x10").
 - **Escalado responsivo de columnas**:
-  - Pantallas de escritorio ($> 1080\text{ px}$): $6$ columnas.
+  - Pantallas de escritorio amplias ($> 1400\text{ px}$): $10$ columnas.
+  - Pantallas intermedias / ventanas no maximizadas ($1081\text{ px} - 1400\text{ px}$): $6$ columnas.
   - Pantallas compactas ($\le 1080\text{ px}$): $4$ columnas.
 
 ### 2.2 Coordenadas y Dimensiones de los Widgets

@@ -1160,6 +1160,40 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-041] Corrección de Estiramiento Excesivo de Tarjetas: Restauración de Cuadrícula 10x10 Canónica y Protección Dimensional en 2x1
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `UI / Dashboard Grid / Developer Manual Specs (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`index.html`](file:///c:/Proyectos/pc_manager/index.html)`, [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)`, [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)`)`
+- **Descripción del Fallo**: 
+  1. En la solución temporal previa de BUG-040, se redujo la cuadrícula general a 6 columnas fijas. Esto provocó que en monitores de escritorio estándar y pantallas maximizadas (1920×1080), las tarjetas de tamaño `2×1` y `2×2` abarcaran cada una el 33.3% del ancho total (~550px por tarjeta), estirándose excesivamente hasta cubrir todo el espacio de manera desproporcionada y violando la norma canónica estipulada en la sección 3.6 del [`MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md) ("Dashboard 10×10").
+  2. En tarjetas `2×1` (como `Reloj del Sistema`), al mantener la altura base de 90px con padding estándar (16px) y margen de cabecera de 12px, el contenido métrico junto a badges e indicadores se recortaba verticalmente por `overflow: hidden`.
+- **Causa Raíz**: 
+  1. Forzar 6 columnas canónicas en pantallas amplias (>1400px) en lugar de respetar la cuadrícula base de 10 columnas del sistema modular.
+  2. Falta de calibración ergonómica específica para tarjetas de una sola fila (`card-size-2x1` y `card-size-1x1`), requiriendo padding compacto (12px) y márgenes de cabecera proporcionados (6px) para garantizar visibilidad al 100% (Regla 7).
+- **Solución Implementada**: 
+  1. **Restauración de la Cuadrícula Canónica de 10 Columnas**:
+     - Se restituyó `repeat(10, minmax(0, 1fr))` en `.grid-board` para resoluciones amplias (>1400px), asegurando proporciones estéticas óptimas (~310-320px para tarjetas `2x1` y `2x2`).
+     - Se conservó la adaptabilidad fluida responsiva a 6 columnas para ventanas intermedias/no maximizadas (`@media (max-width: 1400px)`) y 4 columnas para compactas (`@media (max-width: 1080px)`).
+     - Se calibró `getGridCols()` en JS para retornar 10 (>1400px), 6 (<=1400px) y 4 (<=1080px).
+     - Se restituyó la altura canónica de fila a 90px con `stepY = 90 + gap`.
+  2. **Calibración Dimensional Ergonómica en `card-size-2x1` y `card-size-1x1`**:
+     - Se aplicó padding compacto (`12px 16px` en `2x1` y `12px 14px` en `1x1`) y margen inferior de cabecera reducido (`6px`).
+     - Se ajustó la tipografía de valor métrico en `2x1` a `font-size: 20px` con `white-space: nowrap; font-variant-numeric: tabular-nums;`, garantizando que hora, segundos, AM/PM e insignias no se quiebren en múltiples líneas ni se recorten.
+  3. **Sincronización Total en Mockups y Módulos**:
+     - Modificaciones reflejadas fielmente en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html), [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html), [`index.html`](file:///c:/Proyectos/pc_manager/index.html), [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs) y [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md).
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La readecuación a 10 columnas y el ajuste de padding en `2x1` son estrictamente indispensables para cumplir con la especificación de diseño §3.6 del manual modular y evitar el sobre-estiramiento en pantalla completa, protegiendo al 100% la legibilidad y proporciones de todos los widgets.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`index.html`](file:///c:/Proyectos/pc_manager/index.html)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
 
 
 
