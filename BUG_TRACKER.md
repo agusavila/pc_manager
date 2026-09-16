@@ -774,7 +774,30 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
   - [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md)
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+---
+
+### [BUG-029] Restauración de Grupos de Módulos Colapsables en Menú Lateral y Estiramiento de Tarjetas en Gestor de Módulos
+- **Fecha**: 2026-09-15
+- **Severidad**: `Media`
+- **Componente**: `UI / Sidebar & Gestor de Módulos (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. En el menú lateral (sidebar), los encabezados de grupos de módulos habían dejado de colapsar y expandir sus listas de módulos hijos al hacer clic sobre ellos (`.group-items` permanecía visible y el chevron no rotaba).
+  2. En el Gestor de Módulos, las pestañas "Repositorios Configurados" y "Grupos de Módulos" contenían tarjetas fijas a `max-width: 720px`, lo que causaba que no se estiraran a lo ancho del contenedor y desentonaran con las pestañas "Instalados" y "Catálogo Remoto" (las cuales se expanden al 100%).
+- **Causa Raíz**: 
+  1. Ausencia de reglas CSS dedicadas para `.group-items.collapsed { display: none !important; }` y rotación de `.group-chevron`, junto con una regla `.sidebar.collapsed .modules-nav-area { display: none !important; }` que ocultaba los iconos al minimizar el sidebar.
+  2. Restricción CSS en línea `style="max-width: 720px;"` heredada en las tarjetas de configuración de repositorios y grupos dentro de `#manager-tab-sources` y `#manager-tab-groups`.
+- **Solución Implementada**: 
+  1. Se implementaron estilos CSS canónicos con tokens Material Expressive para `.sidebar-group-box`, `.group-header`, `.group-chevron` (con `transition: transform 0.2s` y rotación de -90deg en estado colapsado), `.group-items` y `.group-items.collapsed { display: none !important; }`.
+  2. Se implementó la función `toggleSidebarGroup(groupName)` para conmutar limpiamente la clase `collapsed` en la lista y cabecera del grupo.
+  3. Se removió la regla que ocultaba `.modules-nav-area` en el sidebar minimizado, permitiendo que los iconos centrados de los módulos instalados se muestren correctamente según la Regla 6.
+  4. Se reemplazó `max-width: 720px` por `width: 100%; box-sizing: border-box;` en todas las tarjetas de "Repositorios Configurados" y "Grupos de Módulos", unificando el ancho completo con las demás pestañas del gestor.
+  5. Se sincronizó `core_shell.html`.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
+
 
 
 

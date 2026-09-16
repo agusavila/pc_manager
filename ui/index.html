@@ -137,8 +137,7 @@
     .sidebar.collapsed .group-header span,
     .sidebar.collapsed .group-header .nav-badge,
     .sidebar.collapsed .group-chevron,
-    .sidebar.collapsed .empty-modules-sidebar-notice,
-    .sidebar.collapsed .modules-nav-area {
+    .sidebar.collapsed .empty-modules-sidebar-notice {
       display: none !important;
     }
 
@@ -289,6 +288,57 @@
       flex-direction: column;
       gap: 4px;
       flex: 1;
+    }
+
+    /* GRUPOS DE MÓDULOS EN SIDEBAR */
+    .sidebar-group-box {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      user-select: none;
+      border-radius: var(--radius-sm);
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .group-header:hover {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+
+    .group-header .group-chevron {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .group-header.collapsed .group-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .group-items {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-top: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .group-items.collapsed {
+      display: none !important;
     }
 
     .empty-modules-sidebar-notice {
@@ -1734,7 +1784,7 @@
 
         <!-- PESTAÑA C: FUENTES DE REPOSITORIOS -->
         <div id="manager-tab-sources" class="hidden">
-          <div class="settings-card" style="max-width: 720px;">
+          <div class="settings-card" style="width: 100%; box-sizing: border-box;">
             <div class="settings-header">
               <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
               <h4>Fuentes de Repositorios Remotos</h4>
@@ -1751,7 +1801,7 @@
 
             <!-- Añadir Repositorio -->
             <div style="display: flex; gap: 8px; margin-top: 14px;">
-              <input type="text" id="new-repo-url" placeholder="https://ejemplo.dominio/repositorio/index.json" style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: #fff; font-size: 13px; outline: none;">
+              <input type="text" id="new-repo-url" class="form-control" placeholder="https://ejemplo.dominio/repositorio/index.json" style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box;">
               <button class="btn btn-primary" onclick="addRepositorySource()">Añadir Repositorio</button>
             </div>
           </div>
@@ -1759,7 +1809,7 @@
 
         <!-- PESTAÑA D: GESTOR DE GRUPOS DE MÓDULOS -->
         <div id="manager-tab-groups" class="hidden">
-          <div class="settings-card" style="max-width: 720px;">
+          <div class="settings-card" style="width: 100%; box-sizing: border-box;">
             <div class="settings-header">
               <svg class="svg-icon" viewBox="0 0 24 24">
                 <path d="M20 7h-9"></path><path d="M14 17H5"></path>
@@ -1790,7 +1840,7 @@
 
             <!-- Crear Grupo -->
             <div style="display: flex; gap: 8px; margin-top: 14px;">
-              <input type="text" id="new-group-name" placeholder="Nombre de nuevo grupo..." style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: #fff; font-size: 13px; outline: none;">
+              <input type="text" id="new-group-name" class="form-control" placeholder="Nombre de nuevo grupo..." style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box;">
               <button class="btn btn-primary" onclick="createGroup()">Crear Grupo</button>
             </div>
           </div>
@@ -4006,9 +4056,8 @@
         groupEl = document.createElement('div');
         groupEl.className = 'sidebar-group-box';
         groupEl.id = `sidebar-group-${groupName}`;
-        groupEl.style.marginTop = '6px';
         groupEl.innerHTML = `
-          <div class="group-header" onclick="this.parentElement.querySelector('.group-items').classList.toggle('collapsed'); this.classList.toggle('collapsed');">
+          <div class="group-header" onclick="toggleSidebarGroup('${groupName}')" title="Plegar / Desplegar grupo ${groupName}">
             <span>${groupName}</span>
             <svg class="svg-icon group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
@@ -4017,6 +4066,15 @@
         navArea.appendChild(groupEl);
       }
       groupEl.style.display = 'block';
+    }
+
+    function toggleSidebarGroup(groupName) {
+      const gBox = document.getElementById(`sidebar-group-${groupName}`);
+      if (!gBox) return;
+      const items = gBox.querySelector('.group-items');
+      const header = gBox.querySelector('.group-header');
+      if (items) items.classList.toggle('collapsed');
+      if (header) header.classList.toggle('collapsed');
     }
 
     function checkSidebarGroupsVisibility() {
