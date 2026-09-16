@@ -267,14 +267,18 @@ En resolución de referencia **1080p** (con barra de tareas de Windows, $W_{\tex
 | Tamaño / Clase | Proporción Matricial | Dimensión Física en 1080p | Propósito y Caso de Uso |
 | :--- | :--- | :--- | :--- |
 | **`1x1`** | 1 col $\times$ 1 fila | $\approx \mathbf{120 \times 102\text{ px}}$ | **Micro-Totalizador**: Indicador único compacto (ej. % CPU, Ping ms, Temperatura °C). Espacio holgado para icono + etiqueta + número grande sin truncar. |
+| **`1x2`** | 1 col $\times$ 2 filas | $\approx \mathbf{120 \times 216\text{ px}}$ | **Torre Métrica Compacta (Vertical)**: Columna delgada para medidores de aguja o nivel vertical, indicadores dobles apilados. |
 | **`2x1`** | 2 cols $\times$ 1 fila | $\approx \mathbf{252 \times 102\text{ px}}$ | **Chip Métrico Horizontal**: Panel con icono, título, métrica dual y mini barra de estado (ej. Memoria RAM usada `8.2/16 GB`, Almacenamiento rápido). |
 | **`2x2`** | 2 cols $\times$ 2 filas | $\approx \mathbf{252 \times 216\text{ px}}$ | **Widget Cuadrado Mediano**: Reloj analógico, medidor tipo tacómetro / velocímetro circular, estado de batería o clima. |
+| **`2x3`** | 2 cols $\times$ 3 filas | $\approx \mathbf{252 \times 330\text{ px}}$ | **Columna Vertical Mediana**: Lista compacta de eventos, controles verticales apilados o selector de perfiles. |
+| **`2x4`** | 2 cols $\times$ 4 filas | $\approx \mathbf{252 \times 444\text{ px}}$ | **Columna Vertical Alta**: Monitor de puertos de red, barra vertical completa de sensores o lista de tareas. |
 | **`3x2`** | 3 cols $\times$ 2 filas (1/4 ancho) | $\approx \mathbf{384 \times 216\text{ px}}$ | **Tarjeta Estándar 16:9**: Tamaño canónico para Reloj digital con fecha y alarmas, Temporizador con botones de control, o Cronómetro. |
 | **`4x2`** | 4 cols $\times$ 2 filas (1/3 ancho) | $\approx \mathbf{516 \times 216\text{ px}}$ | **Tarjeta Extendida de Monitoreo**: Monitoreo de red con mini gráfica de ancho de banda, panel de audio multicanal o monitor de 2 discos duros. |
 | **`4x3`** | 4 cols $\times$ 3 filas | $\approx \mathbf{516 \times 330\text{ px}}$ | **Panel con Historial**: Controles superiores interactivos + lista inferior con scroll interno (ej. lista de vueltas del cronómetro o cola de tareas). |
 | **`4x4`** | 4 cols $\times$ 4 filas | $\approx \mathbf{516 \times 444\text{ px}}$ | **Widget Cuadrado Grande**: Gráficas de telemetría de alta resolución, visualizadores de espectro o consolas de diagnóstico. |
 | **`6x2`** | 6 cols $\times$ 2 filas (1/2 ancho) | $\approx \mathbf{780 \times 216\text{ px}}$ | **Panel Panorámico Medio**: Barra de estado extendida, múltiples contadores o monitoreo de CPU multi-core. |
 | **`6x4`** | 6 cols $\times$ 4 filas (Cuadrante) | $\approx \mathbf{780 \times 444\text{ px}}$ | **Medio Lienzo (Cuadrante)**: 50% de ancho $\times$ 50% de alto del tablero completo. Para consolas integradas de módulos de monitoreo masivo. |
+| **`8x2`** | 8 cols $\times$ 2 filas (2/3 ancho) | $\approx \mathbf{1044 \times 216\text{ px}}$ | **Panorámico Ancho**: Monitor de procesos extendido, panel de almacenamiento multi-partición o consola de telemetría. |
 | **`12x2` (`banner`)** | 12 cols $\times$ 2 filas (100% ancho) | $\approx \mathbf{1567 \times 216\text{ px}}$ | **Banner Panorámico Completo**: Ocupa el 100% del ancho del tablero. Alertas críticas, línea de tiempo de auditoría o banners informativos. |
 
 ---

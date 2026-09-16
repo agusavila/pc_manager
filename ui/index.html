@@ -727,7 +727,7 @@
       overflow: hidden !important;
     }
 
-    @media (max-width: 1280px) {
+    @media (max-width: 1360px) {
       .grid-board {
         grid-template-columns: repeat(8, minmax(0, 1fr));
         grid-template-rows: repeat(6, minmax(0, 1fr));
@@ -735,8 +735,18 @@
       }
     }
 
-    /* TARJETAS DEL DASHBOARD CON DRAG & DROP FLUIDO */
+    @media (max-width: 1080px) {
+      .grid-board {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+    }
+
+    /* TARJETAS DEL DASHBOARD CON DRAG & DROP FLUIDO Y ESCALA ELÁSTICA */
     .card {
+      container-type: inline-size;
+      container-name: card;
       background-color: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
@@ -840,7 +850,93 @@
       border-radius: var(--radius-sm) !important;
     }
 
-    /* CATÁLOGO DE WIDGETS (DRAWER LATERAL) */
+    /* CATÁLOGO DE WIDGETS (DRAWER LATERAL CON GRUPOS COLAPSABLES) */
+    .widget-drawer-group-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+      margin-bottom: 8px;
+    }
+    .widget-drawer-group-card:hover {
+      border-color: var(--border-medium);
+    }
+    .widget-drawer-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg-surface);
+      transition: background 0.15s ease;
+    }
+    .widget-drawer-group-header:hover {
+      background: var(--bg-elevated);
+    }
+    .widget-drawer-group-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-primary);
+      flex-shrink: 0;
+    }
+    .widget-drawer-group-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+    .widget-drawer-group-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .widget-drawer-group-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .widget-drawer-chevron {
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+      color: var(--text-muted);
+    }
+    .widget-drawer-chevron.rotated {
+      transform: rotate(180deg);
+      color: var(--accent-primary);
+    }
+    .widget-drawer-group-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 10px 12px 10px;
+      background: rgba(0, 0, 0, 0.12);
+      border-top: 1px solid var(--border-subtle);
+    }
+    .widget-drawer-group-body .widget-catalog-item {
+      padding: 8px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+    .widget-drawer-group-body .widget-catalog-icon {
+      width: 30px;
+      height: 30px;
+    }
+    .widget-drawer-group-body .widget-catalog-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+    .widget-drawer-group-body .widget-catalog-texts h5 {
+      font-size: 12.5px;
+    }
+
     .widget-catalog-item {
       display: flex;
       flex-direction: row;
@@ -927,7 +1023,7 @@
       100% { transform: scale(1); }
     }
 
-    /* TAMAÑOS MODULARES PROPORCIONALES (MATRIZ 12x8) */
+    /* TAMAÑOS MODULARES PROPORCIONALES (MATRIZ 12x8 Y FORMATOS VERTICALES) */
     .card-size-1x1 { 
       grid-column: span 1; 
       grid-row: span 1; 
@@ -948,6 +1044,29 @@
     .card-size-1x1 .metric-big { font-size: 18px; font-weight: 700; line-height: 1; }
     .card-size-1x1 .metric-label { font-size: 9.5px; margin-top: 1px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    /* FORMATO VERTICAL 1x2 (TORRE MÉTRICA COMPACTA) */
+    .card-size-1x2 {
+      grid-column: span 1;
+      grid-row: span 2;
+      min-width: 0;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .card-size-1x2 .card-header { margin-bottom: 2px; width: 100%; justify-content: center; gap: 4px; }
+    .card-size-1x2 .card-header .card-title-box { justify-content: center; gap: 4px; }
+    .card-size-1x2 .card-header .card-badge, .card-size-1x2 .card-header .card-btn { display: none; }
+    .card-size-1x2 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-1x2 .card-icon-wrap svg { width: 14px; height: 14px; }
+    .card-size-1x2 .card-title-box h4 { font-size: 11px; }
+    .card-size-1x2 .card-body { justify-content: space-between; align-items: center; gap: 4px; width: 100%; height: 100%; }
+    .card-size-1x2 .metric-big { font-size: 20px; font-weight: 700; line-height: 1; }
+    .card-size-1x2 .metric-label { font-size: 9.5px; margin-top: 2px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 0; padding: 10px 14px; }
     .card-size-2x1 .card-header { margin-bottom: 3px; }
     .card-size-2x1 .card-icon-wrap { width: 20px; height: 20px; }
@@ -958,6 +1077,11 @@
     .card-size-2x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 0; padding: 12px; }
+
+    /* FORMATOS VERTICALES 2x3 Y 2x4 (COLUMNAS OPERATIVAS) */
+    .card-size-2x3 { grid-column: span 2; grid-row: span 3; min-width: 0; padding: 12px 14px; }
+    .card-size-2x4 { grid-column: span 2; grid-row: span 4; min-width: 0; padding: 14px 16px; }
+
     .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 0; padding: 12px 14px; }
     .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 0; padding: 14px 16px; }
     .card-size-4x3 { grid-column: span 4; grid-row: span 3; min-width: 0; padding: 14px 16px; }
@@ -982,6 +1106,8 @@
       align-items: center;
       gap: 8px;
       min-width: 0;
+      flex: 1;
+      overflow: hidden;
     }
 
     .card-icon-wrap {
@@ -997,14 +1123,46 @@
     }
 
     .card-title-box h4 {
-      font-size: 13px;
+      font-size: clamp(11.5px, 1.25vw, 13px);
       font-weight: 600;
       color: var(--text-primary);
-      white-space: normal;
-      word-break: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       line-height: 1.25;
-      overflow: visible;
-      text-overflow: clip;
+      margin: 0;
+    }
+
+    /* CONTENEDOR ELÁSTICO INTERNO Y PROTECCIÓN COMPACTA (< 280px) */
+    .card-body {
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .card-body > div[style*="display:flex"],
+    .card-body > div[style*="display: flex"] {
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .card-body .btn {
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    @container card (max-width: 280px) {
+      .card { padding: 10px 12px; }
+      .card-header { margin-bottom: 6px; gap: 4px; }
+      .card-icon-wrap { width: 22px; height: 22px; }
+      .card-icon-wrap svg { width: 13px; height: 13px; }
+      .card-title-box h4 { font-size: 11px; }
+      .card-badge { font-size: 9px; padding: 1px 4px; }
+      .card-body .btn { padding: 4px 6px !important; font-size: 10.5px !important; }
+      .card-body .btn svg { width: 12px !important; height: 12px !important; }
+      .card-body > div[style*="display:flex"],
+      .card-body > div[style*="display: flex"] { gap: 4px !important; }
+      .metric-big { font-size: 20px !important; }
     }
 
     .card-badge {
@@ -2647,19 +2805,21 @@
         </div>
       `;
 
-      const activeWidgets = [];
+      // Agrupar widgets por módulo
+      const moduleGroups = [];
+      let totalAvailableWidgets = 0;
+
       installedModules.forEach(mod => {
         if (mod.active && mod.manifest && mod.manifest.widgets && mod.manifest.widgets.length > 0) {
-          mod.manifest.widgets.forEach(w => {
-            activeWidgets.push({
-              widget: w,
-              module: mod.manifest
-            });
+          totalAvailableWidgets += mod.manifest.widgets.length;
+          moduleGroups.push({
+            module: mod.manifest,
+            widgets: mod.manifest.widgets
           });
         }
       });
 
-      if (activeWidgets.length === 0) {
+      if (moduleGroups.length === 0) {
         container.innerHTML = `
           ${profileSectionHtml}
           <div style="text-align: center; padding: 30px 20px;">
@@ -2682,18 +2842,21 @@
         return;
       }
 
+      if (!window.__EXPANDED_DRAWER_GROUPS__) {
+        window.__EXPANDED_DRAWER_GROUPS__ = new Set();
+      }
+
       container.innerHTML = `
         ${profileSectionHtml}
-        <div style="display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 2px;">
-          <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Widgets en este Perfil</span>
-          <span style="font-size: 11px; color: var(--text-muted);">${activeWidgets.length} disponible(s)</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 8px;">
+          <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Widgets por Módulo</span>
+          <span style="font-size: 11px; color: var(--text-muted);">${totalAvailableWidgets} disponible(s)</span>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${activeWidgets.map(item => {
-            const cardId = item.widget.id || `card-${item.module.id}`;
-            const cardEl = document.getElementById(cardId);
-            const isVisible = cardEl ? cardEl.style.display !== 'none' : !(currentProfile.hiddenWidgets || []).includes(cardId);
-            const iconSvg = item.widget.icon || item.module.icon || (item.module.views && item.module.views[0] && item.module.views[0].icon) || `
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${moduleGroups.map(grp => {
+            const modId = grp.module.id;
+            const isExpanded = window.__EXPANDED_DRAWER_GROUPS__.has(modId);
+            const modIcon = grp.module.icon || (grp.module.views && grp.module.views[0] && grp.module.views[0].icon) || `
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24">
                 <rect width="7" height="9" x="3" y="3" rx="1"></rect>
                 <rect width="7" height="5" x="14" y="3" rx="1"></rect>
@@ -2701,29 +2864,78 @@
                 <rect width="7" height="5" x="3" y="16" rx="1"></rect>
               </svg>
             `;
-            return `
-              <div class="widget-catalog-item">
-                <div class="widget-catalog-info">
-                  <div class="widget-catalog-icon">
-                    ${iconSvg}
-                  </div>
-                  <div class="widget-catalog-texts">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <h5>${item.widget.name || 'Widget'}</h5>
-                      <span class="card-badge" style="font-size: 10px; padding: 2px 6px; flex-shrink: 0;">${item.widget.size || '2x1'}</span>
+            
+            let activeInGroup = 0;
+            const widgetsHtml = grp.widgets.map(w => {
+              const cardId = w.id || `card-${modId}`;
+              const cardEl = document.getElementById(cardId);
+              const isVisible = cardEl ? cardEl.style.display !== 'none' : !(currentProfile.hiddenWidgets || []).includes(cardId);
+              if (isVisible) activeInGroup++;
+
+              const widgetIcon = w.icon || modIcon;
+
+              return `
+                <div class="widget-catalog-item">
+                  <div class="widget-catalog-info">
+                    <div class="widget-catalog-icon">
+                      ${widgetIcon}
                     </div>
-                    <div class="widget-module-name">${item.module.name}</div>
+                    <div class="widget-catalog-texts">
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <h5>${w.name || 'Widget'}</h5>
+                        <span class="card-badge" style="font-size: 9.5px; padding: 1px 5px; flex-shrink: 0;">${w.size || '2x1'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <label class="switch" style="flex-shrink: 0;" title="Mostrar/Ocultar widget en el Dashboard">
+                    <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleWidgetVisibility('${cardId}', this.checked)">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              `;
+            }).join('');
+
+            return `
+              <div class="widget-drawer-group-card">
+                <div class="widget-drawer-group-header" onclick="toggleWidgetDrawerGroup('${modId}')" title="Desplegar / Colapsar widgets de ${grp.module.name}">
+                  <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                    <div class="widget-drawer-group-icon">
+                      ${modIcon}
+                    </div>
+                    <div style="min-width: 0; flex: 1;">
+                      <div class="widget-drawer-group-title">
+                        ${grp.module.name}
+                      </div>
+                      <div class="widget-drawer-group-subtitle">
+                        ${activeInGroup} de ${grp.widgets.length} activo(s)
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="card-badge" style="font-size: 10px; padding: 2px 6px; flex-shrink: 0;">${grp.widgets.length}</span>
+                    <svg class="svg-icon svg-icon-xs widget-drawer-chevron ${isExpanded ? 'rotated' : ''}" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </div>
                 </div>
-                <label class="switch" style="flex-shrink: 0;" title="Mostrar/Ocultar widget en el Dashboard">
-                  <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleWidgetVisibility('${cardId}', this.checked)">
-                  <span class="slider"></span>
-                </label>
+                <div class="widget-drawer-group-body" style="display: ${isExpanded ? 'flex' : 'none'};">
+                  ${widgetsHtml}
+                </div>
               </div>
             `;
           }).join('')}
         </div>
       `;
+    }
+
+    function toggleWidgetDrawerGroup(modId) {
+      if (!window.__EXPANDED_DRAWER_GROUPS__) {
+        window.__EXPANDED_DRAWER_GROUPS__ = new Set();
+      }
+      if (window.__EXPANDED_DRAWER_GROUPS__.has(modId)) {
+        window.__EXPANDED_DRAWER_GROUPS__.delete(modId);
+      } else {
+        window.__EXPANDED_DRAWER_GROUPS__.add(modId);
+      }
+      renderDashboardCustomizationCatalog();
     }
 
     function toggleWidgetVisibility(cardId, isVisible) {
@@ -2877,7 +3089,7 @@
       }
     }
 
-    // DRAG AND DROP FLUIDO, POSICIONAMIENTO EN CUADRÍCULA PROPORCIONAL (12x8)
+    // DRAG AND DROP FLUIDO, POSICIONAMIENTO EN CUADRÍCULA PROPORCIONAL Y RESPONSIVE
     function getGridCols() {
       const grid = document.getElementById('grid-board');
       if (grid) {
@@ -2887,7 +3099,10 @@
           if (cols > 0) return cols;
         }
       }
-      return window.innerWidth <= 1280 ? 8 : 12;
+      const w = window.innerWidth;
+      if (w <= 1080) return 6;
+      if (w <= 1360) return 8;
+      return 12;
     }
 
     function getMaxVisibleRows() {
@@ -2899,7 +3114,9 @@
           if (rows > 0) return rows;
         }
       }
-      return window.innerWidth <= 1280 ? 6 : 8;
+      const w = window.innerWidth;
+      if (w <= 1360) return 6;
+      return 8;
     }
 
     function getCardSpan(card) {

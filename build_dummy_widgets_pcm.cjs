@@ -7,8 +7,11 @@ async function buildShowcaseModule() {
 
   const allSizes = [
     { size: "1x1", name: "Widget 1x1", label: "1x1" },
+    { size: "1x2", name: "Widget 1x2", label: "1x2" },
     { size: "2x1", name: "Widget 2x1", label: "2x1" },
     { size: "2x2", name: "Widget 2x2", label: "2x2" },
+    { size: "2x3", name: "Widget 2x3", label: "2x3" },
+    { size: "2x4", name: "Widget 2x4", label: "2x4" },
     { size: "3x2", name: "Widget 3x2", label: "3x2" },
     { size: "4x2", name: "Widget 4x2", label: "4x2" },
     { size: "4x3", name: "Widget 4x3", label: "4x3" },
@@ -42,6 +45,23 @@ async function buildShowcaseModule() {
       bodyHtml = `
         <div class="card-body">
           <div class="metric-big" style="text-align:center;">1x1</div>
+        </div>
+      `;
+    } else if (item.size === '1x2') {
+      headerHtml = `
+        <header class="card-header">
+          <div class="card-title-box">
+            <div class="card-icon-wrap">
+              ${iconSvg}
+            </div>
+            <h4>1x2</h4>
+          </div>
+        </header>
+      `;
+      bodyHtml = `
+        <div class="card-body">
+          <div class="metric-big" style="text-align:center;">1x2</div>
+          <div class="metric-label" style="text-align:center;">Torre</div>
         </div>
       `;
     } else if (item.size === '2x1') {
@@ -95,7 +115,7 @@ async function buildShowcaseModule() {
     id: "dummy-widgets",
     name: "Muestrario de Tamaños de Widgets",
     version: "1.0.0",
-    description: "Módulo demostrativo con todos los tamaños de widgets soportados por el Dashboard (1x1, 2x1, 2x2, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner). Cada widget está vacío y muestra exclusivamente su tamaño.",
+    description: "Módulo demostrativo con todos los 15 tamaños de widgets soportados por el Dashboard (1x1, 1x2, 2x1, 2x2, 2x3, 2x4, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner). Cada widget está vacío y muestra exclusivamente su tamaño.",
     author: "Core Engine",
     group: "General",
     entrypoint: "module.js",
@@ -118,14 +138,14 @@ async function buildShowcaseModule() {
                 <span class="card-badge" style="color:var(--accent-primary);">v1.0.0</span>
               </div>
               <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
-                Este módulo provee 12 widgets vacíos con todos los factores de forma del sistema (1x1, 2x1, 2x2, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner).
+                Este módulo provee 15 widgets vacíos con todos los factores de forma del sistema (1x1, 1x2, 2x1, 2x2, 2x3, 2x4, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner).
               </p>
               <div style="margin-top:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px;">
                 <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Instrucciones de Uso:</div>
                 <ol style="font-size:12px;color:var(--text-secondary);padding-left:18px;line-height:1.6;margin:0;">
                   <li>Dirígete al <strong>Dashboard</strong> desde el menú lateral.</li>
-                  <li>Pulsa el botón <strong>"Widgets"</strong> en la barra superior para abrir el catálogo lateral.</li>
-                  <li>Activa cualquiera de los 12 tamaños disponibles para colocarlos y probar la reorganización matricial en tiempo real.</li>
+                  <li>Pulsa el botón <strong>"Widgets"</strong> en la barra superior para abrir el catálogo lateral (agrupado por módulos).</li>
+                  <li>Despliega el grupo <strong>"Muestrario de Tamaños de Widgets"</strong> y activa cualquiera de los 15 tamaños disponibles para probar su colocación.</li>
                 </ol>
               </div>
             </div>
@@ -148,10 +168,13 @@ async function buildShowcaseModule() {
 
   const readme = `# Módulo Muestrario de Tamaños de Widgets (v1.0.0)
 
-Módulo demostrativo que exporta 12 widgets vacíos cubriendo todos los factores de forma del Dashboard de PC Manager:
+Módulo demostrativo que exporta 15 widgets vacíos cubriendo todos los factores de forma del Dashboard de PC Manager:
 - 1x1: Micro-totalizador
+- 1x2: Torre métrica compacta (vertical)
 - 2x1: Chip métrico
 - 2x2: Cuadrado mediano
+- 2x3: Columna vertical mediana
+- 2x4: Columna vertical alta
 - 3x2: Estándar 16:9
 - 4x2: Control extendido
 - 4x3: Historial mediano

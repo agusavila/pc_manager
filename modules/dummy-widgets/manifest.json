@@ -2,7 +2,7 @@
   "id": "dummy-widgets",
   "name": "Muestrario de Tamaños de Widgets",
   "version": "1.0.0",
-  "description": "Módulo demostrativo con todos los tamaños de widgets soportados por el Dashboard (1x1, 2x1, 2x2, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner). Cada widget está vacío y muestra exclusivamente su tamaño.",
+  "description": "Módulo demostrativo con todos los 15 tamaños de widgets soportados por el Dashboard (1x1, 1x2, 2x1, 2x2, 2x3, 2x4, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner). Cada widget está vacío y muestra exclusivamente su tamaño.",
   "author": "Core Engine",
   "group": "General",
   "entrypoint": "module.js",
@@ -18,6 +18,12 @@
       "html": "\n        <header class=\"card-header\">\n          <div class=\"card-title-box\">\n            <div class=\"card-icon-wrap\">\n              <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n            </div>\n            <h4>1x1</h4>\n          </div>\n        </header>\n        <div class=\"card-body\">\n          <div class=\"metric-big\" style=\"text-align:center;\">1x1</div>\n        </div>\n      "
     },
     {
+      "id": "card-dummy-1x2",
+      "name": "Widget 1x2",
+      "size": "1x2",
+      "html": "\n        <header class=\"card-header\">\n          <div class=\"card-title-box\">\n            <div class=\"card-icon-wrap\">\n              <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n            </div>\n            <h4>1x2</h4>\n          </div>\n        </header>\n        <div class=\"card-body\">\n          <div class=\"metric-big\" style=\"text-align:center;\">1x2</div>\n          <div class=\"metric-label\" style=\"text-align:center;\">Torre</div>\n        </div>\n      "
+    },
+    {
       "id": "card-dummy-2x1",
       "name": "Widget 2x1",
       "size": "2x1",
@@ -28,6 +34,18 @@
       "name": "Widget 2x2",
       "size": "2x2",
       "html": "\n        <header class=\"card-header\">\n          <div class=\"card-title-box\">\n            <div class=\"card-icon-wrap\">\n              <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n            </div>\n            <h4>Widget 2x2</h4>\n          </div>\n          <span class=\"card-badge\">2x2</span>\n        </header>\n        <div class=\"card-body\" style=\"display:flex;align-items:center;justify-content:center;height:100%;min-height:0;\">\n          <div class=\"metric-big\" style=\"font-size:28px;font-weight:700;letter-spacing:1px;color:var(--accent-primary);text-align:center;\">2x2</div>\n        </div>\n      "
+    },
+    {
+      "id": "card-dummy-2x3",
+      "name": "Widget 2x3",
+      "size": "2x3",
+      "html": "\n        <header class=\"card-header\">\n          <div class=\"card-title-box\">\n            <div class=\"card-icon-wrap\">\n              <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n            </div>\n            <h4>Widget 2x3</h4>\n          </div>\n          <span class=\"card-badge\">2x3</span>\n        </header>\n        <div class=\"card-body\" style=\"display:flex;align-items:center;justify-content:center;height:100%;min-height:0;\">\n          <div class=\"metric-big\" style=\"font-size:28px;font-weight:700;letter-spacing:1px;color:var(--accent-primary);text-align:center;\">2x3</div>\n        </div>\n      "
+    },
+    {
+      "id": "card-dummy-2x4",
+      "name": "Widget 2x4",
+      "size": "2x4",
+      "html": "\n        <header class=\"card-header\">\n          <div class=\"card-title-box\">\n            <div class=\"card-icon-wrap\">\n              <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n            </div>\n            <h4>Widget 2x4</h4>\n          </div>\n          <span class=\"card-badge\">2x4</span>\n        </header>\n        <div class=\"card-body\" style=\"display:flex;align-items:center;justify-content:center;height:100%;min-height:0;\">\n          <div class=\"metric-big\" style=\"font-size:28px;font-weight:700;letter-spacing:1px;color:var(--accent-primary);text-align:center;\">2x4</div>\n        </div>\n      "
     },
     {
       "id": "card-dummy-3x2",
@@ -89,7 +107,7 @@
       "id": "view-module-dummy-widgets",
       "name": "Muestrario de Widgets",
       "icon": "<svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>",
-      "html": "\n          <div style=\"display:flex;flex-direction:column;gap:16px;\">\n            <div class=\"settings-card\">\n              <div class=\"settings-header\" style=\"margin-bottom:8px;\">\n                <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n                <h4>Muestrario de Tamaños de Widgets</h4>\n                <span class=\"card-badge\" style=\"color:var(--accent-primary);\">v1.0.0</span>\n              </div>\n              <p style=\"font-size:13px;color:var(--text-secondary);line-height:1.5;\">\n                Este módulo provee 12 widgets vacíos con todos los factores de forma del sistema (1x1, 2x1, 2x2, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner).\n              </p>\n              <div style=\"margin-top:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px;\">\n                <div style=\"font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;\">Instrucciones de Uso:</div>\n                <ol style=\"font-size:12px;color:var(--text-secondary);padding-left:18px;line-height:1.6;margin:0;\">\n                  <li>Dirígete al <strong>Dashboard</strong> desde el menú lateral.</li>\n                  <li>Pulsa el botón <strong>\"Widgets\"</strong> en la barra superior para abrir el catálogo lateral.</li>\n                  <li>Activa cualquiera de los 12 tamaños disponibles para colocarlos y probar la reorganización matricial en tiempo real.</li>\n                </ol>\n              </div>\n            </div>\n          </div>\n        "
+      "html": "\n          <div style=\"display:flex;flex-direction:column;gap:16px;\">\n            <div class=\"settings-card\">\n              <div class=\"settings-header\" style=\"margin-bottom:8px;\">\n                <svg class=\"svg-icon\" viewBox=\"0 0 24 24\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>\n                <h4>Muestrario de Tamaños de Widgets</h4>\n                <span class=\"card-badge\" style=\"color:var(--accent-primary);\">v1.0.0</span>\n              </div>\n              <p style=\"font-size:13px;color:var(--text-secondary);line-height:1.5;\">\n                Este módulo provee 15 widgets vacíos con todos los factores de forma del sistema (1x1, 1x2, 2x1, 2x2, 2x3, 2x4, 3x2, 4x2, 4x3, 4x4, 6x2, 6x4, 8x2, 12x2 y banner).\n              </p>\n              <div style=\"margin-top:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px;\">\n                <div style=\"font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;\">Instrucciones de Uso:</div>\n                <ol style=\"font-size:12px;color:var(--text-secondary);padding-left:18px;line-height:1.6;margin:0;\">\n                  <li>Dirígete al <strong>Dashboard</strong> desde el menú lateral.</li>\n                  <li>Pulsa el botón <strong>\"Widgets\"</strong> en la barra superior para abrir el catálogo lateral (agrupado por módulos).</li>\n                  <li>Despliega el grupo <strong>\"Muestrario de Tamaños de Widgets\"</strong> y activa cualquiera de los 15 tamaños disponibles para probar su colocación.</li>\n                </ol>\n              </div>\n            </div>\n          </div>\n        "
     }
   ]
 }

@@ -1383,6 +1383,49 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-049] Adaptación Elástica Responsiva en Ventanas Pequeñas, Formatos Verticales de Widgets (1x2, 2x3, 2x4) y Agrupación por Módulos con Acordeón Colapsable en Catálogo Lateral
+- **Fecha**: 2026-09-16
+- **Commit**: `2f30f2b`
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `UI / Dashboard / Grid Layout, Widgets & Drawer Lateral (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, `[`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs)`, `[`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)`)`
+- **Descripción del Fallo**: 
+  1. Al desmaximizar la aplicación o abrirla en pantallas con resolución menor (ventanas estrechas), los widgets se apretujaban y deformaban: los títulos de cabecera como "Temporizador" se partían en sílabas antiestéticas ("Temporiza / dor") y los botones de acción interna (como los 3 botones de control del temporizador/cronómetro) quedaban recortados o desbordaban el borde derecho de la tarjeta.
+  2. La arquitectura del Dashboard carecía de widgets verticales (sólo contemplaba formatos horizontales o cuadrados), impidiendo el diseño de barras de sensores en torre, monitores de puertos o columnas medianas/altas.
+  3. En el drawer lateral de personalización de widgets, todos los widgets se listaban en una única lista plana desordenada, lo que generaba un desplazamiento (scroll) kilométrico e incómodo cuando se instalaban módulos con múltiples componentes.
+- **Causa Raíz**: 
+  1. Ausencia de container queries para la escala interna de elementos interactivos dentro de tarjetas, sumado a que `.card-title-box h4` admitía saltos de línea con `word-break: break-word`, y que se habían retirado los breakpoints responsivos intermedios forzando 12 columnas incluso en anchos reducidos.
+  2. No existían reglas CSS para tamaños donde `spanRow > spanCol` más allá del micro-widget 1x1.
+  3. `renderDashboardCustomizationCatalog()` iteraba linealmente todos los widgets sin agruparlos bajo el identificador de su módulo emisor ni proveer estado de colapso/expansión.
+- **Solución Implementada**: 
+  1. **Container Queries y Escala Elástica Interna**:
+     - Se añadió `container-type: inline-size; container-name: card;` a `.card`.
+     - Regla `@container card (max-width: 280px)` que reduce dinámicamente paddings de tarjeta y botones (`padding: 4px 6px !important; font-size: 10.5px !important; gap: 4px !important;`), garantizando que los 3 botones del temporizador/cronómetro encajen con 100% de visibilidad sin cortes.
+     - Se protegió `.card-title-box h4` con `clamp(11.5px, 1.25vw, 13px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`, eliminando de raíz el quiebre de palabras.
+     - Se reincorporaron breakpoints responsivos en CSS y JS (`<= 1360px` a 8 cols, 6 rows; `<= 1080px` a 6 cols, 6 rows) con posicionamiento no destructivo en `adjustCardsForCurrentGridCols()`.
+  2. **Formatos Verticales Canónicos (1x2, 2x3, 2x4)**:
+     - Se implementaron las clases CSS `.card-size-1x2` (Torre métrica compacta), `.card-size-2x3` (Columna mediana) y `.card-size-2x4` (Columna alta).
+     - Se actualizó el generador y el paquete [`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm) en la raíz a 15 formatos oficiales, y se sincronizó la documentación en `MODULAR_SYSTEM_MANUAL.md` y `DASHBOARD_ARCHITECTURE.md`.
+  3. **Drawer Lateral con Acordeones Colapsables por Módulo**:
+     - Se reestructuró `renderDashboardCustomizationCatalog()` para agrupar widgets bajo el módulo que los provee (`grp.module.name`).
+     - Cada módulo se muestra como una tarjeta acordeón con cabecera interactiva, icono SVG del módulo, conteo total y cantidad de widgets activos en el perfil actual.
+     - Vienen colapsados por defecto (`window.__EXPANDED_DRAWER_GROUPS__`) y se expanden o contraen mediante `toggleWidgetDrawerGroup(modId)`.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La escala elástica mediante container queries y el restablecimiento de breakpoints responsivos corrigen la degradación visual en ventanas pequeñas sin alterar ninguna funcionalidad ni dimensión en ventanas maximizadas. La agrupación por módulos en el drawer optimiza la ergonomía de navegación sin afectar la persistencia ni el orden de los perfiles.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs)
+  - [`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)
+  - [`modules/dummy-widgets/manifest.json`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/manifest.json)
+  - [`modules/dummy-widgets/module.js`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/module.js)
+  - [`modules/dummy-widgets/README.md`](file:///c:/Proyectos/pc_manager/modules/dummy-widgets/README.md)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
 
 
 

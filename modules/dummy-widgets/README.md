@@ -1,9 +1,12 @@
 # Módulo Muestrario de Tamaños de Widgets (v1.0.0)
 
-Módulo demostrativo que exporta 12 widgets vacíos cubriendo todos los factores de forma del Dashboard de PC Manager:
+Módulo demostrativo que exporta 15 widgets vacíos cubriendo todos los factores de forma del Dashboard de PC Manager:
 - 1x1: Micro-totalizador
+- 1x2: Torre métrica compacta (vertical)
 - 2x1: Chip métrico
 - 2x2: Cuadrado mediano
+- 2x3: Columna vertical mediana
+- 2x4: Columna vertical alta
 - 3x2: Estándar 16:9
 - 4x2: Control extendido
 - 4x3: Historial mediano

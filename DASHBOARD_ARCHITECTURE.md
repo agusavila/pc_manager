@@ -267,28 +267,52 @@ Este algoritmo garantiza la eliminación absoluta de huecos muertos, manteniendo
 
 ---
 
+### 2.3 Matriz de Formatos Soportados (15 Tamaños Canónicos)
+
+El sistema soporta una matriz simétrica de 15 factores de forma organizados en tres categorías: horizontales, cuadrados y verticales.
+
+| Categoría | Formatos | Propósito |
+| :--- | :--- | :--- |
+| **Micro-indicadores y Chips** | `1x1`, `2x1` | Métricas compactas, contadores unitarios y chips duales horizontales. |
+| **Formatos Verticales** | `1x2`, `2x3`, `2x4` | **Torre compacta (`1x2`)**, **columna mediana (`2x3`)** y **columna alta (`2x4`)** para monitores de puertos, listas apiladas o medidores verticales. |
+| **Cuadrados Estándar** | `2x2`, `4x4` | Reloj analógico, tacómetros circulares, matrices de diagnóstico o consolas. |
+| **Horizontales 16:9 y Medios** | `3x2`, `4x2`, `4x3`, `6x2` | Widgets funcionales (reloj, cronómetro, temporizador, monitores de red). |
+| **Cuadrantes y Panorámicos** | `6x4`, `8x2`, `12x2`, `banner` | Cuadrantes del 50%, barras anchas de telemetría y banners panorámicos completos. |
+
+---
+
 ## 7. Adaptación Responsiva No Destructiva
 
 Uno de los problemas más críticos en interfaces de cuadrícula libre es la pérdida de diseño cuando el usuario desmaximiza o redimensiona la ventana hacia anchos menores.
 
 ### 7.1 El Desafío de la Reducción de Columnas
 
-Si una tarjeta fue colocada por el usuario en la columna $9$ de una cuadrícula de $10$ columnas, y la ventana se reduce a $6$ columnas, la tarjeta queda fuera de los límites visibles si se fuerza la posición absoluta. Sin embargo, si se sobreescribiera la coordenada original con la posición reducida, al volver a maximizar la ventana la tarjeta jamás volvería a la columna $9$.
+Si una tarjeta fue colocada por el usuario en la columna $9$ de una cuadrícula de $12$ columnas, y la ventana se reduce a $8$ o $6$ columnas, la tarjeta quedaría fuera de los límites visibles si se forzara la posición absoluta. Sin embargo, si se sobreescribiera la coordenada original con la posición reducida, al volver a maximizar la ventana la tarjeta jamás volvería a la columna $9$.
 
 ### 7.2 Solución Implementada: Coordenadas Absolutas vs. Coordenadas de Presentación
 
 Se implementó el desacoplamiento estricto entre:
 1. **Coordenada Maestra Nominal (`dataset.col`, `dataset.row`)**: Almacenada en la tarjeta y en la base de datos de perfiles. Inmutable ante cambios de ancho de ventana.
-2. **Coordenada de Presentación Calculada (`displayCol`)**: Calculada dinámicamente por la función `adjustCardsForCurrentGridCols()` invocada por el `ResizeObserver` del contenedor.
+2. **Coordenada de Presentación Calculada (`displayCol`, `displayRow`)**: Calculada dinámicamente por la función `adjustCardsForCurrentGridCols()` invocada por el `ResizeObserver` del contenedor y los breakpoints CSS:
+   - Pantallas grandes / ventana maximizada (> 1360px): **12 columnas $\times$ 8 filas**.
+   - Ventanas medianas ($\le$ 1360px): **8 columnas $\times$ 6 filas**.
+   - Ventanas compactas / no maximizadas ($\le$ 1080px): **6 columnas $\times$ 6 filas**.
 
 $$\text{displayCol} = \min\left( \text{dataset.col}, \; C_{\text{actual}} - \text{effSpanCol} + 1 \right)$$
 $$\text{effSpanCol} = \min\left( \text{dataset.spanCol}, \; C_{\text{actual}} \right)$$
 
-Al restaurar o maximizar la ventana, $C_{\text{actual}}$ retorna a $10$, por lo que $\text{displayCol}$ vuelve a reflejar exactamente el $\text{dataset.col}$ original sin desfase alguno.
+Al restaurar o maximizar la ventana, $C_{\text{actual}}$ retorna a $12$, por lo que $\text{displayCol}$ vuelve a reflejar exactamente el $\text{dataset.col}$ original sin desfase alguno.
+
+### 7.3 Protección Interna de Contenido mediante Container Queries (`@container`)
+
+Para evitar que el contenido interno de las tarjetas (botones, números, etiquetas de cabecera) se apretuje o se desborde cuando la ventana se achica o un widget se ubica en columnas compactas:
+1. **Contenedor Aislado**: `.card` declara `container-type: inline-size; container-name: card;`.
+2. **Adaptación Elástica (< 280px)**: Mediante `@container card (max-width: 280px)`, se reducen automáticamente paddings, gaps entre botones y tamaños tipográficos sin romper el layout ni cortar botones de acción.
+3. **Protección de Títulos**: `.card-title-box h4` utiliza `clamp(11.5px, 1.25vw, 13px)` combinado con `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;` para garantizar que palabras largas (ej. "Temporizador") nunca se partan en sílabas deformadas.
 
 ---
 
-## 8. Sistema de Perfiles de Dashboard
+## 8. Sistema de Perfiles y Catálogo de Widgets
 
 El sistema soporta múltiples perfiles de usuario configurables para organizar diferentes escenarios de trabajo (ej. *Monitoreo General*, *Desarrollo y Depuración*, *Servicios de Red*).
 
@@ -322,6 +346,13 @@ Al crear un nuevo perfil mediante el botón de creación (`+`):
 ### 8.3 Inmutabilidad del Perfil Predeterminado
 
 El perfil `"default"` (*Predeterminado*) es canónico e inborrable. La interfaz desactiva automáticamente los botones de eliminación para proteger la estabilidad del sistema base. Si un perfil secundario es eliminado, el Core conmuta de forma transparente al perfil `"default"`.
+
+### 8.4 Catálogo de Widgets en Drawer con Acordeones Colapsables por Módulo
+
+Para prevenir el desplazamiento infinito cuando existen decenas de widgets instalados:
+- Los widgets se agrupan automáticamente bajo el nombre de su módulo emisor (`grp.module.name`).
+- Cada grupo funciona como un **acordeón colapsable por defecto**, mostrando el icono del módulo, el total de widgets disponibles y cuántos están activos en el perfil actual.
+- El usuario puede desplegar únicamente los módulos que desea configurar, manteniendo el drawer limpio y organizado.
 
 ---
 
