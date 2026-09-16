@@ -1130,8 +1130,35 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
 
-
+### [BUG-040] Tarjetas del Dashboard se Descuadran al Maximizar la Ventana (Salto de 6 a 10 Columnas)
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `UI / Dashboard Grid Layout ([`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html), [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html), [`index.html`](file:///c:/Proyectos/pc_manager/index.html))`
+- **Descripción del Fallo**: 
+  1. Al iniciar la aplicación en ventana no maximizada (~1180px de ancho), las 3 tarjetas del Dashboard (Temporizador 2×2, Cronómetro 2×2, Reloj del Sistema 2×1) se visualizaban correctamente llenando el 100% del ancho de la fila (33.3% cada una).
+  2. Al maximizar la ventana (>1400px en un monitor 1080p), la cuadrícula saltaba abruptamente de **6 a 10 columnas**. Las tarjetas de `span 2` pasaban de ocupar 2/6 (33%) a 2/10 (20%) del ancho, encogiendo cada tarjeta un 40%.
+  3. Quedaba un vacío de 40% en el lado derecho (columnas 7-10 sin contenido).
+  4. En la tarjeta `Reloj del Sistema` (2×1), el texto `11:35:50 AM` con la insignia `EN VIVO` no cabía en el ancho reducido, provocando que `AM` saltara a una segunda línea y ambos elementos (`AM` y `EN VIVO`) se recortaran por overflow hidden en la altura fija de 90px.
+- **Causa Raíz**: 
+  1. La cuadrícula base `.grid-board` estaba definida con `grid-template-columns: repeat(10, minmax(0, 1fr))` para >1400px, mientras el `@media (max-width: 1400px)` la reducía a 6 columnas. Este salto discontinuo de 6→10 columnas al cruzar el umbral de 1400px era incompatible con tarjetas diseñadas para una cuadrícula de 6 columnas.
+  2. La función JavaScript `getGridCols()` replicaba la misma lógica: retornaba 10 para >1400px, causando que el algoritmo de posicionamiento y arrastre usara 10 columnas mientras las tarjetas solo tenían `span 2`.
+  3. La altura base de fila era 90px (`grid-auto-rows: 90px`), demasiado ajustada para el contenido con la nueva anchura.
+- **Solución Implementada**: 
+  1. **Unificación a 6 columnas canónicas para escritorio estándar**: Se cambió la cuadrícula base de `repeat(10, ...)` a `repeat(6, minmax(0, 1fr))` en `.grid-board`. Esto garantiza que 3 tarjetas de `span 2` ocupen 100% del ancho tanto en ventana normal como maximizada.
+  2. **`getGridCols()` simplificado**: Retorna 6 para todas las resoluciones de escritorio (>1080px), eliminando el salto discontinuo a 10 columnas.
+  3. **Altura de fila incrementada a 110px**: Se actualizó `grid-auto-rows` de 90px a 110px para dar más espacio vertical al contenido de las tarjetas, especialmente las de tipo `2×1`. Se sincronizó el `stepY` del drag & drop (`110 + gap`) y el `min-height` del indicador de drop.
+  4. **Media query `@media (max-width: 1400px)` simplificada**: Ya no necesita redefinir el grid-template-columns (es 6 por defecto), solo ajusta el gap y los spans de tarjetas extra-anchas.
+  5. **Sincronización en los 3 archivos**: `ui/index.html`, `core_shell.html` e `index.html` (mockup raíz).
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  El cambio de `grid-auto-rows` de 90px a 110px es una modificación intencional y necesaria. Con 6 columnas canónicas, las tarjetas `2×1` reciben mayor ancho (~33% vs. 20%), y la altura de 90px resultaba demasiado comprimida para el contenido visible (reloj + badge). Se verificó que los widgets `2×2` (Temporizador, Cronómetro) mantienen sus proporciones armónicas con 110px × 2 + gap = 234px de alto.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`index.html`](file:///c:/Proyectos/pc_manager/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
 
 
 
