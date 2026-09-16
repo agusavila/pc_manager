@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Manager // Core v0.0.2-alpha (Software Nativo de Escritorio)</title>
+  <title>PC Manager // Core v0.0.3-alpha (Software Nativo de Escritorio)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -911,12 +911,23 @@
     }
 
     /* VARIANTES DE TAMAÑO EN CUADRÍCULA CON MIN-WIDTH PROTECTOR */
-    .card-size-1x1 { grid-column: span 1; grid-row: span 1; min-width: 140px; padding: 12px 14px; }
-    .card-size-1x1 .card-header { margin-bottom: 6px; }
-    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 220px; padding: 12px 16px; }
-    .card-size-2x1 .card-header { margin-bottom: 6px; }
-    .card-size-2x1 .metric-big { font-size: 20px; }
-    .card-size-2x1 .metric-label { font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-size-1x1 { grid-column: span 1; grid-row: span 1; min-width: 140px; padding: 10px 12px; }
+    .card-size-1x1 .card-header { margin-bottom: 4px; }
+    .card-size-1x1 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-1x1 .card-icon-wrap svg { width: 13px; height: 13px; }
+    .card-size-1x1 .card-title-box h4 { font-size: 12px; }
+    .card-size-1x1 .card-body { justify-content: center; gap: 2px; }
+    .card-size-1x1 .metric-big { font-size: 18px; line-height: 1; }
+    .card-size-1x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 220px; padding: 10px 14px; }
+    .card-size-2x1 .card-header { margin-bottom: 4px; }
+    .card-size-2x1 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-2x1 .card-icon-wrap svg { width: 13px; height: 13px; }
+    .card-size-2x1 .card-title-box h4 { font-size: 12px; }
+    .card-size-2x1 .card-body { justify-content: center; gap: 2px; }
+    .card-size-2x1 .metric-big { font-size: 19px; line-height: 1; }
+    .card-size-2x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 220px; }
     .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 300px; }
     .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 380px; }
@@ -1704,7 +1715,7 @@
         </div>
         <div class="brand-info">
           <h1>PC MANAGER</h1>
-          <span id="sidebar-core-version">CORE // v0.0.2</span>
+          <span id="sidebar-core-version">CORE // v0.0.3-alpha</span>
         </div>
       </div>
 
@@ -2201,6 +2212,53 @@
                   <span>Permisos de Módulos...</span>
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- HISTORIAL DE NOTIFICACIONES DEL SISTEMA -->
+          <div class="settings-card" id="card-notification-history">
+            <div class="settings-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 14 14"></polyline>
+                </svg>
+                <h4>Historial de Notificaciones</h4>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn btn-secondary" onclick="markAllNotificationsHistoryRead()" style="font-size: 11.5px; padding: 6px 12px;" title="Marcar todas como leídas">
+                  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Marcar Leídas</span>
+                </button>
+                <button class="btn btn-secondary" onclick="clearNotificationHistory()" style="font-size: 11.5px; padding: 6px 12px; color: var(--accent-danger); border-color: rgba(239, 68, 68, 0.3);" title="Limpiar historial completo">
+                  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <span>Limpiar Historial</span>
+                </button>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px;">
+              Registro cronológico auditable de avisos, alertas de sistema y notificaciones de extensiones modulares.
+            </p>
+
+            <!-- Barra de Filtros y Búsqueda -->
+            <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;">
+              <div style="flex: 1; min-width: 200px; position: relative;">
+                <input type="text" id="input-notif-history-search" class="form-input" placeholder="Buscar en el historial..." oninput="filterNotificationHistory()" style="width: 100%; font-size: 12px; padding: 7px 10px 7px 30px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); box-sizing: border-box;">
+                <svg class="svg-icon svg-icon-xs" style="position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
+              <div style="width: 170px;">
+                <select id="select-notif-history-category" class="custom-combobox form-select" onchange="filterNotificationHistory()" style="width: 100%; font-size: 12px; padding: 7px 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); cursor: pointer; box-sizing: border-box;">
+                  <option value="all">Todas las categorías</option>
+                  <option value="system">Sistema / Núcleo</option>
+                  <option value="modules">Módulos</option>
+                  <option value="profiles">Perfiles</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Contenedor de Registros del Historial -->
+            <div id="notif-history-container" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-surface);">
+              <!-- Se inyecta dinámicamente -->
             </div>
           </div>
 
@@ -4539,9 +4597,183 @@
       emptyState.style.display = (items.length === 0) ? 'block' : 'none';
     }
 
+    const NOTIF_HISTORY_STORAGE_KEY = 'pcm_notification_history';
+    let notificationHistory = [];
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function loadNotificationHistory() {
+      try {
+        const raw = localStorage.getItem(NOTIF_HISTORY_STORAGE_KEY);
+        if (raw) {
+          notificationHistory = JSON.parse(raw);
+          if (!Array.isArray(notificationHistory)) notificationHistory = [];
+        }
+      } catch (e) {
+        notificationHistory = [];
+      }
+      renderNotificationHistory();
+      syncDrawerFromHistory();
+    }
+
+    function saveNotificationHistory() {
+      try {
+        if (notificationHistory.length > 200) {
+          notificationHistory = notificationHistory.slice(0, 200);
+        }
+        localStorage.setItem(NOTIF_HISTORY_STORAGE_KEY, JSON.stringify(notificationHistory));
+      } catch (e) {}
+    }
+
+    function formatNotifTime(isoOrMs) {
+      if (!isoOrMs) return 'ahora mismo';
+      const d = new Date(isoOrMs);
+      if (isNaN(d.getTime())) return 'reciente';
+      const now = new Date();
+      const diffSec = Math.floor((now - d) / 1000);
+      if (diffSec < 60) return 'ahora mismo';
+      if (diffSec < 3600) return `hace ${Math.floor(diffSec / 60)} min`;
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - ' + d.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+    }
+
+    function syncDrawerFromHistory() {
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      list.querySelectorAll('.notif-item').forEach(i => i.remove());
+
+      const recentItems = notificationHistory.slice(0, 25);
+      recentItems.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'notif-item' + (entry.read ? '' : ' unread');
+        item.dataset.notifId = entry.id;
+        item.innerHTML = `
+          <div class="notif-icon">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          </div>
+          <div class="notif-body">
+            <h6>${escapeHtml(entry.title)}</h6>
+            <p>${escapeHtml(entry.text)}</p>
+            <div class="notif-time">${formatNotifTime(entry.timestamp)}</div>
+          </div>
+        `;
+        setupNotificationItem(item);
+        list.appendChild(item);
+      });
+      updateNotificationEmptyState();
+      updateUnreadNotifBadge();
+    }
+
+    function renderNotificationHistory() {
+      const container = document.getElementById('notif-history-container');
+      if (!container) return;
+
+      const searchInput = document.getElementById('input-notif-history-search');
+      const categorySelect = document.getElementById('select-notif-history-category');
+
+      const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      const cat = categorySelect ? categorySelect.value : 'all';
+
+      const filtered = notificationHistory.filter(item => {
+        if (cat !== 'all') {
+          if (cat === 'system' && item.category !== 'system' && !item.category?.startsWith('system_')) return false;
+          if (cat === 'modules' && item.category !== 'modules') return false;
+          if (cat === 'profiles' && item.category !== 'profiles') return false;
+        }
+        if (query) {
+          const matchTitle = (item.title || '').toLowerCase().includes(query);
+          const matchText = (item.text || '').toLowerCase().includes(query);
+          const matchCat = (item.category || '').toLowerCase().includes(query);
+          return matchTitle || matchText || matchCat;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 36px 16px; text-align: center; color: var(--text-muted); font-size: 12.5px;">
+            <svg class="svg-icon svg-icon-md" style="margin-bottom: 8px; opacity: 0.4;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            <div>No hay notificaciones registradas en el historial.</div>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div style="display: flex; flex-direction: column;">';
+      filtered.forEach(entry => {
+        const typeColor = entry.type === 'error' ? 'var(--accent-danger)' :
+                          entry.type === 'warning' ? '#f59e0b' :
+                          entry.type === 'success' ? 'var(--accent-success)' : 'var(--accent-primary)';
+        const typeLabel = (entry.type || 'info').toUpperCase();
+        const catLabel = entry.category === 'system' ? 'Sistema' :
+                         entry.category === 'modules' ? 'Módulo' :
+                         entry.category === 'profiles' ? 'Perfiles' : (entry.category || 'General');
+        const timeFormatted = new Date(entry.timestamp).toLocaleString('es-ES', { 
+          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
+
+        html += `
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 11px 14px; border-bottom: 1px solid var(--border-subtle); background: ${entry.read ? 'transparent' : 'rgba(59, 130, 246, 0.04)'}; transition: background 0.15s ease;">
+            <div style="display: flex; align-items: flex-start; gap: 10px; min-width: 0; flex: 1;">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: ${entry.read ? 'transparent' : 'var(--accent-primary)'}; margin-top: 6px; flex-shrink: 0;" title="${entry.read ? 'Leída' : 'No leída'}"></div>
+              <div style="min-width: 0; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
+                  <span style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: var(--radius-pill); background: var(--bg-elevated); border: 1px solid ${typeColor}; color: ${typeColor};">${typeLabel}</span>
+                  <span style="font-size: 10.5px; color: var(--text-muted);">${catLabel}</span>
+                  <span style="font-size: 10.5px; color: var(--text-muted); margin-left: auto;">${timeFormatted}</span>
+                </div>
+                <div style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">${escapeHtml(entry.title)}</div>
+                <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; word-break: break-word;">${escapeHtml(entry.text)}</div>
+              </div>
+            </div>
+            <button class="btn-icon btn-icon-xs" onclick="deleteHistoryNotification('${entry.id}')" title="Eliminar del historial" style="margin-top: 2px; flex-shrink: 0;">
+              <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function filterNotificationHistory() {
+      renderNotificationHistory();
+    }
+
+    function markAllNotificationsHistoryRead() {
+      notificationHistory.forEach(n => n.read = true);
+      saveNotificationHistory();
+      renderNotificationHistory();
+      syncDrawerFromHistory();
+    }
+
+    function clearNotificationHistory() {
+      notificationHistory = [];
+      saveNotificationHistory();
+      renderNotificationHistory();
+      syncDrawerFromHistory();
+    }
+
+    function deleteHistoryNotification(id) {
+      notificationHistory = notificationHistory.filter(n => n.id !== id);
+      saveNotificationHistory();
+      renderNotificationHistory();
+      syncDrawerFromHistory();
+    }
+
     function markAllNotificationsAsRead() {
+      notificationHistory.forEach(n => n.read = true);
+      saveNotificationHistory();
       document.querySelectorAll('#notif-list .notif-item').forEach(item => item.classList.remove('unread'));
       updateUnreadNotifBadge();
+      renderNotificationHistory();
     }
 
     function clearAllNotifications() {
@@ -4550,7 +4782,10 @@
         list.querySelectorAll('.notif-item').forEach(i => i.remove());
         updateNotificationEmptyState();
       }
+      notificationHistory.forEach(n => n.read = true);
+      saveNotificationHistory();
       updateUnreadNotifBadge();
+      renderNotificationHistory();
     }
 
     function dispatchWindowsNativeNotification(title, text) {
@@ -4591,27 +4826,22 @@
         }
       }
 
-      const list = document.getElementById('notif-list');
-      if (!list) return;
+      // 4. Registrar en historial persistente y actualizar UI
+      const notifEntry = {
+        id: 'notif-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        title,
+        text,
+        type: type || 'info',
+        category: category || 'system',
+        timestamp: new Date().toISOString(),
+        read: false
+      };
+      notificationHistory.unshift(notifEntry);
+      saveNotificationHistory();
+      renderNotificationHistory();
+      syncDrawerFromHistory();
 
-      const item = document.createElement('div');
-      item.className = 'notif-item unread';
-      item.innerHTML = `
-        <div class="notif-icon">
-          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-        </div>
-        <div class="notif-body">
-          <h6>${title}</h6>
-          <p>${text}</p>
-          <div class="notif-time">ahora mismo</div>
-        </div>
-      `;
-      setupNotificationItem(item);
-      list.prepend(item);
-      updateNotificationEmptyState();
-      updateUnreadNotifBadge();
-
-      // 4. Emisión nativa a Windows 10/11 si está autorizada
+      // 5. Emisión nativa a Windows 10/11 si está autorizada
       dispatchWindowsNativeNotification(title, text);
     }
 
@@ -5551,6 +5781,7 @@
 
         // 3. Cargar preferencias y permisos de notificaciones antes de restaurar módulos
         await loadNotificationSettings();
+        loadNotificationHistory();
 
         if (invokeFn) {
           const sysInfo = await invokeFn('get_system_info');

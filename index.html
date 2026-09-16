@@ -588,12 +588,23 @@
     }
 
     /* VARIANTES DE TAMAÑO EN CUADRÍCULA 10x10 */
-    .card-size-1x1 { grid-column: span 1; grid-row: span 1; padding: 12px 14px; }
-    .card-size-1x1 .card-header { margin-bottom: 6px; }
-    .card-size-2x1 { grid-column: span 2; grid-row: span 1; padding: 12px 16px; }
-    .card-size-2x1 .card-header { margin-bottom: 6px; }
-    .card-size-2x1 .metric-big { font-size: 20px; }
-    .card-size-2x1 .metric-label { font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-size-1x1 { grid-column: span 1; grid-row: span 1; padding: 10px 12px; }
+    .card-size-1x1 .card-header { margin-bottom: 4px; }
+    .card-size-1x1 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-1x1 .card-icon-wrap svg { width: 13px; height: 13px; }
+    .card-size-1x1 .card-title-box h4 { font-size: 12px; }
+    .card-size-1x1 .card-body { justify-content: center; gap: 2px; }
+    .card-size-1x1 .metric-big { font-size: 18px; line-height: 1; }
+    .card-size-1x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; padding: 10px 14px; }
+    .card-size-2x1 .card-header { margin-bottom: 4px; }
+    .card-size-2x1 .card-icon-wrap { width: 22px; height: 22px; }
+    .card-size-2x1 .card-icon-wrap svg { width: 13px; height: 13px; }
+    .card-size-2x1 .card-title-box h4 { font-size: 12px; }
+    .card-size-2x1 .card-body { justify-content: center; gap: 2px; }
+    .card-size-2x1 .metric-big { font-size: 19px; line-height: 1; }
+    .card-size-2x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-size-2x2 { grid-column: span 2; grid-row: span 2; }
     .card-size-3x2 { grid-column: span 3; grid-row: span 2; }
     .card-size-4x2 { grid-column: span 4; grid-row: span 2; }

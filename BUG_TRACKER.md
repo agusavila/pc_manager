@@ -1194,6 +1194,49 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-042] Transición a Alpha 0.0.3: Centrado Vertical Ergonómico en Tarjetas 2×1, Clarificación de Política Anti-Spam e Historial de Notificaciones en Configuraciones
+- **Fecha**: 2026-09-16
+- **Severidad**: `Media`
+- **Componente**: `UI / Settings / Notifications / Card Layout (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`index.html`](file:///c:/Proyectos/pc_manager/index.html)`, [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`, [`package.json`](file:///c:/Proyectos/pc_manager/package.json)`, [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)`, [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json)`, [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`, [`docs/ai/MODULAR_SYSTEM_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md)`)`
+- **Descripción del Fallo**: 
+  1. En las tarjetas compactas `2×1` (como `Reloj del Sistema`), los elementos quedaban visualmente apretados y pegados contra el borde inferior de la tarjeta, debido a una desproporción entre la altura de la cabecera (icono de 28px) y el padding vertical, dejando la fecha pegada a la curvatura inferior.
+  2. La regla contra spam de notificaciones en arranque fue interpretada con excesiva rigidez, prohibiendo cualquier aviso al inicio. El usuario clarificó que lo prohibido es el bucle repetitivo de "módulo instalado" cada vez que se abre la app y se restauran módulos desde disco, mientras que las notificaciones legítimas de instalación manual, alertas de sistema o eventos reales de servicios sí deben emitirse.
+  3. No existía un registro persistente ni vista de Historial de Notificaciones en la sección de Configuraciones.
+- **Causa Raíz**: 
+  1. Espaciado interno no calibrado para tarjetas de una sola fila (`2x1`), donde la cabecera y el cuerpo carecían de márgenes compactos proporcionales.
+  2. Falta de distinción conceptual en la especificación entre la restauración rutinaria de módulos en arranque y los eventos legítimos de notificación.
+  3. El Centro de Notificaciones solo existía como un panel lateral temporal (drawer) en memoria DOM, sin historial persistente auditable en Configuraciones.
+- **Solución Implementada**: 
+  1. **Subida de Versión a Alpha 0.0.3**:
+     - Incrementada la versión a `0.0.3-alpha` en `package.json`, `Cargo.toml`, `tauri.conf.json`, `src/lib.rs`, `ui/index.html`, `core_shell.html` y documentación técnica.
+  2. **Calibración Ergonómica Vertical de Tarjetas 2×1 y 1×1**:
+     - Reducido el padding vertical a `10px 14px` y el icono de cabecera a `22px` con `margin-bottom: 4px`.
+     - Centrado vertical simétrico con `justify-content: center; gap: 2px;` y métricas proporcionales (19px), garantizando ~15px de holgura limpia y simétrica tanto arriba como abajo del texto de fecha.
+  3. **Clarificación Formal de la Política Anti-Spam (docs/ai/MODULAR_SYSTEM_AI_SPEC.md)**:
+     - Clarificado que las alertas de instalación manual, eventos de sistema, alertas de salud de servicios y notificaciones intencionadas de módulos sí son legítimas, prohibiendo únicamente la re-emisión redundante de módulos restaurados desde disco en el arranque.
+  4. **Historial Persistente de Notificaciones en Configuraciones**:
+     - Se incorporó la tarjeta `Historial de Notificaciones` en `Configuraciones -> General` ([`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) y [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)).
+     - Persistencia estructurada en `localStorage` (`pcm_notification_history`).
+     - Filtros interactivos en tiempo real por término de búsqueda y por categoría (Todas, Sistema, Módulos, Perfiles).
+     - Acciones de "Marcar Leídas" y "Limpiar Historial", sincronizadas en tiempo real con el drawer lateral.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  El ajuste de espaciado en tarjetas 2x1 y la adición del historial en configuraciones enriquecen la ergonomía visual y la observabilidad del sistema sin alterar ninguna función previa ni causar regresiones en otros componentes.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`index.html`](file:///c:/Proyectos/pc_manager/index.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`docs/ai/core_ai_spec.md`](file:///c:/Proyectos/pc_manager/docs/ai/core_ai_spec.md)
+  - [`docs/ai/MODULAR_SYSTEM_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
 
 
 

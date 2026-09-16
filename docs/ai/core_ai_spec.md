@@ -1,4 +1,4 @@
-# Especificación para Modelos de IA: PC Manager Core (v0.0.2-alpha)
+# Especificación para Modelos de IA: PC Manager Core (v0.0.3-alpha)
 
 Esta especificación proporciona las directivas formales, esquemas de datos, contratos IPC y restricciones que cualquier agente o modelo de IA debe respetar al generar, modificar o auditar código del Core o sus extensiones.
 

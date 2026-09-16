@@ -30,7 +30,7 @@ fn get_system_info() -> SystemInfoPayload {
         os_name: "Windows NT".to_string(),
         arch: std::env::consts::ARCH.to_string(),
         hostname,
-        version: "0.0.2".to_string(),
+        version: "0.0.3".to_string(),
         status: "OPERATIONAL".to_string(),
     }
 }
@@ -146,7 +146,7 @@ pub fn run() {
             // 2. Construcción del icono del System Tray
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("PC Manager Core v0.0.2")
+                .tooltip("PC Manager Core v0.0.3")
                 .menu(&tray_menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
