@@ -113,13 +113,103 @@ Si el módulo requiere parámetros configurables por el usuario, los declara en 
   };
   ```
 
-### 3.3. Acceso Obligatorio a Configuraciones desde la Pantalla Principal
+### 3.3. Navegación Directa e Integración entre Vistas y Widgets
+El Core proporciona la función global `switchView(viewId)` para transicionar instantáneamente entre cualquier sección de la aplicación sin recargas:
+
+- **Navegar a la pantalla principal de un módulo**:
+  ```javascript
+  switchView('module-' + manifest.id);
+  ```
+- **Navegar al Dashboard**:
+  ```javascript
+  switchView('dashboard');
+  ```
+- **Navegar a la sección de Configuraciones**:
+  ```javascript
+  switchView('settings');
+  ```
+
+#### Patrón A: Vincular la Cabecera del Widget a la Pantalla del Módulo
+Para que el usuario pueda hacer clic en el encabezado de una tarjeta del Dashboard y abrir la pantalla completa del módulo correspondiente:
+
+```html
+<header class="card-header" onclick="switchView('module-mi-modulo')" style="cursor: pointer;" title="Abrir pantalla completa del módulo">
+  <div class="card-title-box">
+    <div class="card-icon-wrap">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    </div>
+    <h4>Monitor de Telemetría</h4>
+  </div>
+  <div class="card-actions">
+    <!-- Botón de apertura rápida explícito -->
+    <button class="card-btn" onclick="event.stopPropagation(); switchView('module-mi-modulo');" data-tooltip="Ver detalles del módulo" title="Ver detalles del módulo">
+      <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+    </button>
+  </div>
+</header>
+```
+
+#### Patrón B: Botón de Acceso a Configuraciones desde la Pantalla Principal
 > [!IMPORTANT]
 > **Regla de Gobernanza de Interfaz**: Si un módulo añade opciones a Configuraciones (`manifest.meta_options`), su pantalla principal (vista dedicada en `manifest.views`) debe contener obligatoriamente un botón visible y estilizado (`btn btn-secondary` o `btn-icon`) que dirija al usuario directamente a sus opciones en la pantalla de configuraciones (`switchView('settings')` y `switchSettingsTab('mod-' + moduleId)`).
-> 
-> La barra superior del Core (`top-bar`) también respalda canónicamente este acceso de forma complementaria.
 
-### 3.4. Ciclo de Vida y Limpieza Determinista (`Cleanup Handler`)
+```html
+<div class="settings-header" style="justify-content: space-between;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <h4>Panel de Control Operativo</h4>
+  </div>
+  <button class="btn btn-secondary" onclick="switchView('settings'); switchSettingsTab('mod-mi-modulo');" title="Configurar parámetros del módulo" style="padding: 6px 12px; font-size: 12px;">
+    <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Configuración</span>
+  </button>
+</div>
+```
+
+---
+
+### 3.4. Componentes Interactivos Dentro de Widgets (Botones, Switches y Barras)
+
+Las tarjetas del Dashboard admiten controles interactivos ricos.
+
+#### Aislamiento de Drag & Drop (`event.stopPropagation`)
+Debido a que el Dashboard permite arrastrar y reorganizar las tarjetas fluidamente, cualquier clic o interacción sobre un botón, input o switch debe detener la propagación del evento:
+
+```html
+<!-- Botón de acción rápida en el widget -->
+<button class="btn btn-secondary" onclick="event.stopPropagation(); window.miModuloEjecutarAccion();" style="padding: 4px 10px; font-size: 11.5px; height: 26px;">
+  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+  <span>Iniciar Test</span>
+</button>
+```
+
+#### Mini Switch Toggle Integrado en Tarjeta
+Para alternar estados operativos directamente desde la cuadrícula:
+```html
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+  <span style="font-size: 11.5px; color: var(--text-secondary);">Modo Turbo</span>
+  <label class="switch" onclick="event.stopPropagation()" title="Activar / Desactivar modo turbo">
+    <input type="checkbox" id="chk-mi-modulo-turbo" onchange="event.stopPropagation(); window.miModuloSetTurbo(this.checked);">
+    <span class="slider"></span>
+  </label>
+</div>
+```
+
+#### Barra de Progreso Dinámica
+```html
+<div class="metric-progress-bg">
+  <div class="metric-progress-bar" id="prog-mi-modulo" style="width: 65%;"></div>
+</div>
+```
+Para actualizarla desde JavaScript:
+```javascript
+const bar = document.getElementById('prog-mi-modulo');
+if (bar) bar.style.width = `${porcentaje}%`;
+```
+
+---
+
+### 3.5. Ciclo de Vida y Limpieza Determinista (`Cleanup Handler`)
 Al deshabilitar o desinstalar un módulo, el Core invoca automáticamente el handler de limpieza para evitar fugas de memoria o procesos huérfanos:
 ```javascript
 window.__CLEANUP_mi_modulo__ = function() {
@@ -127,31 +217,39 @@ window.__CLEANUP_mi_modulo__ = function() {
     clearInterval(pollingTimer);
     pollingTimer = null;
   }
-  // Desuscribir listeners de eventos o sockets locales
+  if (window.ServiceRegistry) {
+    window.ServiceRegistry.unregister('system.memory');
+  }
   console.log('Módulo mi-modulo detenido limpiamente.');
 };
 ```
 
-### 3.5. Widgets para el Dashboard 10x10
+---
+
+### 3.6. Widgets para el Dashboard 10x10
 Los módulos pueden exportar una o más tarjetas para la cuadrícula adaptable del Dashboard:
 - **Tamaños disponibles**:
-  - `1x1`: Micro-métrica o chip de estado.
-  - `2x1`: Métrica horizontal con valor y tendencia.
-  - `2x2`: Tarjeta estándar cuadrada con gráfico o reloj.
-  - `3x2`: Métrica agrupada o gráfica de serie temporal.
-  - `4x2` / `5x2`: Paneles anchos para tablas o monitores de red.
+  - `1x1`: Micro-métrica o chip de estado (min-width: 140px).
+  - `2x1`: Métrica horizontal con valor y tendencia (min-width: 220px).
+  - `2x2`: Tarjeta estándar cuadrada con gráfico o reloj (min-width: 220px).
+  - `3x2`: Métrica agrupada o gráfica de serie temporal (min-width: 300px).
+  - `4x2`: Paneles anchos de monitoreo o listas cortas (min-width: 380px).
+  - `5x2` / `5x5`: Paneles de análisis profundo o tablas (min-width: 440px).
+  - `10x2`: Banner panorámico de ancho completo.
 - **Regla de Cero Recortes**: Los títulos y valores deben ser 100% legibles. Prohibido recortar textos esenciales con puntos suspensivos (`ellipsis`) dentro del cuerpo de la tarjeta.
 - **Menú Contextual Integrado**: Al hacer clic derecho sobre la tarjeta, el Core despliega opciones dinámicas: acceso a configuración del módulo (si posee `meta_options`), acceso a su pantalla principal, auto-organización de la cuadrícula y ocultamiento del widget.
 
-### 3.6. Emisión de Notificaciones Controladas
-Los módulos pueden emitir avisos a la bandeja de notificaciones del Core:
+---
+
+### 3.7. Emisión de Notificaciones y Alertas a Windows
+Los módulos pueden emitir avisos a la campana del Core y al Centro de Actividades de Windows 10/11:
 ```javascript
 if (typeof addSystemNotification === 'function') {
   addSystemNotification(
-    'Alerta de Memoria',
-    'El consumo de memoria superó el 90%.',
+    'Alerta de Rendimiento',
+    'El consumo de recursos superó el 85%.',
     'warning',
-    'modules'
+    'modules' // Categoría
   );
 }
 ```

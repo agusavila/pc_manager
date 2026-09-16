@@ -173,5 +173,7 @@ Get-ChildItem -Path "src" -Recurse -Filter "*.js" | Select-String -Pattern "C:\\
 
 ## 6. Documentación Complementaria de Módulos
 
-Para consultar la guía exhaustiva de programación de extensiones, formato `.pcm`, consumo de APIs de la carcasa, ciclo de vida y ejemplos de código, consulte el [Manual del Desarrollador: Sistema de Módulos](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md).
+Para consultar la documentación técnica completa del sistema de módulos en sus dos vertientes:
+- **Para Desarrolladores**: [Manual del Desarrollador: Sistema de Módulos](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md).
+- **Para Modelos de IA**: [Especificación para IA: Sistema Modular](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md).
 
