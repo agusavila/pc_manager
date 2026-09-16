@@ -1865,28 +1865,16 @@
             </div>
 
             <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">
-              El grupo <strong>"General"</strong> es predeterminado e inborrable. Los módulos sin grupo asignado o cuyos grupos personalizados sean eliminados se agruparán automáticamente en "General". Los grupos vacíos se ocultan automáticamente del menú lateral.
+              El grupo <strong>"General"</strong> es predeterminado e inborrable. Los módulos sin grupo asignado o cuyos grupos personalizados sean eliminados se agruparán automáticamente en "General". Los grupos vacíos se ocultan automáticamente del menú lateral. Puedes reordenar, renombrar grupos y asignar o mover módulos entre grupos libremente.
             </p>
 
-            <div id="groups-list" style="display: flex; flex-direction: column; gap: 8px;">
-              <!-- Grupo General Inmutable -->
-              <div class="group-row">
-                <div>
-                  <strong style="font-size: 13.5px;">General</strong>
-                  <div style="font-size: 11px; color: var(--text-muted);" id="group-general-count">0 módulos asignados</div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="group-pill-system">PREDETERMINADO</span>
-                  <button class="btn-icon" style="cursor: not-allowed; opacity: 0.4;" title="Inborrable por directiva del sistema">
-                    <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  </button>
-                </div>
-              </div>
+            <div id="groups-list" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Los grupos del sistema se inyectan dinámicamente con opciones de orden, edición y módulos asignados -->
             </div>
 
             <!-- Crear Grupo -->
-            <div style="display: flex; gap: 8px; margin-top: 14px;">
-              <input type="text" id="new-group-name" class="form-control" placeholder="Nombre de nuevo grupo..." style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box;">
+            <div style="display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-subtle);">
+              <input type="text" id="new-group-name" class="form-control" placeholder="Nombre de nuevo grupo..." style="flex: 1; padding: 8px 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box;" onkeydown="if(event.key==='Enter') createGroup()">
               <button class="btn btn-primary" onclick="createGroup()">Crear Grupo</button>
             </div>
           </div>
@@ -2634,6 +2622,12 @@
 
       const activeTab = document.getElementById('manager-tab-' + tabId);
       if (activeTab) activeTab.classList.remove('hidden');
+
+      if (tabId === 'groups') {
+        renderModuleGroupsManagerUI();
+      } else if (tabId === 'installed') {
+        renderInstalledModulesGroupSelectors();
+      }
     }
 
     // 5. GESTIÓN E INSTALACIÓN DE PAQUETES .PCM (DYNAMIC EXTENSIBILITY)
@@ -3789,6 +3783,13 @@
       }
       modCard.style.opacity = isActive ? '1' : '0.65';
 
+      const defaultGroup = manifest.group || DEFAULT_MODULE_GROUP;
+      if (!moduleGroupsState.groups.includes(defaultGroup)) {
+        moduleGroupsState.groups.push(defaultGroup);
+        persistModuleGroupsState();
+      }
+      const assignedGroup = getModuleGroup(manifest.id);
+
       modCard.innerHTML = `
         <div style="display: flex; gap: 14px; align-items: center;">
           <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; color: var(--accent-primary); flex-shrink: 0;">
@@ -3801,7 +3802,12 @@
               ${isUpdate ? '<span class="card-badge" style="color: var(--accent-primary); background: var(--accent-primary-dim);">ACTUALIZADO</span>' : ''}
             </div>
             <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${manifest.description || ''}</p>
-            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-secondary);">Grupo: ${manifest.group || 'General'}</span>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Grupo:</span>
+              <select class="form-select" id="select-group-mod-${manifest.id}" style="padding: 2px 8px; font-size: 11.5px; height: 26px; border-radius: 6px; width: auto; background: var(--bg-surface);" onchange="setModuleGroup('${manifest.id}', this.value)" title="Asignar grupo del módulo">
+                ${moduleGroupsState.groups.map(g => `<option value="${g}" ${assignedGroup === g ? 'selected' : ''}>${g}</option>`).join('')}
+              </select>
+            </div>
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 14px;">
@@ -3820,25 +3826,8 @@
       updateModuleCounts();
 
       // 3. Añadir o actualizar navegación al Sidebar bajo su grupo
-      const groupName = manifest.group || 'General';
-      ensureSidebarGroup(groupName);
-      const groupContainer = document.getElementById(`sidebar-group-items-${groupName}`);
-      if (groupContainer) {
-        let navBtn = document.getElementById(`nav-module-${manifest.id}`);
-        if (!navBtn) {
-          navBtn = document.createElement('button');
-          navBtn.className = 'nav-button';
-          navBtn.id = `nav-module-${manifest.id}`;
-          navBtn.onclick = () => switchView(`module-${manifest.id}`);
-          groupContainer.appendChild(navBtn);
-        }
-        navBtn.title = manifest.name;
-        navBtn.innerHTML = `
-          <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          <span>${manifest.name}</span>
-        `;
-        navBtn.style.display = isActive ? 'flex' : 'none';
-      }
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
 
       // 4. Inyectar vista dedicada del módulo
       if (manifest.views && manifest.views.length > 0) {
@@ -4103,12 +4092,15 @@
       }
 
       installedModules.delete(moduleId);
+      delete moduleGroupsState.moduleAssignments[moduleId];
+      persistModuleGroupsState();
       delete notificationSettings.modulePermissions[moduleId];
       saveNotificationSettingsToDisk();
       renderModuleNotificationPermissions();
       updateModuleCounts();
       updateDashboardCardsCount();
-      checkSidebarGroupsVisibility();
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
       renderDashboardCustomizationCatalog();
 
       if (installedModules.size === 0) {
@@ -4127,25 +4119,11 @@
     }
 
     function ensureSidebarGroup(groupName) {
-      let groupEl = document.getElementById(`sidebar-group-${groupName}`);
-      const emptyNotice = document.querySelector('.empty-modules-sidebar-notice');
-      if (emptyNotice) emptyNotice.style.display = 'none';
-
-      if (!groupEl) {
-        const navArea = document.getElementById('modules-nav-area');
-        groupEl = document.createElement('div');
-        groupEl.className = 'sidebar-group-box';
-        groupEl.id = `sidebar-group-${groupName}`;
-        groupEl.innerHTML = `
-          <div class="group-header" onclick="toggleSidebarGroup('${groupName}')" title="Plegar / Desplegar grupo ${groupName}">
-            <span>${groupName}</span>
-            <svg class="svg-icon group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="group-items" id="sidebar-group-items-${groupName}"></div>
-        `;
-        navArea.appendChild(groupEl);
+      if (!moduleGroupsState.groups.includes(groupName)) {
+        moduleGroupsState.groups.push(groupName);
+        persistModuleGroupsState();
       }
-      groupEl.style.display = 'block';
+      renderSidebarGroups();
     }
 
     function toggleSidebarGroup(groupName) {
@@ -4628,34 +4606,380 @@
       container.innerHTML = html;
     }
 
-    // 7. GESTOR DE GRUPOS
-    function updateGroupsBadgeCount() {
-      const rows = document.querySelectorAll('#groups-list .group-row');
+    // 7. GESTOR DE GRUPOS DE MÓDULOS (CORE-MODULAR)
+    const DEFAULT_MODULE_GROUP = 'General';
+    let moduleGroupsState = {
+      groups: [DEFAULT_MODULE_GROUP],
+      moduleAssignments: {} // moduleId -> groupName
+    };
+
+    function getModuleGroup(moduleId) {
+      if (moduleGroupsState.moduleAssignments && moduleGroupsState.moduleAssignments[moduleId]) {
+        const assigned = moduleGroupsState.moduleAssignments[moduleId];
+        if (moduleGroupsState.groups.includes(assigned)) {
+          return assigned;
+        }
+      }
+      const mod = installedModules.get(moduleId);
+      if (mod && mod.manifest && mod.manifest.group) {
+        if (moduleGroupsState.groups.includes(mod.manifest.group)) {
+          return mod.manifest.group;
+        }
+      }
+      return DEFAULT_MODULE_GROUP;
+    }
+
+    async function loadModuleGroupsState() {
+      let saved = null;
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        try {
+          const res = await invokeFn('get_saved_settings', { moduleId: 'core_groups' });
+          if (res && res.state) {
+            saved = typeof res.state === 'string' ? JSON.parse(res.state) : res.state;
+          }
+        } catch(e) {
+          console.warn('Error al cargar estado de grupos desde disco:', e);
+        }
+      }
+      if (!saved) {
+        try {
+          const local = localStorage.getItem('pcm_module_groups_state');
+          if (local) saved = JSON.parse(local);
+        } catch(e) {}
+      }
+
+      if (saved && Array.isArray(saved.groups) && saved.groups.length > 0) {
+        moduleGroupsState.groups = saved.groups;
+        if (saved.moduleAssignments && typeof saved.moduleAssignments === 'object') {
+          moduleGroupsState.moduleAssignments = saved.moduleAssignments;
+        }
+      }
+
+      // El grupo 'General' es canónico, predeterminado e inborrable (Regla 3)
+      if (!moduleGroupsState.groups.includes(DEFAULT_MODULE_GROUP)) {
+        moduleGroupsState.groups.unshift(DEFAULT_MODULE_GROUP);
+      }
+    }
+
+    function persistModuleGroupsState() {
+      try {
+        localStorage.setItem('pcm_module_groups_state', JSON.stringify(moduleGroupsState));
+      } catch(e) {}
+
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        invokeFn('save_module_setting', {
+          moduleId: 'core_groups',
+          optionId: 'state',
+          value: JSON.stringify(moduleGroupsState)
+        }).catch(e => console.warn(e));
+      }
+    }
+
+    function renderSidebarGroups() {
+      const navArea = document.getElementById('modules-nav-area');
+      if (!navArea) return;
+
+      const emptyNotice = document.querySelector('.empty-modules-sidebar-notice');
+      if (emptyNotice) emptyNotice.style.display = 'none';
+
+      // 1. Crear u ordenar contenedores de grupo en el Sidebar según moduleGroupsState.groups
+      moduleGroupsState.groups.forEach(groupName => {
+        let groupEl = document.getElementById(`sidebar-group-${groupName}`);
+        if (!groupEl) {
+          groupEl = document.createElement('div');
+          groupEl.className = 'sidebar-group-box';
+          groupEl.id = `sidebar-group-${groupName}`;
+          groupEl.innerHTML = `
+            <div class="group-header" onclick="toggleSidebarGroup('${groupName}')" title="Plegar / Desplegar grupo ${groupName}">
+              <span>${groupName}</span>
+              <svg class="svg-icon group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="group-items" id="sidebar-group-items-${groupName}"></div>
+          `;
+        }
+        navArea.appendChild(groupEl);
+      });
+
+      // 2. Eliminar del sidebar cualquier contenedor de grupo que ya no exista
+      navArea.querySelectorAll('.sidebar-group-box').forEach(el => {
+        const gName = el.id.replace('sidebar-group-', '');
+        if (!moduleGroupsState.groups.includes(gName)) {
+          el.remove();
+        }
+      });
+
+      // 3. Posicionar botones de módulos instalados en sus grupos asignados
+      installedModules.forEach((mod, modId) => {
+        const assignedGroup = getModuleGroup(modId);
+        const groupContainer = document.getElementById(`sidebar-group-items-${assignedGroup}`);
+        if (groupContainer) {
+          let navBtn = document.getElementById(`nav-module-${modId}`);
+          if (!navBtn) {
+            navBtn = document.createElement('button');
+            navBtn.className = 'nav-button';
+            navBtn.id = `nav-module-${modId}`;
+            navBtn.onclick = () => switchView(`module-${modId}`);
+            navBtn.title = mod.manifest.name;
+            navBtn.innerHTML = `
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>${mod.manifest.name}</span>
+            `;
+          }
+          groupContainer.appendChild(navBtn);
+          navBtn.style.display = mod.active ? 'flex' : 'none';
+        }
+      });
+
+      checkSidebarGroupsVisibility();
+    }
+
+    function renderInstalledModulesGroupSelectors() {
+      installedModules.forEach((mod, modId) => {
+        const selectEl = document.getElementById(`select-group-mod-${modId}`);
+        if (selectEl) {
+          const current = getModuleGroup(modId);
+          selectEl.innerHTML = moduleGroupsState.groups.map(g => `
+            <option value="${g}" ${current === g ? 'selected' : ''}>${g}</option>
+          `).join('');
+        }
+      });
+    }
+
+    function setModuleGroup(moduleId, targetGroup) {
+      if (!moduleGroupsState.groups.includes(targetGroup)) {
+        targetGroup = DEFAULT_MODULE_GROUP;
+      }
+      moduleGroupsState.moduleAssignments[moduleId] = targetGroup;
+      persistModuleGroupsState();
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
+      renderInstalledModulesGroupSelectors();
+
+      const mod = installedModules.get(moduleId);
+      const modName = (mod && mod.manifest) ? mod.manifest.name : moduleId;
+      addSystemNotification('Módulo Reasignado', `"${modName}" asignado al grupo "${targetGroup}".`, 'info', 'modules');
+    }
+
+    function renderModuleGroupsManagerUI() {
+      const list = document.getElementById('groups-list');
       const badge = document.getElementById('tab-groups-count');
-      if (badge) badge.textContent = rows.length;
+      if (badge) badge.textContent = moduleGroupsState.groups.length;
+      if (!list) return;
+
+      list.innerHTML = moduleGroupsState.groups.map((groupName, index) => {
+        const isDefault = (groupName === DEFAULT_MODULE_GROUP);
+        const assignedModules = [];
+        installedModules.forEach((mod, modId) => {
+          if (getModuleGroup(modId) === groupName) {
+            assignedModules.push({ id: modId, name: mod.manifest.name });
+          }
+        });
+
+        const isFirst = (index === 0);
+        const isLast = (index === moduleGroupsState.groups.length - 1);
+
+        const modulesHtml = assignedModules.length > 0
+          ? `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+              ${assignedModules.map(m => `
+                <div class="group-module-pill" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 11.5px;">
+                  <span>${m.name}</span>
+                  <select class="form-select" style="padding: 1px 4px; font-size: 10.5px; height: 20px; border-radius: 4px; width: auto; background: var(--bg-elevated); border: 1px solid var(--border-subtle);" onchange="setModuleGroup('${m.id}', this.value)" title="Mover a otro grupo">
+                    ${moduleGroupsState.groups.map(g => `<option value="${g}" ${groupName === g ? 'selected' : ''}>${g}</option>`).join('')}
+                  </select>
+                </div>
+              `).join('')}
+            </div>`
+          : `<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic;">Sin módulos asignados (se oculta automáticamente del menú lateral)</div>`;
+
+        return `
+          <div class="group-row" id="group-card-${groupName}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                <div style="width: 34px; height: 34px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent-primary); flex-shrink: 0;">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div style="min-width: 0; flex: 1;" id="group-display-${groupName}">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="font-size: 14px; color: var(--text-primary);">${groupName}</strong>
+                    ${isDefault ? '<span class="group-pill-system">PREDETERMINADO</span>' : ''}
+                  </div>
+                  <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+                    ${assignedModules.length} módulo(s) asignado(s)
+                  </div>
+                </div>
+                <!-- Cuadro para renombrar inline -->
+                <div id="group-rename-box-${groupName}" style="display: none; align-items: center; gap: 6px; flex: 1;">
+                  <input type="text" id="input-rename-group-${groupName}" class="form-control" style="padding: 4px 8px; font-size: 12.5px; height: 30px; min-width: 0; flex: 1;" value="${groupName}" onkeydown="if(event.key==='Enter') saveRenameGroupInline('${groupName}')">
+                  <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11.5px;" onclick="saveRenameGroupInline('${groupName}')">Guardar</button>
+                  <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11.5px;" onclick="cancelRenameGroupInline('${groupName}')">Cancelar</button>
+                </div>
+              </div>
+
+              <!-- Acciones de orden, edición y eliminación -->
+              <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <button class="btn-icon" style="width: 30px; height: 30px; ${isFirst ? 'opacity: 0.25; cursor: not-allowed;' : ''}" title="Subir orden" onclick="${isFirst ? '' : `moveGroupUp('${groupName}')`}">
+                  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                </button>
+                <button class="btn-icon" style="width: 30px; height: 30px; ${isLast ? 'opacity: 0.25; cursor: not-allowed;' : ''}" title="Bajar orden" onclick="${isLast ? '' : `moveGroupDown('${groupName}')`}">
+                  <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                ${!isDefault ? `
+                  <button class="btn-icon" style="width: 30px; height: 30px; color: var(--accent-primary);" title="Renombrar grupo" onclick="showRenameGroupInline('${groupName}')">
+                    <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  </button>
+                  <button class="btn-icon" style="width: 30px; height: 30px; color: var(--accent-danger);" title="Eliminar grupo (reasigna a General)" onclick="deleteGroup('${groupName}')">
+                    <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
+                  </button>
+                ` : `
+                  <button class="btn-icon" style="width: 30px; height: 30px; cursor: not-allowed; opacity: 0.4;" title="Inborrable por directiva del sistema">
+                    <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  </button>
+                `}
+              </div>
+            </div>
+
+            <!-- Módulos asignados a este grupo -->
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 8px;">
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Módulos en este grupo:</div>
+              ${modulesHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function createGroup() {
       const input = document.getElementById('new-group-name');
-      const val = input.value.trim();
-      if (!val) return;
+      const val = input ? input.value.trim() : '';
+      if (!val) {
+        addSystemNotification('Nombre Inválido', 'Debe ingresar un nombre para el nuevo grupo.', 'warning', 'modules');
+        return;
+      }
 
-      const list = document.getElementById('groups-list');
-      const newRow = document.createElement('div');
-      newRow.className = 'group-row';
-      newRow.innerHTML = `
-        <div>
-          <strong style="font-size: 13.5px;">${val}</strong>
-          <div style="font-size: 11px; color: var(--text-muted);">0 módulos asignados</div>
-        </div>
-        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; color: var(--accent-danger);" onclick="this.closest('.group-row').remove(); updateGroupsBadgeCount();">
-          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg>
-          <span>Eliminar</span>
-        </button>
-      `;
-      list.appendChild(newRow);
+      if (moduleGroupsState.groups.some(g => g.toLowerCase() === val.toLowerCase())) {
+        addSystemNotification('Grupo Existente', `Ya existe un grupo llamado "${val}".`, 'warning', 'modules');
+        return;
+      }
+
+      moduleGroupsState.groups.push(val);
       input.value = '';
-      updateGroupsBadgeCount();
+      persistModuleGroupsState();
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
+      renderInstalledModulesGroupSelectors();
+      addSystemNotification('Grupo Creado', `Grupo "${val}" creado exitosamente.`, 'success', 'modules');
+    }
+
+    function showRenameGroupInline(groupName) {
+      const display = document.getElementById(`group-display-${groupName}`);
+      const renameBox = document.getElementById(`group-rename-box-${groupName}`);
+      if (display) display.style.display = 'none';
+      if (renameBox) {
+        renameBox.style.display = 'flex';
+        const input = document.getElementById(`input-rename-group-${groupName}`);
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }
+    }
+
+    function cancelRenameGroupInline(groupName) {
+      const display = document.getElementById(`group-display-${groupName}`);
+      const renameBox = document.getElementById(`group-rename-box-${groupName}`);
+      if (display) display.style.display = 'block';
+      if (renameBox) renameBox.style.display = 'none';
+    }
+
+    function saveRenameGroupInline(groupName) {
+      const input = document.getElementById(`input-rename-group-${groupName}`);
+      if (input) {
+        submitRenameGroup(groupName, input.value);
+      }
+    }
+
+    function submitRenameGroup(oldName, newName) {
+      newName = (newName || '').trim();
+      if (!newName || newName.toLowerCase() === oldName.toLowerCase()) {
+        renderModuleGroupsManagerUI();
+        return;
+      }
+      if (moduleGroupsState.groups.some(g => g.toLowerCase() === newName.toLowerCase())) {
+        addSystemNotification('Nombre Duplicado', `Ya existe un grupo llamado "${newName}".`, 'warning', 'modules');
+        renderModuleGroupsManagerUI();
+        return;
+      }
+
+      const idx = moduleGroupsState.groups.indexOf(oldName);
+      if (idx !== -1) {
+        moduleGroupsState.groups[idx] = newName;
+      }
+
+      Object.keys(moduleGroupsState.moduleAssignments).forEach(modId => {
+        if (moduleGroupsState.moduleAssignments[modId] === oldName) {
+          moduleGroupsState.moduleAssignments[modId] = newName;
+        }
+      });
+
+      persistModuleGroupsState();
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
+      renderInstalledModulesGroupSelectors();
+      addSystemNotification('Grupo Renombrado', `El grupo "${oldName}" ahora se llama "${newName}".`, 'success', 'modules');
+    }
+
+    function deleteGroup(groupName) {
+      if (groupName === DEFAULT_MODULE_GROUP) {
+        addSystemNotification('Acción No Permitida', 'El grupo "General" es predeterminado e inborrable.', 'warning', 'modules');
+        return;
+      }
+
+      if (!confirm(`¿Confirmas la eliminación del grupo "${groupName}"? Todos sus módulos se reasignarán automáticamente a "${DEFAULT_MODULE_GROUP}".`)) {
+        return;
+      }
+
+      let reassignedCount = 0;
+      installedModules.forEach((mod, modId) => {
+        if (getModuleGroup(modId) === groupName) {
+          moduleGroupsState.moduleAssignments[modId] = DEFAULT_MODULE_GROUP;
+          reassignedCount++;
+        }
+      });
+
+      moduleGroupsState.groups = moduleGroupsState.groups.filter(g => g !== groupName);
+
+      persistModuleGroupsState();
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
+      renderInstalledModulesGroupSelectors();
+      addSystemNotification('Grupo Eliminado', `El grupo "${groupName}" fue eliminado. ${reassignedCount > 0 ? `${reassignedCount} módulo(s) reasignados a "${DEFAULT_MODULE_GROUP}".` : ''}`, 'info', 'modules');
+    }
+
+    function moveGroupUp(groupName) {
+      const idx = moduleGroupsState.groups.indexOf(groupName);
+      if (idx > 0) {
+        const temp = moduleGroupsState.groups[idx - 1];
+        moduleGroupsState.groups[idx - 1] = moduleGroupsState.groups[idx];
+        moduleGroupsState.groups[idx] = temp;
+        persistModuleGroupsState();
+        renderSidebarGroups();
+        renderModuleGroupsManagerUI();
+      }
+    }
+
+    function moveGroupDown(groupName) {
+      const idx = moduleGroupsState.groups.indexOf(groupName);
+      if (idx !== -1 && idx < moduleGroupsState.groups.length - 1) {
+        const temp = moduleGroupsState.groups[idx + 1];
+        moduleGroupsState.groups[idx + 1] = moduleGroupsState.groups[idx];
+        moduleGroupsState.groups[idx] = temp;
+        persistModuleGroupsState();
+        renderSidebarGroups();
+        renderModuleGroupsManagerUI();
+      }
     }
 
     // 7.1 PESTAÑAS DE CONFIGURACIÓN (GENERAL + MÓDULOS)
@@ -4976,6 +5300,9 @@
         // 1. Cargar perfiles de dashboard primero desde disco o almacenamiento local
         await loadDashboardProfiles();
 
+        // 2. Cargar grupos de módulos y asignaciones desde disco o almacenamiento local
+        await loadModuleGroupsState();
+
         if (invokeFn) {
           const sysInfo = await invokeFn('get_system_info');
           if (sysInfo) {
@@ -5057,6 +5384,11 @@
       renderSystemNotificationEvents();
       renderModuleNotificationPermissions();
       updateNotificationBadgesAndSummaries();
+
+      // Inicializar y sincronizar grupos de módulos en el sidebar y en el gestor
+      renderSidebarGroups();
+      renderModuleGroupsManagerUI();
+      renderInstalledModulesGroupSelectors();
 
       // Inicializar notificaciones existentes y contador no leído
       document.querySelectorAll('#notif-list .notif-item').forEach(setupNotificationItem);

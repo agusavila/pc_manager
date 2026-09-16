@@ -853,6 +853,45 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-032] Gestión Integral de Grupos de Módulos: Reordenamiento, Edición/Renombrado y Asignación Dinámica de Módulos
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `Gestor de Módulos / Grupos / Sidebar (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. Los grupos de módulos en la pestaña "Grupos de Módulos" del Gestor de Módulos no permitían editar ni renombrar sus nombres.
+  2. No se permitía cambiar el orden de los grupos: el orden era rígido tanto en la lista del gestor como en el menú lateral (Sidebar).
+  3. No era posible seleccionar ni reasignar a qué grupo pertenece cada módulo instalado, ni desde la tarjeta del módulo ni desde la pestaña de grupos.
+- **Causa Raíz**: 
+  1. El sistema de grupos carecía de un modelo de estado persistente (`moduleGroupsState`), dependiendo de filas estáticas en el DOM HTML que solo permitían `.remove()` sin mecanismo de renombrado o persistencia.
+  2. `installModule` asignaba el grupo del manifiesto como texto plano estático no editable y renderizaba el botón de navegación del sidebar directamente en el primer grupo encontrado sin permitir reubicación ni alterar el orden.
+  3. No existían selectores (`<select>`) en las tarjetas de módulos instalados para conmutar su grupo en caliente, ni controles de desplazamiento arriba/abajo (`moveGroupUp`, `moveGroupDown`) en la lista de grupos.
+- **Solución Implementada**: 
+  1. **Modelo de Estado y Persistencia Integral (`moduleGroupsState`)**:
+     - Estructura con `groups: ['General', ...]` y mapa de asignaciones `moduleAssignments: { moduleId: groupName }`.
+     - Persistencia sincrónica y asincrónica en disco mediante `localStorage` (`pcm_module_groups_state`) y el comando nativo Tauri `save_module_setting` (`moduleId: 'core_groups'`, `optionId: 'state'`).
+     - Cumplimiento incondicional de la Regla 3: el grupo "General" es permanente e inborrable con insignia y candado de directiva del sistema. Al eliminar cualquier grupo personalizado, todos sus módulos se reasignan automáticamente a "General".
+  2. **Reordenamiento Dinámico de Grupos (`moveGroupUp`, `moveGroupDown`)**:
+     - Se dotó a cada tarjeta de grupo de botones con flechas SVG (`▲`, `▼`) para subir o bajar su posición en la jerarquía.
+     - `renderSidebarGroups()` sincroniza físicamente el orden de los contenedores `.sidebar-group-box` en el menú lateral conforme al orden establecido en `moduleGroupsState.groups`.
+  3. **Edición y Renombrado Inline de Grupos (`showRenameGroupInline`, `saveRenameGroupInline`)**:
+     - Se integró un formulario de edición inline por grupo con validaciones de nombre no vacío y prevención de duplicados, actualizando en caliente el nombre del grupo en el sidebar y reasignando automáticamente los módulos dependientes.
+  4. **Asignación Dinámica de Módulos a Grupos**:
+     - En cada tarjeta de módulo instalado se incorporó un selector desplegable (`<select id="select-group-mod-${id}">`) que lista dinámicamente los grupos registrados y reubica el módulo de inmediato (`setModuleGroup`) en el sidebar y en el modelo persistido.
+     - En cada tarjeta de la pestaña de grupos se muestran chips interactivos de los módulos asignados con un selector rápido para transferirlos directamente a cualquier otro grupo.
+  5. **Sincronización en Arranque**:
+     - Se cargó el estado en `DOMContentLoaded` con `await loadModuleGroupsState()`, invocando `renderSidebarGroups()`, `renderModuleGroupsManagerUI()` y `renderInstalledModulesGroupSelectors()`.
+  6. **Sincronización y Compilación**:
+     - Sincronizado en [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y verificado para compilación nativa del binario de escritorio.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
