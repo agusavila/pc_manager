@@ -226,16 +226,17 @@ window.__CLEANUP_mi_modulo__ = function() {
 
 ---
 
-### 3.6. Widgets para el Dashboard 10x10
-Los módulos pueden exportar una o más tarjetas para la cuadrícula adaptable del Dashboard:
+### 3.6. Widgets para el Dashboard Modular (Modular Tile Grid)
+Los módulos pueden exportar una o más tarjetas para la cuadrícula modular de celdas del Dashboard (`repeat(auto-fill, minmax(130px, 1fr))`, `grid-auto-rows: 90px`):
+- **Celda Base Modular**: Unidad elemental de ~130px de ancho por 90px de alto. Las tarjetas ocupan múltiplos enteros de celdas manteniendo siempre su ergonomía sin estiramientos grotescos ni compresiones destructivas.
 - **Tamaños disponibles**:
-  - `1x1`: Micro-métrica o chip de estado (min-width: 140px).
-  - `2x1`: Métrica horizontal con valor y tendencia (min-width: 220px).
-  - `2x2`: Tarjeta estándar cuadrada con gráfico o reloj (min-width: 220px).
-  - `3x2`: Métrica agrupada o gráfica de serie temporal (min-width: 300px).
-  - `4x2`: Paneles anchos de monitoreo o listas cortas (min-width: 380px).
-  - `5x2` / `5x5`: Paneles de análisis profundo o tablas (min-width: 440px).
-  - `10x2`: Banner panorámico de ancho completo.
+  - `1x1`: Micro-métrica o chip de estado compacto (1 col x 1 fila).
+  - `2x1`: Métrica horizontal con valor y tendencia (2 cols x 1 fila, ~274px ancho). Tamaño canónico por defecto.
+  - `2x2`: Tarjeta estándar cuadrada con gráfico, reloj o cronómetro (2 cols x 2 filas).
+  - `3x2`: Métrica agrupada o gráfica de serie temporal (3 cols x 2 filas, ~420px ancho).
+  - `4x2`: Paneles anchos de monitoreo o listas cortas (4 cols x 2 filas, ~560px ancho).
+  - `5x2` / `5x3`: Paneles de análisis profundo o tablas (5 cols x 2-3 filas).
+  - `banner`: Banner panorámico de ancho completo (`grid-column: 1 / -1`).
 - **Regla de Cero Recortes**: Los títulos y valores deben ser 100% legibles. Prohibido recortar textos esenciales con puntos suspensivos (`ellipsis`) dentro del cuerpo de la tarjeta.
 - **Menú Contextual Integrado**: Al hacer clic derecho sobre la tarjeta, el Core despliega opciones dinámicas: acceso a configuración del módulo (si posee `meta_options`), acceso a su pantalla principal, auto-organización de la cuadrícula y ocultamiento del widget.
 

@@ -691,7 +691,7 @@
       display: none !important;
     }
 
-    /* DASHBOARD 10x10 */
+    /* DASHBOARD MODULAR */
     .dashboard-container {
       display: flex;
       flex-direction: column;
@@ -700,10 +700,10 @@
       flex: 1;
     }
 
-    /* GRID CANÓNICA DEL DASHBOARD — 10 columnas (norma §3.6 del Manual del Desarrollador) */
+    /* CUADRÍCULA DE CELDAS MODULARES (MODULAR TILE GRID CON AUTO-FILL) */
     .grid-board {
       display: grid;
-      grid-template-columns: repeat(10, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       grid-auto-rows: 90px;
       gap: 14px;
       background-color: var(--bg-surface);
@@ -910,8 +910,8 @@
       100% { transform: scale(1); }
     }
 
-    /* VARIANTES DE TAMAÑO EN CUADRÍCULA CON MIN-WIDTH PROTECTOR */
-    .card-size-1x1 { grid-column: span 1; grid-row: span 1; min-width: 140px; padding: 10px 12px; }
+    /* TAMAÑOS MODULARES DE TARJETA (MÚLTIPLOS DE CELDA 130x90) */
+    .card-size-1x1 { grid-column: span 1; grid-row: span 1; min-width: 0; padding: 10px 12px; }
     .card-size-1x1 .card-header { margin-bottom: 4px; }
     .card-size-1x1 .card-icon-wrap { width: 22px; height: 22px; }
     .card-size-1x1 .card-icon-wrap svg { width: 13px; height: 13px; }
@@ -920,7 +920,7 @@
     .card-size-1x1 .metric-big { font-size: 18px; line-height: 1; }
     .card-size-1x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 220px; padding: 10px 14px; }
+    .card-size-2x1 { grid-column: span 2; grid-row: span 1; min-width: 0; padding: 10px 14px; }
     .card-size-2x1 .card-header { margin-bottom: 4px; }
     .card-size-2x1 .card-icon-wrap { width: 22px; height: 22px; }
     .card-size-2x1 .card-icon-wrap svg { width: 13px; height: 13px; }
@@ -928,43 +928,13 @@
     .card-size-2x1 .card-body { justify-content: center; gap: 2px; }
     .card-size-2x1 .metric-big { font-size: 19px; line-height: 1; }
     .card-size-2x1 .metric-label { font-size: 10.5px; margin-top: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 220px; }
-    .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 300px; }
-    .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 380px; }
-    .card-size-5x2 { grid-column: span 5; grid-row: span 2; min-width: 440px; }
-    .card-size-5x5 { grid-column: span 5; grid-row: span 5; min-width: 440px; }
-    .card-size-10x2 { grid-column: span 10; grid-row: span 2; min-width: 100%; }
 
-    /* ADAPTABILIDAD RESPONSIVE EN VENTANAS NO MAXIMIZADAS (MATERIAL EXPRESSIVE) */
-    @media (max-width: 1400px) {
-      .grid-board {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 12px;
-      }
-      .card-size-1x1 { grid-column: span 1; }
-      .card-size-2x1 { grid-column: span 2; }
-      .card-size-2x2 { grid-column: span 2; }
-      .card-size-3x2 { grid-column: span 3; }
-      .card-size-4x2 { grid-column: span 4; }
-      .card-size-5x2 { grid-column: span 6; }
-      .card-size-5x5 { grid-column: span 6; }
-      .card-size-10x2 { grid-column: span 6; }
-    }
-
-    @media (max-width: 1080px) {
-      .grid-board {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 10px;
-      }
-      .card-size-1x1 { grid-column: span 2; }
-      .card-size-2x1 { grid-column: span 4; }
-      .card-size-2x2 { grid-column: span 4; }
-      .card-size-3x2 { grid-column: span 4; }
-      .card-size-4x2 { grid-column: span 4; }
-      .card-size-5x2 { grid-column: span 4; }
-      .card-size-5x5 { grid-column: span 4; }
-      .card-size-10x2 { grid-column: span 4; }
-    }
+    .card-size-2x2 { grid-column: span 2; grid-row: span 2; min-width: 0; }
+    .card-size-3x2 { grid-column: span 3; grid-row: span 2; min-width: 0; }
+    .card-size-4x2 { grid-column: span 4; grid-row: span 2; min-width: 0; }
+    .card-size-5x2 { grid-column: span 5; grid-row: span 2; min-width: 0; }
+    .card-size-5x5 { grid-column: span 5; grid-row: span 5; min-width: 0; }
+    .card-size-10x2 { grid-column: 1 / -1; grid-row: span 2; min-width: 0; }
 
     /* CABECERA DE TARJETA */
     .card-header {
@@ -1775,7 +1745,7 @@
       <header class="topbar">
         <div class="topbar-title-group">
           <h2 class="topbar-view-title" id="current-view-title">Dashboard</h2>
-          <span class="topbar-view-desc" id="current-view-desc">Cuadrícula adaptable 10x10 para tarjetas y widgets del sistema.</span>
+          <span class="topbar-view-desc" id="current-view-desc">Cuadrícula modular de celdas para tarjetas y widgets del sistema.</span>
         </div>
 
         <div class="topbar-actions">
@@ -1822,7 +1792,7 @@
       <section class="view-content" id="view-dashboard">
         <div class="dashboard-container">
 
-          <!-- CUADRÍCULA 10x10 CON MENSAJE DE ONBOARDING -->
+          <!-- CUADRÍCULA MODULAR DE CELDAS CON MENSAJE DE ONBOARDING -->
           <div class="grid-board" id="grid-board">
             <div id="grid-drop-indicator" class="grid-drop-indicator" style="display: none;"></div>
             
@@ -2439,7 +2409,7 @@
     const VIEW_METADATA = {
       'dashboard': {
         title: 'Dashboard',
-        desc: 'Cuadrícula adaptable 10x10 para tarjetas y widgets del sistema.'
+        desc: 'Cuadrícula modular de celdas para tarjetas y widgets del sistema.'
       },
       'module-manager': {
         title: 'Gestor de Módulos',
@@ -2877,10 +2847,16 @@
 
     // DRAG AND DROP FLUIDO, POSICIONAMIENTO LIBRE EN CUADRÍCULA Y AUTO-ORGANIZACIÓN (MATERIAL EXPRESSIVE)
     function getGridCols() {
+      const grid = document.getElementById('grid-board');
+      if (grid) {
+        const computed = window.getComputedStyle(grid).gridTemplateColumns;
+        if (computed && computed !== 'none') {
+          const cols = computed.trim().split(/\s+/).length;
+          if (cols > 0) return cols;
+        }
+      }
       const w = window.innerWidth;
-      if (w <= 1080) return 4;
-      if (w <= 1400) return 6;
-      return 10;
+      return Math.max(1, Math.floor((w - 300) / 146));
     }
 
     function getCardSpan(card) {
@@ -3029,6 +3005,10 @@
             const relY = cardTop - boardRect.top - padTop;
 
             let targetCol = Math.round(relX / stepX) + 1;
+            // Si el cursor o la tarjeta se aproxima al borde derecho del lienzo, permitir acoplar al extremo
+            if (moveEvent.clientX >= boardRect.right - padRight - 20) {
+              targetCol = gridCols - effSpanCol + 1;
+            }
             targetCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, targetCol));
 
             let targetRow = Math.round(relY / stepY) + 1;

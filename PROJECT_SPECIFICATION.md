@@ -37,7 +37,7 @@ El proyecto cuenta con dos prototipos de referencia en la raíz del repositorio,
 ### 2.1 `core_shell.html`: La Referencia Canónica de la Carcasa Limpia (v0.0.1-alpha)
 - **Propósito**: Representa fielmente **cómo debe lucir y estar ordenada la primera versión del Core (v0.0.1-alpha) al salir de fábrica**, es decir, **completamente limpia y sin módulos instalados**.
 - **Comportamiento**:
-  - El Dashboard es una cuadrícula 10x10 limpia con su mensaje de bienvenida (*Empty State*) invitando a instalar paquetes `.pcm`.
+  - El Dashboard es una cuadrícula modular limpia con su mensaje de bienvenida (*Empty State*) invitando a instalar paquetes `.pcm`.
   - El menú lateral (sidebar) no tiene módulos cargados; muestra una notificación sutil indicando que no hay módulos activos.
   - El Gestor de Módulos muestra 0 módulos instalados y su zona dropzone vacía.
   - Toda la jerarquía visual, espaciado, colores, tipografía y disposición de componentes en esta maqueta es el modelo a seguir para el binario final de la Carcasa.
@@ -82,7 +82,7 @@ El proyecto cuenta con dos prototipos de referencia en la raíz del repositorio,
 3. **Botón de Personalización del Dashboard**:
    - Permite desplegar el panel lateral (drawer) de selección y activación de tarjetas disponibles.
 
-### 3.3 El Dashboard (Cuadrícula Adaptable 10x10)
+### 3.3 El Dashboard (Cuadrícula Modular Tile Grid)
 1. **Nombre Canónico**:
    - Se denomina estrictamente **"Dashboard"** (prohibido "Pizarra Central" u otras variantes).
 2. **Eficiencia Visual (Cero Relleno Informativo)**:

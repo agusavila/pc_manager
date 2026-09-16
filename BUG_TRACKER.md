@@ -1257,6 +1257,41 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-045] Transición Integral de Cuadrícula Teórica "10x10" a Arquitectura de Celdas Modular Tile Grid (Auto-Fill)
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `UI / Dashboard / Grid Layout & Drag and Drop (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, Documentación y Especificaciones)`
+- **Descripción del Fallo**: 
+  El concepto rígido y teórico de "10x10" columnas fijas provocaba una discordancia geométrica insalvable en pantallas intermedias, monitores verticales o ventanas no maximizadas: al dividir el lienzo en 10 columnas forzadas (~70-80px cada una), colisionaba con los `min-width` físicos de las tarjetas (`220px`), provocando que el navegador estirara asimétricamente las columnas ocupadas y aplastara las columnas vacías. Esto desincronizaba el cálculo de columnas en JavaScript (`stepX`) respecto a las columnas físicas reales del DOM, generando saltos imprecisos y anomalías al soltar las tarjetas en los bordes.
+- **Causa Raíz**: 
+  1. Uso de `repeat(10, minmax(0, 1fr))` y media queries arbitrarias que alteraban bruscamente el conteo de columnas.
+  2. `getGridCols()` utilizaba puntos de corte de ancho de ventana (`window.innerWidth`) desacoplados de la cuadrícula real computada en el contenedor.
+  3. Tamaño y espaciado de tarjetas no alineados con un sistema de celdas atómicas e invariables.
+- **Solución Implementada**: 
+  1. **Modular Tile Grid Nativo**: Se migró la cuadrícula del Dashboard a `grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));` y `grid-auto-rows: 90px; gap: 14px;`, estableciendo una celda elemental base de ~130x90px.
+  2. **Dimensionamiento Limpio de Tarjetas**: Las clases `.card-size-*` aplican `grid-column: span N` y `grid-row: span M` con `min-width: 0`, permitiendo que las tarjetas ocupen múltiplos enteros exactos de celdas sin deformarse jamás (~274px para 2x1 en cualquier pantalla o resolución).
+  3. **Sincronización Dinámica del DOM**: `getGridCols()` ahora lee directamente las columnas computadas por el navegador (`window.getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length`), asegurando precisión matemática milimétrica al arrastrar.
+  4. **Snapping Ergonómico a Bordes**: Se implementó acoplamiento asistido tanto al borde derecho (`gridCols - effSpanCol + 1`) como al borde inferior (`maxAllowedRow`) ante proximidad del puntero.
+  5. **Actualización Integral de Documentación**: Se sincronizaron la especificación maestra, manual de desarrollador, especificaciones para IA y manual de usuario.
+  6. **Exclusión Estricta de Maquetas**: Las maquetas de prototipado (`core_shell.html` e `index.html`) fueron preservadas intactas y excluidas de la operación según directiva explícita del usuario.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La transición a la cuadrícula modular de celdas resuelve de forma definitiva la física del Dashboard en cualquier relación de aspecto o resolución de pantalla sin romper ninguna funcionalidad previa, garantizando un arrastre fluido, predecible y estéticamente superior.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)
+  - [`PROJECT_SPECIFICATION.md`](file:///c:/Proyectos/pc_manager/PROJECT_SPECIFICATION.md)
+  - [`DASHBOARD_ARCHITECTURE.md`](file:///c:/Proyectos/pc_manager/DASHBOARD_ARCHITECTURE.md)
+  - [`docs/ai/MODULAR_SYSTEM_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/MODULAR_SYSTEM_AI_SPEC.md)
+  - [`docs/ai/core_ai_spec.md`](file:///c:/Proyectos/pc_manager/docs/ai/core_ai_spec.md)
+  - [`docs/user/core_user_manual.md`](file:///c:/Proyectos/pc_manager/docs/user/core_user_manual.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
