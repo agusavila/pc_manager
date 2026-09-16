@@ -65,7 +65,11 @@ La paleta prioriza un modo oscuro profundo, con niveles de elevación sutiles y 
 - **Aprovechamiento Canónico de Espacio**: El nombre de la sección o módulo activo y su descripción se presentan de forma unificada en la barra superior (`.topbar-title-group`). Queda prohibido duplicar bloques de encabezados, títulos secundarios o subtítulos dentro del cuerpo de la vista, garantizando el 100% de espacio vertical útil para el contenido operativo.
 - **Limpieza Visual Absoluta**: Prohibido incluir textos o chips decorativos e innecesarios (prohibido *"Sistema Central"*, *"Núcleo Operativo"*, contadores de *"Módulos Activos"* o botones hamburguesa redundantes en la barra).
 - **Título Canónico**: La sección principal se titula exclusivamente **"Dashboard"** (prohibido *"Pizarra Central"*).
-- **Acceso a Notificaciones**: El botón de notificaciones se ubica en la barra superior como un icono SVG pequeño y limpio (`btn-icon`), con un indicador circular rojo numérico (`.notification-counter`) para alertas no leídas.
+- **Acceso y Gestión de Notificaciones (Política Anti-Ruido y Cero Alertas Placebo)**:
+  - El botón de notificaciones se ubica en la barra superior como un icono SVG pequeño y limpio (`btn-icon`), con un indicador circular rojo numérico (`.notification-counter`) para alertas no leídas.
+  - **Prohibición Absoluta de Notificaciones Redundantes de UI**: Queda terminantemente prohibido disparar notificaciones para acciones directas del usuario donde el resultado es visible de inmediato en pantalla (cambio de tema, cambio de color de acento, alternar switches, mover sliders, cambiar o reordenar perfiles de dashboard, compactar o auto-organizar la cuadrícula).
+  - **Prohibición de Spam en el Arranque**: Queda prohibido emitir alertas rutinarias al abrir la aplicación (conexión con host nativo o restauración de módulos desde disco). La campana de notificaciones debe iniciar siempre en cero (sin encender innecesariamente el indicador rojo).
+  - **Criterio de Uso Exclusivo**: Las notificaciones del sistema se reservan estrictamente para errores reales y fallos de validación (paquetes corruptos, manifiestos ausentes, acciones bloqueadas), transacciones formales de módulos (instalación, actualización y desinstalación de paquetes .pcm) y avisos emitidos intencionalmente por extensiones operativas en segundo plano.
 
 ### 5.3. Dashboard, Drag and Drop Fluido y Auto-organización
 - Cuadrícula responsive de 10 columnas (`grid-template-columns: repeat(10, minmax(0, 1fr))`) con espaciado de `16px`.

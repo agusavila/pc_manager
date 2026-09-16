@@ -752,6 +752,31 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-028] Purga de Notificaciones Redundantes de Sistema y Establecimiento de Política Anti-Ruido
+- **Fecha**: 2026-09-15
+- **Severidad**: `Baja`
+- **Componente**: `Notificaciones / UI / Gobernanza (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)`, [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md)`)`
+- **Descripción del Fallo**: 
+  Saturación excesiva del centro de notificaciones con alertas innecesarias y redundantes. Acciones inmediatas en pantalla (como cambiar de tema, alternar paletas de acento, reordenar perfiles con flechas, compactar la cuadrícula o mover switches) generaban notificaciones irrelevantes; asimismo, el arranque normal de la aplicación disparaba alertas automáticas ("Host Nativo Conectado", "Módulos Restaurados"), encendiendo permanentemente el indicador rojo de la campana sin que hubiese ocurrido ningún evento de interés real.
+- **Causa Raíz**: 
+  Inclusión de llamadas directas a `addSystemNotification` dentro de callbacks de eventos visuales inmediatos y en el hook `DOMContentLoaded`.
+- **Solución Implementada**: 
+  1. Se eliminaron las 12 notificaciones de ruido identificadas en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) y [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html):
+     - Feedbacks visuales de UI: `Tema Visual Aplicado`, `Color de Acento Actualizado`, `Perfil Cambiado`, `Perfil Reordenado`, `Dashboard Auto-organizado`, `Auto-organización`, `Ajuste Guardado en Disco`, `Arranque del Sistema`, `Bandeja del Sistema`, `Instalación Nativa` y `Catálogo Remoto`.
+     - Spam de arranque: `Host Nativo Windows Conectado` y `Módulos Restaurados`.
+  2. Se reestructuraron las categorías operativas en `SYSTEM_NOTIFICATION_CATEGORIES` consolidando 4 grupos de valor real: Módulos, Perfiles, Integración con Windows y Seguridad.
+  3. Se formalizó la **Política Anti-Ruido y Cero Alertas Placebo** como regla estricta en [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md) (Regla 6) y [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md) (Sección 5.2), prohibiendo terminantemente generar alertas para acciones de UI cuyo resultado ya es visible en tiempo real o rutinas de arranque estándar.
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

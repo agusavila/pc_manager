@@ -2570,7 +2570,6 @@
 
         // 1. Vía Nativa Rust (Software de Escritorio)
         if (invokeFn) {
-          addSystemNotification('Instalación Nativa', `Instalando ${file.name} físicamente en el disco duro de Windows...`, 'info', 'modules');
           const packageBytes = Array.from(new Uint8Array(arrayBuffer));
           const record = await invokeFn('install_module_package', { packageBytes });
           if (record && record.manifest) {
@@ -3018,7 +3017,6 @@
         persistDashboardProfilesState();
         updateProfileSelectorsUI();
         renderDashboardCustomizationCatalog();
-        addSystemNotification('Perfil Reordenado', `Se subió la posición del perfil "${dashboardProfilesState.profiles[activeId].name}".`, 'info', 'profiles');
       }
     }
 
@@ -3035,7 +3033,6 @@
         persistDashboardProfilesState();
         updateProfileSelectorsUI();
         renderDashboardCustomizationCatalog();
-        addSystemNotification('Perfil Reordenado', `Se bajó la posición del perfil "${dashboardProfilesState.profiles[activeId].name}".`, 'info', 'profiles');
       }
     }
 
@@ -3327,8 +3324,6 @@
       await restoreDashboardLayout();
       persistDashboardProfilesState();
       renderDashboardCustomizationCatalog();
-      const profile = dashboardProfilesState.profiles[profileId];
-      addSystemNotification('Perfil Cambiado', `Se activó el perfil "${profile.name}".`, 'info', 'profiles');
     }
 
     function showNewProfilePrompt() {
@@ -3485,7 +3480,6 @@
       const grid = document.getElementById('grid-board');
       const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none');
       if (cards.length === 0) {
-        addSystemNotification('Auto-organización', 'No hay tarjetas activas en el Dashboard para auto-organizar.', 'info', 'organize');
         return;
       }
 
@@ -3526,7 +3520,6 @@
       });
 
       persistDashboardLayout();
-      addSystemNotification('Dashboard Auto-organizado', `${cards.length} tarjeta(s) compactada(s) fluidamente en la cuadrícula.`, 'success', 'organize');
     }
 
     function adjustCardsForCurrentGridCols() {
@@ -3609,7 +3602,6 @@
         if (invokeFn) {
           invokeFn('save_module_setting', { moduleId, optionId, value }).catch(e => console.warn(e));
         }
-        addSystemNotification('Ajuste Guardado en Disco', `"${optionId}" guardado en el sistema.`, 'info', 'settings');
       }
     }
 
@@ -4055,7 +4047,7 @@
     }
 
     function syncRemoteCatalog() {
-      addSystemNotification('Catálogo Remoto', 'Consultando repositorios configurados (0 fuentes registradas).', 'info', 'modules');
+      console.log('Consultando repositorios configurados (0 fuentes registradas).');
     }
 
     function addRepositorySource() {
@@ -4088,13 +4080,10 @@
 
     // 6. GESTIÓN Y PERMISOS DE NOTIFICACIONES (WINDOWS, NÚCLEO Y MÓDULOS)
     const SYSTEM_NOTIFICATION_CATEGORIES = [
-      { id: 'host', label: 'Conexión de Host y Estado Operativo', desc: 'Avisos de conexión con el host de Windows y arranque del sistema' },
       { id: 'modules', label: 'Gestión de Módulos (.pcm)', desc: 'Instalación, actualización, cambio de estado y desinstalación de extensiones' },
-      { id: 'profiles', label: 'Perfiles de Dashboard', desc: 'Creación, cambio, duplicación, renombrado y borrado de perfiles' },
-      { id: 'organize', label: 'Auto-organización de Cuadrícula', desc: 'Compactación y reubicación inteligente de widgets en el Dashboard' },
-      { id: 'settings', label: 'Configuración y Personalización', desc: 'Guardado de preferencias en disco, temas y colores semánticos' },
-      { id: 'windows_integration', label: 'Integración con Windows', desc: 'Cambios en bandeja (tray), inicio con Windows y modo servicio' },
-      { id: 'security', label: 'Seguridad y Modo Simulación', desc: 'Alertas de protección del sistema y dry-run previo' }
+      { id: 'profiles', label: 'Perfiles de Dashboard', desc: 'Creación, duplicación, renombrado o eliminación de perfiles' },
+      { id: 'windows_integration', label: 'Integración con Windows', desc: 'Modo servicio headless y detención ordenada del núcleo' },
+      { id: 'security', label: 'Seguridad y Modo Simulación', desc: 'Alertas de protección del sistema y simulación dry-run' }
     ];
 
     const notificationSettings = {
@@ -4102,11 +4091,8 @@
       windowsNativeEnabled: false,
       modulesMasterEnabled: true,
       systemEvents: {
-        host: true,
         modules: true,
         profiles: true,
-        organize: true,
-        settings: true,
         windows_integration: true,
         security: true
       },
@@ -4460,11 +4446,13 @@
 
     // 8. CICLO DE VIDA EN WINDOWS
     function toggleStartupWindows(isEnabled) {
-      addSystemNotification('Arranque del Sistema', isEnabled ? 'Inicio con Windows activado.' : 'Inicio con Windows desactivado.', 'info', 'windows_integration');
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        invokeFn('save_module_setting', { moduleId: 'core_lifecycle', optionId: 'startup_with_windows', value: isEnabled }).catch(e => console.warn(e));
+      }
     }
 
     function toggleTrayMinimize(isEnabled) {
-      addSystemNotification('Bandeja del Sistema', isEnabled ? 'Minimizar al Tray activo (predeterminado).' : 'Minimizar al Tray desactivado.', 'info', 'windows_integration');
       if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
         window.__TAURI_INTERNALS__.invoke('minimize_to_tray');
       } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
@@ -4715,8 +4703,6 @@
       for (const [prop, val] of Object.entries(preset.vars)) {
         root.style.setProperty(prop, val);
       }
-
-      addSystemNotification('Tema Visual Aplicado', `Esquema "${preset.name}" activado en caliente.`, 'info', 'settings');
     }
 
     function applyAccent(colorHex, hoverHex, dimRgba, swatchEl) {
@@ -4727,8 +4713,6 @@
       root.style.setProperty('--accent-primary', colorHex);
       root.style.setProperty('--accent-primary-hover', hoverHex);
       root.style.setProperty('--accent-primary-dim', dimRgba);
-
-      addSystemNotification('Color de Acento Actualizado', `Paleta primaria cambiada a ${colorHex}.`, 'success', 'settings');
     }
 
     // 10. INICIALIZACIÓN Y VINCULACIÓN CON HOST NATIVO TAURI (SOFTWARE DE ESCRITORIO)
@@ -4743,7 +4727,6 @@
             if (brandSpan && sysInfo.hostname) {
               brandSpan.textContent = `${sysInfo.hostname} // v${sysInfo.version}`;
             }
-            addSystemNotification('Host Nativo Windows Conectado', `${sysInfo.hostname || 'Host'} • ${sysInfo.os_name} (${sysInfo.arch}) // Core v${sysInfo.version} operacional.`, 'info', 'host');
           }
 
           // Cargar módulos previamente instalados en Windows desde disco
@@ -4792,7 +4775,6 @@
             } catch(e) {}
 
             renderDashboardCustomizationCatalog();
-            addSystemNotification('Módulos Restaurados', `${installedList.length} extensión(es) cargada(s) desde el disco duro.`, 'success', 'modules');
           }
 
           // Restaurar preferencias de notificaciones desde disco
