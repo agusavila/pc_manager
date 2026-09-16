@@ -1028,6 +1028,39 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-037] Sustitución de Selectores Nativos HTML por Comboboxes Personalizados Material Expressive en Gestión de Grupos y Opciones de Módulos
+- **Fecha**: 2026-09-16
+- **Severidad**: `Media`
+- **Componente**: `UI Design System / Material Expressive / Combobox Components (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. En el Gestor de Módulos (pestaña Grupos), el selector de reasignación de grupo en las píldoras de cada módulo (`.group-module-pill`) utilizaba un elemento `<select>` nativo de HTML. Al desplegarlo en Windows / WebView2, se abría un menú emergente tosco, gris y plano del sistema operativo, desentonando por completo con la línea de diseño Material Expressive de la aplicación.
+  2. En las tarjetas de módulos instalados (`#installed-modules-list`), el selector desplegable de asignación de grupo también empleaba un elemento `<select>` nativo.
+  3. En las opciones de configuración de módulos declaradas con `type: 'select'` dentro de `meta_options`, se utilizaba de igual manera un elemento `<select class="form-select">` nativo.
+- **Causa Raíz**: 
+  A pesar de contar con estilos CSS para `.form-select`, los elementos `<select>` en WebView2 renderizan el popup desplegable del sistema operativo Windows sin capacidad de personalización temática, transparencia de fondo ni iconografía vectorial. La arquitectura contaba con el componente canónico `.custom-combobox` para selectores del sistema (temas, presets, perfiles), pero no se había implementado una variante compacta (`.custom-combobox.combobox-sm`) para su uso en píldoras, tarjetas y opciones dinámicas.
+- **Solución Implementada**: 
+  1. **Componente `.custom-combobox.combobox-sm`**:
+     - Se crearon los estilos de combobox compacto con altura de 24px, padding proporcionado, rotación fluida de flecha chevron SVG, borde semántico interactivo, foco con anillo de acento primario y dropdown flotante con `backdrop-filter: blur(16px)`, sombras de elevación y checkmarks SVG para la opción seleccionada.
+  2. **Reemplazo en Gestor de Grupos (`renderModuleGroupsManagerUI`)**:
+     - Las píldoras `.group-module-pill` ahora integran un `.custom-combobox.combobox-sm`, invocando `toggleCombobox` y actualizando el grupo mediante `setModuleGroup` de forma totalmente armónica con el tema activo.
+  3. **Reemplazo en Módulos Instalados (`installModule` y `renderInstalledModulesGroupSelectors`)**:
+     - Se sustituyó el select nativo en las tarjetas de módulos instalados por `.custom-combobox.combobox-sm`, sincronizando en caliente el valor y las opciones dinámicas sin elementos nativos.
+  4. **Reemplazo en `meta_options` (`opt.type === 'select'`)**:
+     - Se migró el renderizado de opciones select de extensiones a `.custom-combobox`, añadiendo el manejador reactivo `selectModuleOptionCombo` y actualizando `dispatchModuleSetting` para sincronizar automáticamente el texto y la clase seleccionada tanto en eventos de usuario como en carga inicial.
+  5. **Erradicación Total de `<select>` Nativos**:
+     - La aplicación eliminó el 100% de los elementos `<select>` nativos, garantizando homogeneidad visual y cumplimiento estricto de la Regla 6.
+  6. **Sincronización y Compilación**:
+     - Sincronizado en [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y compilado el binario nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

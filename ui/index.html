@@ -1359,6 +1359,55 @@
       right: auto;
     }
 
+    /* VARIANTE COMPACTA (PARA PILLS DE GRUPOS, CHIPS Y LISTAS DE MÓDULOS) */
+    .custom-combobox.combobox-sm {
+      width: auto;
+      display: inline-block;
+      vertical-align: middle;
+      position: relative;
+    }
+
+    .custom-combobox.combobox-sm .combobox-trigger {
+      height: 24px;
+      padding: 0 8px;
+      font-size: 11.5px;
+      font-weight: 500;
+      gap: 6px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      box-sizing: border-box;
+      white-space: nowrap;
+    }
+
+    .custom-combobox.combobox-sm .combobox-trigger:hover {
+      background-color: var(--bg-elevated);
+      border-color: var(--border-focus);
+    }
+
+    .custom-combobox.combobox-sm.open .combobox-trigger {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-primary-dim);
+    }
+
+    .custom-combobox.combobox-sm .combobox-dropdown {
+      min-width: 140px;
+      width: max-content;
+      max-width: 240px;
+      left: 0;
+      right: auto;
+      z-index: 1000;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-floating);
+    }
+
+    .custom-combobox.combobox-sm .combobox-option {
+      padding: 5px 8px;
+      font-size: 11.5px;
+      border-radius: 4px;
+    }
+
     /* VISTA DE CONFIGURACIONES HOMOGÉNEA (CUADRÍCULA DE 2 COLUMNAS Y SISTEMA POR PESTAÑAS) */
     .settings-content-stack {
       display: grid;
@@ -3797,6 +3846,18 @@
         if (optEl.type === 'checkbox') optEl.checked = Boolean(value);
         else optEl.value = value;
       }
+      const valEl = document.getElementById(`val-opt-${moduleId}-${optionId}`);
+      const dropdown = document.getElementById(`dropdown-opt-${moduleId}-${optionId}`);
+      if (valEl && dropdown) {
+        const matchOpt = dropdown.querySelector(`.combobox-option[data-value="${value}"]`);
+        if (matchOpt) {
+          const textSpan = matchOpt.querySelector('span');
+          if (textSpan) valEl.textContent = textSpan.textContent;
+        }
+        dropdown.querySelectorAll('.combobox-option').forEach(opt => {
+          opt.classList.toggle('selected', opt.getAttribute('data-value') === String(value));
+        });
+      }
 
       if (syncDisk) {
         const invokeFn = getTauriInvoke();
@@ -3885,9 +3946,20 @@
             <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${manifest.description || ''}</p>
             <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
               <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Grupo:</span>
-              <select class="form-select form-select-sm" id="select-group-mod-${manifest.id}" onchange="setModuleGroup('${manifest.id}', this.value)" title="Asignar grupo del módulo">
-                ${moduleGroupsState.groups.map(g => `<option value="${g}" ${assignedGroup === g ? 'selected' : ''}>${g}</option>`).join('')}
-              </select>
+              <div class="custom-combobox combobox-sm" id="combo-mod-group-${manifest.id}">
+                <div class="combobox-trigger" onclick="toggleCombobox('combo-mod-group-${manifest.id}')" title="Asignar grupo del módulo">
+                  <span class="combobox-val" id="val-mod-group-${manifest.id}">${assignedGroup}</span>
+                  <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="combobox-dropdown" id="dropdown-mod-group-${manifest.id}">
+                  ${moduleGroupsState.groups.map(g => `
+                    <div class="combobox-option ${assignedGroup === g ? 'selected' : ''}" onclick="closeAllComboboxes(); setModuleGroup('${manifest.id}', '${g.replace(/'/g, "\\'")}')">
+                      <span>${g}</span>
+                      <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -4021,14 +4093,27 @@
                       </div>
                     `;
                   } else if (opt.type === 'select') {
+                    const defaultOpt = (opt.options || []).find(o => o.value === opt.default) || (opt.options || [])[0] || { label: '', value: '' };
                     return `
                       <div>
                         <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
                           ${opt.name}
                         </label>
-                        <select class="form-select" id="opt-${manifest.id}-${opt.id}" onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.value)">
-                          ${opt.options.map(o => `<option value="${o.value}" ${o.value === opt.default ? 'selected' : ''}>${o.label}</option>`).join('')}
-                        </select>
+                        <div class="custom-combobox" id="combo-opt-${manifest.id}-${opt.id}">
+                          <div class="combobox-trigger" onclick="toggleCombobox('combo-opt-${manifest.id}-${opt.id}')">
+                            <span class="combobox-val" id="val-opt-${manifest.id}-${opt.id}">${defaultOpt.label}</span>
+                            <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                          </div>
+                          <div class="combobox-dropdown" id="dropdown-opt-${manifest.id}-${opt.id}">
+                            ${(opt.options || []).map(o => `
+                              <div class="combobox-option ${o.value === opt.default ? 'selected' : ''}" data-value="${o.value}" onclick="selectModuleOptionCombo('${manifest.id}', '${opt.id}', '${o.value}', '${o.label.replace(/'/g, "\\'")}')">
+                                <span>${o.label}</span>
+                                <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </div>
+                            `).join('')}
+                          </div>
+                        </div>
+                        <input type="hidden" id="opt-${manifest.id}-${opt.id}" value="${defaultOpt.value}">
                         <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">${opt.desc}</div>
                       </div>
                     `;
@@ -4818,11 +4903,16 @@
 
     function renderInstalledModulesGroupSelectors() {
       installedModules.forEach((mod, modId) => {
-        const selectEl = document.getElementById(`select-group-mod-${modId}`);
-        if (selectEl) {
+        const valEl = document.getElementById(`val-mod-group-${modId}`);
+        const dropdownEl = document.getElementById(`dropdown-mod-group-${modId}`);
+        if (valEl && dropdownEl) {
           const current = getModuleGroup(modId);
-          selectEl.innerHTML = moduleGroupsState.groups.map(g => `
-            <option value="${g}" ${current === g ? 'selected' : ''}>${g}</option>
+          valEl.textContent = current;
+          dropdownEl.innerHTML = moduleGroupsState.groups.map(g => `
+            <div class="combobox-option ${current === g ? 'selected' : ''}" onclick="closeAllComboboxes(); setModuleGroup('${modId}', '${g.replace(/'/g, "\\'")}')">
+              <span>${g}</span>
+              <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
           `).join('');
         }
       });
@@ -4864,11 +4954,22 @@
         const modulesHtml = assignedModules.length > 0
           ? `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
               ${assignedModules.map(m => `
-                <div class="group-module-pill" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 11.5px;">
+                <div class="group-module-pill" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 11.5px;">
                   <span>${m.name}</span>
-                  <select class="form-select form-select-sm" onchange="setModuleGroup('${m.id}', this.value)" title="Mover a otro grupo">
-                    ${moduleGroupsState.groups.map(g => `<option value="${g}" ${groupName === g ? 'selected' : ''}>${g}</option>`).join('')}
-                  </select>
+                  <div class="custom-combobox combobox-sm" id="combo-pill-group-${m.id}">
+                    <div class="combobox-trigger" onclick="toggleCombobox('combo-pill-group-${m.id}')" title="Mover a otro grupo">
+                      <span class="combobox-val">${groupName}</span>
+                      <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="combobox-dropdown" id="dropdown-pill-group-${m.id}">
+                      ${moduleGroupsState.groups.map(g => `
+                        <div class="combobox-option ${groupName === g ? 'selected' : ''}" onclick="closeAllComboboxes(); setModuleGroup('${m.id}', '${g.replace(/'/g, "\\'")}')">
+                          <span>${g}</span>
+                          <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
                 </div>
               `).join('')}
             </div>`
@@ -5279,6 +5380,21 @@
         closeAllComboboxes();
       }
     });
+
+    function selectModuleOptionCombo(moduleId, optionId, value, label) {
+      const valEl = document.getElementById(`val-opt-${moduleId}-${optionId}`);
+      if (valEl) valEl.textContent = label;
+      const hiddenInput = document.getElementById(`opt-${moduleId}-${optionId}`);
+      if (hiddenInput) hiddenInput.value = value;
+      const dropdown = document.getElementById(`dropdown-opt-${moduleId}-${optionId}`);
+      if (dropdown) {
+        dropdown.querySelectorAll('.combobox-option').forEach(opt => {
+          opt.classList.toggle('selected', opt.getAttribute('data-value') === String(value));
+        });
+      }
+      closeAllComboboxes();
+      dispatchModuleSetting(moduleId, optionId, value);
+    }
 
     const MODE_PRESETS = {
       dark: [
