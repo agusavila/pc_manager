@@ -1,6 +1,6 @@
 [package]
 name = "pc_manager"
-version = "0.0.3"
+version = "0.0.4"
 description = "PC Manager - Software de Escritorio Core-Modular para Windows (Rust + Tauri)"
 authors = ["PC Manager Team"]
 edition = "2021"

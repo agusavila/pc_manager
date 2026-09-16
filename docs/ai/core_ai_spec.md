@@ -1,4 +1,4 @@
-# Especificación para Modelos de IA: PC Manager Core (v0.0.3-alpha)
+# Especificación para Modelos de IA: PC Manager Core (v0.0.4-alpha)
 
 Esta especificación proporciona las directivas formales, esquemas de datos, contratos IPC y restricciones que cualquier agente o modelo de IA debe respetar al generar, modificar o auditar código del Core o sus extensiones.
 
@@ -11,7 +11,7 @@ Esta especificación proporciona las directivas formales, esquemas de datos, con
 2. Registro y persistencia de módulos `.pcm` (`module_manager` en Rust y montador dinámico en JavaScript con JSZip).
 3. Publicar y consumir servicios compartidos (`ServiceRegistry`).
 4. Orquestar el centro de notificaciones (filtrado de 3 capas y notificaciones Toast nativas en Windows vía `tauri-plugin-notification`).
-5. Proveer el motor de personalización de Dashboard (cuadrícula isométrica 70x70, lienzo acotado sin estiramiento, perfiles independientes, Drag & Drop fluido y auto-organización).
+5. Proveer el motor de personalización de Dashboard (cuadrícula proporcional 12x8, residuo vertical cero, perfiles independientes, Drag & Drop fluido y auto-organización).
 6. Proveer el sistema de diseño reactivo, comboboxes Material Expressive y temas (`ThemeEngine`).
 
 > [!TIP]
