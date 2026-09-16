@@ -59,6 +59,7 @@ La paleta prioriza un modo oscuro profundo, con niveles de elevación sutiles y 
 - **Grupos de Módulos Colapsables y Auto-ocultamiento**:
   - Los grupos permiten desplegar y contraer sus módulos hijos mediante un botón/chevron interactivo.
   - **Sin prefijo redundante**: Prohibido anteponer la palabra *"Grupo:"*; se muestra directamente el nombre en mayúsculas limpias (*"GENERAL"*, *"PERIFÉRICOS"*).
+  - **Ajuste Estricto a Una Sola Línea en Sidebar**: El nombre de todo módulo o sección en los botones del menú lateral (`nav-button span`) y encabezados de grupos (`group-header span`) debe ajustarse estrictamente a una sola línea con puntos suspensivos (`text-overflow: ellipsis; white-space: nowrap; overflow: hidden;`), garantizando tooltip explicativo en hover y prohibiendo saltos de línea que rompan la simetría visual.
   - **Ocultamiento Automático de Grupos Vacíos**: Cuando un módulo es deshabilitado o desinstalado, se retira del menú. Si todos los módulos de un grupo quedan inactivos o vacíos, **el grupo completo se oculta automáticamente** de la interfaz. Al reactivar un módulo, su grupo reaparece instantáneamente.
 
 ### 5.2. Barra Superior Canónica y Acceso a Notificaciones (Topbar)
@@ -168,4 +169,9 @@ Para garantizar una estética 100% coherente e inquebrantable a lo largo de toda
 2. **Menú Contextual Canónico (Cero Menús Genéricos de Navegador)**:
    - Se intercepta el evento `contextmenu` globalmente con `e.preventDefault()` para suprimir menús genéricos de navegador.
    - Únicamente se despliega el menú contextual nativo personalizado (`.custom-context-menu`) en elementos interactivos donde aporte valor operativo (módulos en menú lateral y gestor, widgets en dashboard).
+3. **Homogeneidad de Controles de Selección y Comboboxes**:
+   - Queda terminantemente prohibido utilizar elementos `<select>` nativos del navegador sin estilizar.
+   - Todo selector debe adoptar la línea visual Material Expressive del Core:
+     - Selectores interactivos destacados: `.custom-combobox` con gatillo `.combobox-trigger`, flecha SVG `.combobox-chevron` y menú flotante `.combobox-dropdown` con sombra `--shadow-floating`.
+     - Selectores compactos e inline: `.form-select` o `.form-select-sm` con `appearance: none`, flecha SVG en `background-image`, bordes sutiles con `--border-medium`, fondo `--bg-elevated`/`--bg-surface` y foco accesible con anillo de acento primario `--accent-primary-dim`.
 

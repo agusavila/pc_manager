@@ -931,6 +931,44 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-034] Homogeneización de Comboboxes Material Expressive, Regla de Ajuste de Nombres en Sidebar a Una Sola Línea y Manual Integral del Sistema de Módulos
+- **Fecha**: 2026-09-16
+- **Severidad**: `Media`
+- **Componente**: `UI / Componentes / Combobox / Sidebar / Documentación (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)`, [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)`)`
+- **Descripción del Fallo**: 
+  1. Los selectores tipo combobox en las opciones de grupos de módulos no respetaban la línea de diseño Material Expressive de la app, mostrando bordes y flechas nativas del navegador sin coherencia estética.
+  2. Nombres largos de módulos o grupos en el menú lateral podían desbordar a múltiples líneas o alterar la simetría vertical del sidebar.
+  3. Faltaba un manual integral y unificado de desarrollo de módulos que explicara la raíz de los módulos, almacenamiento en disco en Windows, proceso de empaquetado `.pcm`, APIs utilizables de la carcasa, reglas de interfaz y código de ejemplo completo.
+- **Causa Raíz**: 
+  1. La clase `.form-select` carecía de `appearance: none`, icono SVG de flecha integrado en background y variante compacta `.form-select-sm`, dependiendo de estilos inline ad-hoc.
+  2. Los elementos `.nav-button span` y `.group-header span` no tenían aplicada la regla estricta de elipsis en una sola línea (`white-space: nowrap; text-overflow: ellipsis; overflow: hidden;`).
+  3. Ausencia del documento maestro `MODULAR_SYSTEM_MANUAL.md` enfocado en desarrolladores de extensiones.
+- **Solución Implementada**: 
+  1. **Línea de Diseño Estricta para Comboboxes y Scrollbars**:
+     - Se actualizó `.form-select` con `appearance: none`, flecha SVG semántica (`data:image/svg+xml`), padding dinámico, bordes sutiles y foco con anillo de acento primario.
+     - Se creó `.form-select.form-select-sm` para selectores en tarjetas y listas de grupos, eliminando estilos inline toscos.
+     - Se reforzó la compatibilidad estándar de scrollbars (`scrollbar-width: thin; scrollbar-color: var(--border-medium) transparent;`) en `html, *`.
+  2. **Ajuste Estricto a Una Línea en Sidebar**:
+     - Se aplicó `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;` a `.nav-button span` y `.group-header span`.
+     - Se formalizó la directiva en [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md) (Regla 6) y [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md).
+  3. **Manual Integral del Sistema de Módulos**:
+     - Se redactó el documento exhaustivo [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md) con arquitectura, raíz de almacenamiento en `%APPDATA%\pc_manager\modules\`, empaquetado `.pcm`, APIs de la carcasa (`ServiceRegistry`, EventBus, `meta_options`, cleanup, widgets), directivas de diseño y módulo de ejemplo completo (`memory-monitor`).
+  4. **Sincronización y Compilación**:
+     - Sincronizado en [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y compilado el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/ui_design_system.md`](file:///c:/Proyectos/pc_manager/.agents/rules/ui_design_system.md)
+  - [`docs/developer/MODULAR_SYSTEM_MANUAL.md`](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md)
+  - [`docs/developer/core_developer_guide.md`](file:///c:/Proyectos/pc_manager/docs/developer/core_developer_guide.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

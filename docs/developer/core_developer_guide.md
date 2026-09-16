@@ -168,3 +168,10 @@ Get-ChildItem -Path "src/core/*.js" | ForEach-Object { node --check $_.FullName 
 # Ejecutar auditoría de marca blanca
 Get-ChildItem -Path "src" -Recurse -Filter "*.js" | Select-String -Pattern "C:\\Users"
 ```
+
+---
+
+## 6. Documentación Complementaria de Módulos
+
+Para consultar la guía exhaustiva de programación de extensiones, formato `.pcm`, consumo de APIs de la carcasa, ciclo de vida y ejemplos de código, consulte el [Manual del Desarrollador: Sistema de Módulos](file:///c:/Proyectos/pc_manager/docs/developer/MODULAR_SYSTEM_MANUAL.md).
+
