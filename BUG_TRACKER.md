@@ -891,6 +891,47 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-033] Corrección de Título Canónico y Opciones Dinámicas en Menú Contextual de Widgets y Regla de Botón de Configuración en Pantalla Principal de Módulos
+- **Fecha**: 2026-09-16
+- **Severidad**: `Media`
+- **Componente**: `Dashboard / Widgets / Menú Contextual / Gobernanza de Módulos (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`, [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)`)`
+- **Descripción del Fallo**: 
+  1. El menú contextual nativo al hacer clic derecho sobre un widget del Dashboard tomaba el texto de la insignia/chip descriptivo (ej: `"24H"`, `"LISTO"`, `"EN VIVO"`) en vez del nombre real del widget.
+  2. Las opciones del menú contextual arrojaban errores de ejecución y no funcionaban: `autoOrganizeDashboardGrid` no existía (era `autoOrganizeDashboard`), `openDrawer('drawer-dashboard-custom')` no existía (era `toggleDrawer('catalog')`), y `toggleDashboardWidget` no existía (era `toggleWidgetVisibility`).
+  3. Se mostraban opciones estáticas e inexistentes en widgets que no contaban con personalización (ej. "Personalizar Widgets" indiscriminadamente en el widget de reloj).
+  4. Los módulos que añadían parámetros a Configuraciones carecían de una directiva obligatoria para proveer un botón directo de configuración en su propia pantalla principal (vista dedicada).
+- **Causa Raíz**: 
+  1. `openAppContextMenu` utilizaba `targets.gridCard.querySelector('.card-header span')`, seleccionando el primer elemento `span` dentro del encabezado que en la mayoría de widgets corresponde a insignias (`.card-badge` o `.card-chip`).
+  2. Nombres de funciones desfasadas en los atributos `onclick` del HTML generado en el menú contextual respecto a la API real del Core.
+  3. Ausencia de verificación condicional sobre las capacidades (`meta_options`, `views`) del módulo al que pertenece el widget.
+  4. Falta de estandarización en las reglas de arquitectura y scaffolding sobre el acceso directo a la configuración desde la interfaz del módulo.
+- **Solución Implementada**: 
+  1. **Resolución Canónica del Nombre del Widget**:
+     - Se indexa en caliente contra `installedModules` para recuperar el nombre exacto declarado en el manifiesto (`widget.name`). Si no se encuentra, se prioriza `h4` y se filtran expresamente elementos con clase `.card-badge` y `.card-chip`.
+  2. **Opciones Dinámicas y Funcionales**:
+     - Conexión con las funciones reales del Core: `autoOrganizeDashboard()`, `toggleDrawer('catalog')` y `toggleWidgetVisibility(cardId, false)`.
+     - Si el widget o su módulo posee `meta_options`, se expone la opción "Configuración del Widget", llevando directo a `switchView('settings')` y `switchSettingsTab('mod-' + moduleId)`. Si no posee opciones configurables, se oculta limpiamente.
+     - Si el módulo posee vista dedicada en el sidebar, se expone "Ir al Módulo" (`switchView('module-' + moduleId)`).
+  3. **Regla de Arquitectura y Botón de Configuración en Módulos**:
+     - Se incorporó la regla en [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md) (Regla 3, punto 7) y [`.agents/rules/core_modular_architecture.md`](file:///c:/Proyectos/pc_manager/.agents/rules/core_modular_architecture.md): si un módulo agrega opciones a Configuraciones, su pantalla principal debe incluir obligatoriamente un botón directo hacia su pestaña de configuración.
+     - La barra superior del Core respalda automáticamente esta navegación inyectando el botón contextual de Configuración al visualizar el módulo.
+     - Se actualizó el generador y la plantilla de `system-clock` en [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs) y se recompiló [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm).
+  4. **Sincronización y Compilación**:
+     - Sincronizado en [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y compilado el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`.agents/rules/core_modular_architecture.md`](file:///c:/Proyectos/pc_manager/.agents/rules/core_modular_architecture.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

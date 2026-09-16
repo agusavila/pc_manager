@@ -36,6 +36,7 @@ Bienvenido al espacio de trabajo de **PC Manager**. Estas directivas son de cump
   4. **Gestor de Grupos de Módulos**: Integrado canónicamente dentro del **Gestor de Módulos**. Soporta agrupación configurable de módulos, con el grupo **"General" predeterminado e inborrable**. Al eliminar cualquier grupo personalizado, sus módulos se reasignan automáticamente a "General".
   5. Bus de eventos/mensajería interna para comunicación desacoplada.
   6. Configuración centralizada y logs de auditoría.
+  7. **Acceso Obligatorio a Configuraciones desde Pantalla Principal de Módulos**: Si un módulo añade opciones o parámetros a la sección de Configuraciones (`manifest.meta_options`), su pantalla principal (vista dedicada en `manifest.views`) debe contener obligatoriamente un botón visible y estilizado de acceso a configuraciones (`btn btn-secondary` o `btn-icon`) que dirija al usuario directamente a la pestaña de configuración de ese módulo (`switchView('settings')` y `switchSettingsTab('mod-' + moduleId)`). La barra superior del Core (`top-bar`) también respalda canónicamente este acceso de forma complementaria al estar en la vista del módulo.
 - Los módulos deben poder añadirse, removerse o desactivarse sin que el Core o el resto de los módulos dejen de funcionar (salvo dependencias explícitas declaradas y validadas por el Core).
 
 ### Regla 4: Tríada de Documentación Obligatoria

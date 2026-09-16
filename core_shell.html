@@ -2353,9 +2353,23 @@
       } else if (viewId.startsWith('module-')) {
         const modId = viewId.replace('module-', '');
         const mod = installedModules.get(modId);
-        if (mod && mod.manifest && mod.manifest.topbar_actions) {
+        let actionsHtml = '';
+        if (mod && mod.manifest) {
+          if (mod.manifest.topbar_actions) {
+            actionsHtml += mod.manifest.topbar_actions;
+          }
+          if (mod.manifest.meta_options && mod.manifest.meta_options.length > 0) {
+            actionsHtml += `
+              <button class="btn btn-secondary" onclick="switchView('settings'); switchSettingsTab('mod-${modId}');" title="Configuración de ${mod.manifest.name}">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Configuración</span>
+              </button>
+            `;
+          }
+        }
+        if (actionsHtml) {
           container.style.display = 'flex';
-          container.innerHTML = mod.manifest.topbar_actions;
+          container.innerHTML = actionsHtml;
         } else {
           container.style.display = 'none';
           container.innerHTML = '';
@@ -5501,21 +5515,76 @@
           </div>
         `;
       } else if (targets.gridCard) {
-        const cardTitle = targets.gridCard.querySelector('.card-header span')?.textContent || 'Widget';
         const cardId = targets.gridCard.id;
+        let cardTitle = '';
+        let widgetModule = null;
+        let widgetObj = null;
+
+        // 1. Obtener nombre canónico y módulo padre a partir del registro de módulos instalados
+        installedModules.forEach((mod, modId) => {
+          if (mod.manifest && mod.manifest.widgets) {
+            const foundW = mod.manifest.widgets.find(w => (w.id || `card-${modId}`) === cardId);
+            if (foundW) {
+              widgetModule = mod;
+              widgetObj = foundW;
+              if (foundW.name) cardTitle = foundW.name;
+            }
+          }
+        });
+
+        // 2. Fallback: buscar título en encabezado excluyendo badges y chips
+        if (!cardTitle) {
+          const titleH4 = targets.gridCard.querySelector('.card-header h4, .card-title-box h4, .card-title, h4');
+          if (titleH4) {
+            cardTitle = titleH4.textContent.trim();
+          } else {
+            const spans = Array.from(targets.gridCard.querySelectorAll('.card-header span'));
+            const nonBadge = spans.find(s => !s.classList.contains('card-badge') && !s.classList.contains('card-chip'));
+            cardTitle = nonBadge ? nonBadge.textContent.trim() : (spans[0]?.textContent.trim() || 'Widget');
+          }
+        }
+
+        const hasSettings = widgetModule && widgetModule.manifest && widgetModule.manifest.meta_options && widgetModule.manifest.meta_options.length > 0;
+        const hasModuleView = widgetModule && widgetModule.manifest && widgetModule.manifest.views && widgetModule.manifest.views.length > 0;
 
         itemsHtml = `
-          <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 4px 8px; letter-spacing: 0.5px;">${cardTitle}</div>
-          <div class="context-menu-item" onclick="closeAppContextMenu(); autoOrganizeDashboardGrid()">
+          <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 4px 8px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cardTitle}</div>
+        `;
+
+        // Si el módulo dispone de opciones en Configuraciones, se despliega la opción de configuración
+        if (hasSettings) {
+          itemsHtml += `
+            <div class="context-menu-item" onclick="closeAppContextMenu(); switchView('settings'); switchSettingsTab('mod-${widgetModule.manifest.id}');">
+              <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>Configuración del Widget</span>
+            </div>
+          `;
+        }
+
+        if (hasModuleView) {
+          itemsHtml += `
+            <div class="context-menu-item" onclick="closeAppContextMenu(); switchView('module-${widgetModule.manifest.id}');">
+              <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>Ir al Módulo</span>
+            </div>
+          `;
+        }
+
+        if (hasSettings || hasModuleView) {
+          itemsHtml += `<div class="context-menu-separator"></div>`;
+        }
+
+        itemsHtml += `
+          <div class="context-menu-item" onclick="closeAppContextMenu(); autoOrganizeDashboard()">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             <span>Auto-organizar Cuadrícula</span>
           </div>
-          <div class="context-menu-item" onclick="closeAppContextMenu(); openDrawer('drawer-dashboard-custom')">
+          <div class="context-menu-item" onclick="closeAppContextMenu(); toggleDrawer('catalog')">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
-            <span>Personalizar Widgets</span>
+            <span>Catálogo de Widgets</span>
           </div>
           <div class="context-menu-separator"></div>
-          <div class="context-menu-item danger" onclick="closeAppContextMenu(); toggleDashboardWidget('${cardId}', false)">
+          <div class="context-menu-item danger" onclick="closeAppContextMenu(); toggleWidgetVisibility('${cardId}', false)">
             <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             <span>Ocultar Widget</span>
           </div>

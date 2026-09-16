@@ -42,6 +42,9 @@ Todo módulo debe satisfacer los siguientes requisitos:
   - `on_enable()`: Activación de tareas periódicas o escucha de eventos.
   - `on_disable()`: Limpieza de recursos, timers o descriptores abiertos.
   - `get_status()`: Estado de salud y métricas operativas del módulo.
+- **Acceso Obligatorio a Configuraciones desde Pantalla Principal**:
+  - Si un módulo declara opciones de configuración (`manifest.meta_options` o panel en Configuraciones), su pantalla principal (vista dedicada en `manifest.views`) debe incluir obligatoriamente en su cabecera o interfaz un botón estilizado (`btn btn-secondary` o `btn-icon`) que dirija al usuario directamente a la pestaña de configuración de ese módulo (`switchView('settings')` y `switchSettingsTab('mod-' + moduleId)`).
+  - La barra superior del Core (`top-bar`) inyectará de forma complementaria esta acción para garantizar navegación inmediata y sin fricciones.
 
 ---
 
