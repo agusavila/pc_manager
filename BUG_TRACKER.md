@@ -1006,6 +1006,29 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-036] Deformación Horizontal de Insignias Numéricas (Badges) y Truncamiento Indebido de "Gestor de Módulos" en el Menú Lateral
+- **Fecha**: 2026-09-16
+- **Severidad**: `Media`
+- **Componente**: `Sidebar / Navigation Layout / UI Design System (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`)`
+- **Descripción del Fallo**: 
+  1. En el menú lateral (Sidebar), las insignias numéricas (`.nav-badge`) de los botones "Dashboard" y "Gestor de Módulos" se estiraban de manera desproporcionada hacia la derecha, adoptando una forma de barra horizontal vacía.
+  2. Debido al espacio excesivo consumido por el badge estirado, el texto del botón canónico "Gestor de Módulos" quedaba comprimido y se truncaba toscamente como `"Gestor de..."`.
+- **Causa Raíz**: 
+  La regla CSS `.nav-button span` aplicada para obligar al nombre a ajustarse en una sola línea con elipsis (`white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;`) seleccionaba indiscriminadamente a todos los `span` hijos del botón. Dado que las insignias numéricas se declaran como `<span class="nav-badge">`, el badge recibió también `flex: 1`, forzándolo a crecer y ocupar el 50% del ancho del botón como flex item, dejando sin espacio al texto descriptivo.
+- **Solución Implementada**: 
+  1. **Ajuste Específico del Selector de Texto**: Se cambió el selector a `.nav-button > span:not(.nav-badge)`, asegurando que únicamente el rótulo del botón reciba `flex: 1`, `min-width: 0` y la propiedad de elipsis.
+  2. **Insignia Fija No Deformable**: Se configuró explícitamente `.nav-badge` con `flex: 0 0 auto; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1.2;`. La insignia conserva su tamaño compacto de píldora ajustada al dígito, y "Gestor de Módulos" recupera todo el ancho útil del sidebar, mostrándose completo y nítido.
+  3. **Sincronización y Compilación**: Se sincronizó [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se recompiló el ejecutable nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

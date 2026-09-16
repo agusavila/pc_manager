@@ -269,7 +269,7 @@
       border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
     }
 
-    .nav-button span {
+    .nav-button > span:not(.nav-badge) {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -286,6 +286,12 @@
       padding: 2px 7px;
       border-radius: var(--radius-pill);
       border: 1px solid var(--border-subtle);
+      flex: 0 0 auto;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.2;
     }
 
     .nav-badge.active-badge {
