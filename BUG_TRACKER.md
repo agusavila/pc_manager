@@ -1060,6 +1060,49 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-038] Corrección de Centrado y Geometría en Switches Toggle, Erradicación de Spam de Notificaciones en Arranque e Integración de Notificaciones Nativas de Windows con Tauri Plugin
+- **Fecha**: 2026-09-16
+- **Severidad**: `Alta`
+- **Componente**: `UI Design System / Switches / Notification System / Windows Toast Notifications (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`, [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`, [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)`, [`src-tauri/capabilities/default.json`](file:///c:/Proyectos/pc_manager/src-tauri/capabilities/default.json)`)`
+- **Descripción del Fallo**: 
+  1. **Descuadre en interruptores (Switches)**: El botón toggle presentaba su círculo interior (thumb blanco) visualmente caído hacia el borde inferior y asimétrico horizontalmente (3px de margen izquierdo en reposo vs 5px de margen derecho al activarse).
+  2. **Spam de notificaciones en arranque**: Cada vez que se abría la aplicación, se emitían notificaciones de "Módulo Instalado" por cada extensión persistida, violentando la política anti-ruido de la Regla 6.
+  3. **Inoperancia al desactivar notificaciones de sistema**: Al desactivar notificaciones de sistema o módulos, la configuración no se leía a tiempo durante el arranque ya que se cargaba después de restaurar los módulos desde disco.
+  4. **Fallo en notificaciones de Windows**: Al habilitar la opción de notificaciones hacia Windows, no llegaban al Centro de Actividades porque se utilizaba la Web Notification API del navegador (`new Notification`), la cual es suprimida/bloqueada en entornos de escritorio nativo Windows con WebView2.
+- **Causa Raíz**: 
+  1. En CSS, `.switch` tenía un ancho de 44px y `.slider:before` utilizaba `bottom: 3px; left: 3px; transform: translateX(18px);` sin centrado vertical porcentual, lo que en WebView2 causaba caída por redondeo de subpíxeles y un desfase de 2px respecto al margen derecho en estado activo (`42px - 37px = 5px`).
+  2. En `installModule`, la emisión de notificaciones de instalación no verificaba el parámetro `isStartup`, disparándose de manera redundante en cada inicio de la app.
+  3. En `DOMContentLoaded`, la restauración de preferencias de notificación se ejecutaba al final en lugar de antes de montar los módulos, y no contaba con sincronización bidireccional local inmediata.
+  4. En Windows nativo de escritorio, las notificaciones del Centro de Actividades requieren el uso del subsistema WinRT Toast del sistema operativo mediante Tauri IPC y no la API web del DOM.
+- **Solución Implementada**: 
+  1. **Geometría y Centrado Exacto de Switches**:
+     - Se rediseñó el CSS de `.switch` a 42px de ancho y 24px de alto.
+     - Se aplicó centrado vertical exacto al thumb con `top: 50%; transform: translateY(-50%)` y `left: 3px`.
+     - En estado `:checked`, se traslada exactamente a `transform: translate(18px, -50%)`, obteniendo 3px de separación simétrica tanto en reposo como activo en todos los lados, con sombra de elevación Material suave (`box-shadow: 0 1px 3px rgba(0,0,0,0.25)`).
+  2. **Erradicación de Notificaciones en Arranque**:
+     - Se envolvió la emisión de avisos en `installModule` con `if (!isStartup)`, erradicando por completo los avisos al arrancar el programa.
+  3. **Carga y Persistencia de Notificaciones**:
+     - Se implementó la función asíncrona `loadNotificationSettings()`, invocada al principio de `DOMContentLoaded` antes de restaurar módulos.
+     - Se añadió sincronización inmediata con `localStorage` y `save_module_setting` en Rust, actualizando también la opacidad y accesibilidad de los eventos granulares al apagar el interruptor maestro.
+  4. **Notificaciones Nativas de Windows 10/11 con Tauri Plugin**:
+     - Se incorporó `tauri-plugin-notification = "2.4.0"` y su capacidad en `src-tauri/capabilities/default.json`.
+     - Se implementó el comando de Rust `show_windows_notification` en `src-tauri/src/lib.rs` conectado a `app.notification().builder()`.
+     - En JavaScript, `dispatchWindowsNativeNotification` invoca dicho comando nativo por IPC, enviando alertas reales al Centro de Actividades de Windows con sonido y persistencia nativa.
+  5. **Sincronización y Compilación**:
+     - Se replicaron las mejoras en [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html) y se compiló el binario nativo [`pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`src-tauri/capabilities/default.json`](file:///c:/Proyectos/pc_manager/src-tauri/capabilities/default.json)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

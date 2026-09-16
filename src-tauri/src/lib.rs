@@ -9,6 +9,7 @@ use tauri::{
     AppHandle, Manager, WindowEvent,
 };
 use module_manager::InstalledModuleRecord;
+use tauri_plugin_notification::NotificationExt;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SystemInfoPayload {
@@ -96,9 +97,21 @@ fn get_dashboard_order(app: AppHandle) -> Vec<String> {
     registry.card_order
 }
 
+#[tauri::command]
+fn show_windows_notification(app: AppHandle, title: String, body: String) -> Result<(), String> {
+    app.notification()
+        .builder()
+        .title(&title)
+        .body(&body)
+        .show()
+        .map_err(|e| format!("Error al emitir notificación en Windows: {}", e))?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
         .plugin(
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Info)
@@ -115,7 +128,8 @@ pub fn run() {
             save_module_setting,
             get_saved_settings,
             save_dashboard_order,
-            get_dashboard_order
+            get_dashboard_order,
+            show_windows_notification
         ])
         .setup(|app| {
             // 1. Configuración del menú contextual nativo del Tray

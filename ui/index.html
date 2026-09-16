@@ -1175,11 +1175,11 @@
       background-position: right 8px center;
     }
 
-    /* SWITCHES */
+    /* SWITCHES (MATERIAL EXPRESSIVE - GEOMETRÍA Y CENTRADO EXACTO) */
     .switch {
       position: relative;
       display: inline-block;
-      width: 44px;
+      width: 42px;
       height: 24px;
       flex-shrink: 0;
     }
@@ -1191,7 +1191,8 @@
       background-color: var(--bg-card);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-pill);
-      transition: .2s;
+      box-sizing: border-box;
+      transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
     }
     .slider:before {
       position: absolute;
@@ -1199,17 +1200,19 @@
       height: 16px;
       width: 16px;
       left: 3px;
-      bottom: 3px;
+      top: 50%;
+      transform: translateY(-50%);
       background-color: var(--text-muted);
       border-radius: 50%;
-      transition: .2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), background-color 0.2s ease;
     }
     input:checked + .slider {
       background-color: var(--accent-primary);
       border-color: var(--accent-primary);
     }
     input:checked + .slider:before {
-      transform: translateX(18px);
+      transform: translate(18px, -50%);
       background-color: #ffffff;
     }
 
@@ -4144,10 +4147,12 @@
         toggleModuleActive(manifest.id, false, false);
       }
 
-      if (isUpdate) {
-        addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success', 'modules');
-      } else if (isActive) {
-        addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success', 'modules');
+      if (!isStartup) {
+        if (isUpdate) {
+          addSystemNotification('Módulo Actualizado', `"${manifest.name}" actualizado de v${oldVersion} a v${manifest.version}.`, 'success', 'modules');
+        } else if (isActive) {
+          addSystemNotification('Módulo Instalado', `"${manifest.name}" (v${manifest.version}) registrado y operativo.`, 'success', 'modules');
+        }
       }
     }
 
@@ -4553,20 +4558,14 @@
 
     function dispatchWindowsNativeNotification(title, text) {
       if (!notificationSettings.windowsNativeEnabled) return;
-      try {
-        if ('Notification' in window) {
-          if (Notification.permission === 'granted') {
-            new Notification(title, { body: text });
-          } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then(permission => {
-              if (permission === 'granted') {
-                new Notification(title, { body: text });
-              }
-            });
-          }
-        }
-      } catch (e) {
-        console.warn('Fallo al emitir notificación nativa de Windows:', e);
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        invokeFn('show_windows_notification', { title, body: text })
+          .catch(e => console.warn('Fallo al emitir notificación en Windows:', e));
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(title, { body: text });
+        } catch (e) {}
       }
     }
 
@@ -4626,6 +4625,11 @@
         if (chkSys) chkSys.checked = notificationSettings.systemEnabled !== false;
         const chkWin = document.getElementById('chk-notif-windows');
         if (chkWin) chkWin.checked = !!notificationSettings.windowsNativeEnabled;
+        const container = document.getElementById('settings-system-notif-events');
+        if (container) {
+          container.style.opacity = notificationSettings.systemEnabled ? '1' : '0.45';
+          container.style.pointerEvents = notificationSettings.systemEnabled ? 'auto' : 'none';
+        }
         renderSystemNotificationEvents();
         modal.style.display = 'flex';
       }
@@ -4659,6 +4663,11 @@
 
     function toggleSystemNotifPermission(enabled) {
       notificationSettings.systemEnabled = enabled;
+      const container = document.getElementById('settings-system-notif-events');
+      if (container) {
+        container.style.opacity = enabled ? '1' : '0.45';
+        container.style.pointerEvents = enabled ? 'auto' : 'none';
+      }
       saveNotificationSettingsToDisk();
       updateNotificationBadgesAndSummaries();
     }
@@ -4676,21 +4685,10 @@
 
     async function toggleWindowsNativeNotif(enabled) {
       notificationSettings.windowsNativeEnabled = enabled;
-      if (enabled) {
-        if ('Notification' in window) {
-          if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-            try {
-              const perm = await Notification.requestPermission();
-              if (perm !== 'granted') {
-                console.warn('Permiso de notificaciones del SO denegado por el usuario.');
-              }
-            } catch (e) {
-              console.warn('Error al solicitar permiso de notificaciones:', e);
-            }
-          }
-        }
-      }
       saveNotificationSettingsToDisk();
+      if (enabled) {
+        dispatchWindowsNativeNotification('PC Manager', 'Notificaciones nativas de Windows activadas.');
+      }
     }
 
     function toggleModuleNotifPermission(moduleId, enabled) {
@@ -4729,14 +4727,68 @@
       }
     }
 
+    async function loadNotificationSettings() {
+      let saved = null;
+      const invokeFn = getTauriInvoke();
+      if (invokeFn) {
+        try {
+          const res = await invokeFn('get_saved_settings', { moduleId: 'core_notifications' });
+          if (res && res.preferences) {
+            saved = typeof res.preferences === 'string' ? JSON.parse(res.preferences) : res.preferences;
+          }
+        } catch (e) {
+          console.warn('Error al cargar preferencias de notificaciones desde backend:', e);
+        }
+      }
+      if (!saved) {
+        try {
+          const local = localStorage.getItem('pcm_notification_settings');
+          if (local) saved = JSON.parse(local);
+        } catch(e) {}
+      }
+
+      if (saved && typeof saved === 'object') {
+        if (typeof saved.systemEnabled === 'boolean') notificationSettings.systemEnabled = saved.systemEnabled;
+        if (typeof saved.windowsNativeEnabled === 'boolean') notificationSettings.windowsNativeEnabled = saved.windowsNativeEnabled;
+        if (typeof saved.modulesMasterEnabled === 'boolean') notificationSettings.modulesMasterEnabled = saved.modulesMasterEnabled;
+        if (saved.systemEvents && typeof saved.systemEvents === 'object') {
+          notificationSettings.systemEvents = Object.assign(notificationSettings.systemEvents, saved.systemEvents);
+        }
+        if (saved.modulePermissions && typeof saved.modulePermissions === 'object') {
+          notificationSettings.modulePermissions = saved.modulePermissions;
+        }
+      }
+
+      const chkSys = document.getElementById('chk-notif-system');
+      if (chkSys) chkSys.checked = notificationSettings.systemEnabled !== false;
+      const chkWin = document.getElementById('chk-notif-windows');
+      if (chkWin) chkWin.checked = !!notificationSettings.windowsNativeEnabled;
+      const chkModMaster = document.getElementById('chk-notif-modules-master');
+      if (chkModMaster) chkModMaster.checked = notificationSettings.modulesMasterEnabled !== false;
+
+      const container = document.getElementById('settings-system-notif-events');
+      if (container) {
+        container.style.opacity = notificationSettings.systemEnabled ? '1' : '0.45';
+        container.style.pointerEvents = notificationSettings.systemEnabled ? 'auto' : 'none';
+      }
+
+      renderSystemNotificationEvents();
+      renderModuleNotificationPermissions();
+      updateNotificationBadgesAndSummaries();
+    }
+
     function saveNotificationSettingsToDisk() {
+      try {
+        localStorage.setItem('pcm_notification_settings', JSON.stringify(notificationSettings));
+      } catch(e) {}
+
       const invokeFn = getTauriInvoke();
       if (invokeFn) {
         invokeFn('save_module_setting', {
           moduleId: 'core_notifications',
           optionId: 'preferences',
           value: JSON.stringify(notificationSettings)
-        }).catch(e => console.warn(e));
+        }).catch(e => console.warn('Error al guardar preferencias de notificaciones:', e));
       }
     }
 
@@ -5500,6 +5552,9 @@
         // 2. Cargar grupos de módulos y asignaciones desde disco o almacenamiento local
         await loadModuleGroupsState();
 
+        // 3. Cargar preferencias y permisos de notificaciones antes de restaurar módulos
+        await loadNotificationSettings();
+
         if (invokeFn) {
           const sysInfo = await invokeFn('get_system_info');
           if (sysInfo) {
@@ -5542,36 +5597,6 @@
             await restoreDashboardLayout();
             renderDashboardCustomizationCatalog();
           }
-
-          // Restaurar preferencias de notificaciones desde disco
-          try {
-            const savedNotifs = await invokeFn('get_saved_settings', { moduleId: 'core_notifications' });
-            if (savedNotifs && savedNotifs.preferences) {
-              const parsed = typeof savedNotifs.preferences === 'string' ? JSON.parse(savedNotifs.preferences) : savedNotifs.preferences;
-              if (parsed) {
-                if (typeof parsed.systemEnabled === 'boolean') notificationSettings.systemEnabled = parsed.systemEnabled;
-                if (typeof parsed.windowsNativeEnabled === 'boolean') notificationSettings.windowsNativeEnabled = parsed.windowsNativeEnabled;
-                if (typeof parsed.modulesMasterEnabled === 'boolean') notificationSettings.modulesMasterEnabled = parsed.modulesMasterEnabled;
-                if (parsed.systemEvents && typeof parsed.systemEvents === 'object') {
-                  notificationSettings.systemEvents = Object.assign(notificationSettings.systemEvents, parsed.systemEvents);
-                }
-                if (parsed.modulePermissions) notificationSettings.modulePermissions = parsed.modulePermissions;
-              }
-            }
-          } catch (e) {
-            console.warn('No se pudieron restaurar preferencias de notificaciones:', e);
-          }
-
-          const chkSys = document.getElementById('chk-notif-system');
-          if (chkSys) chkSys.checked = notificationSettings.systemEnabled;
-          const chkWin = document.getElementById('chk-notif-windows');
-          if (chkWin) chkWin.checked = notificationSettings.windowsNativeEnabled;
-          const chkModMaster = document.getElementById('chk-notif-modules-master');
-          if (chkModMaster) chkModMaster.checked = notificationSettings.modulesMasterEnabled !== false;
-          renderSystemNotificationEvents();
-          renderModuleNotificationPermissions();
-          updateNotificationEmptyState();
-          updateNotificationBadgesAndSummaries();
         }
       } catch (err) {
         console.warn('Ejecutando en entorno webview desacoplado:', err);
