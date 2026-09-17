@@ -688,77 +688,53 @@
       position: relative;
     }
     #view-dashboard.view-content {
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      padding: 20px 24px;
+      overflow: hidden !important;
+      padding: clamp(10px, 1.5vw, 20px) clamp(14px, 2vw, 24px);
+      box-sizing: border-box;
+      height: 100%;
     }
     .hidden {
       display: none !important;
     }
 
-    /* DASHBOARD MODULAR INTELIGENTE (ALTURA UNIFORME Y SCROLL SUAVE INTEGRADO) */
+    /* DASHBOARD MODULAR INTELIGENTE (CERO SCROLL Y CAPACIDAD ESTRICTA) */
     .dashboard-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      min-height: 100%;
+      gap: clamp(8px, 1.2vw, 16px);
+      height: 100%;
+      max-height: 100%;
       flex: 1;
+      overflow: hidden !important;
       box-sizing: border-box;
     }
 
-    /* CUADRÍCULA PROPORCIONAL ADAPTATIVA (12 COLUMNAS x FILAS UNIFORMES) */
+    /* CUADRÍCULA PROPORCIONAL ADAPTATIVA (HORIZONTAL 12x6 / VERTICAL 6x12) */
     .grid-board {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      grid-template-rows: repeat(8, minmax(56px, 1fr));
-      grid-auto-rows: minmax(56px, 1fr);
-      gap: 12px;
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      gap: clamp(8px, 1vw, 12px);
       background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
-      padding: 16px;
-      min-height: 100%;
+      padding: clamp(10px, 1.2vw, 16px);
+      height: 100%;
+      max-height: 100%;
       flex: 1;
       box-sizing: border-box;
       position: relative;
       background-image: radial-gradient(var(--border-medium) 1px, transparent 1px);
       background-size: 20px 20px;
-    }
-
-    @media (max-width: 1360px) {
-      .grid-board {
-        grid-template-columns: repeat(8, minmax(0, 1fr));
-        grid-template-rows: repeat(8, minmax(56px, 1fr));
-        grid-auto-rows: minmax(56px, 1fr);
-        gap: 10px;
-      }
-    }
-
-    @media (max-width: 1080px) {
-      .grid-board {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        grid-template-rows: repeat(8, minmax(56px, 1fr));
-        grid-auto-rows: minmax(56px, 1fr);
-        gap: 10px;
-      }
+      overflow: hidden !important;
     }
 
     /* TOPOLOGÍA ADAPTATIVA PARA MONITORES Y PANTALLAS VERTICALES (PORTRAIT 9:16) */
     @media (orientation: portrait), (max-aspect-ratio: 1/1) {
       .grid-board {
         grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-        grid-template-rows: repeat(14, minmax(56px, 1fr)) !important;
-        grid-auto-rows: minmax(56px, 1fr) !important;
-        gap: 10px !important;
-      }
-    }
-
-    @media (orientation: portrait) and (max-width: 650px) {
-      .grid-board {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        grid-template-rows: repeat(14, minmax(56px, 1fr)) !important;
-        grid-auto-rows: minmax(56px, 1fr) !important;
-        gap: 8px !important;
+        grid-template-rows: repeat(12, minmax(0, 1fr)) !important;
+        gap: clamp(8px, 1vw, 10px) !important;
       }
     }
 
@@ -1163,22 +1139,23 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 8px;
+      margin-bottom: clamp(6px, 1.2cqw, 10px);
+      gap: clamp(4px, 1cqw, 8px);
+      flex-shrink: 0;
     }
 
     .card-title-box {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: clamp(4px, 1cqw, 8px);
       min-width: 0;
       flex: 1;
       overflow: hidden;
     }
 
     .card-icon-wrap {
-      width: 28px;
-      height: 28px;
+      width: clamp(20px, 2.8cqw, 28px);
+      height: clamp(20px, 2.8cqw, 28px);
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
@@ -1189,7 +1166,7 @@
     }
 
     .card-title-box h4 {
-      font-size: clamp(11.5px, 1.25vw, 13px);
+      font-size: clamp(11px, 2.2cqw, 13px);
       font-weight: 600;
       color: var(--text-primary);
       white-space: nowrap;
@@ -1199,10 +1176,14 @@
       margin: 0;
     }
 
-    /* CONTENEDOR ELÁSTICO INTERNO Y PROTECCIÓN COMPACTA (< 280px) */
+    /* CONTENEDOR ELÁSTICO INTERNO Y PROTECCIÓN COMPACTA (< 280px / < 180px) */
     .card-body {
       min-width: 0;
       box-sizing: border-box;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .card-body > div[style*="display:flex"],
@@ -1218,17 +1199,28 @@
     }
 
     @container card (max-width: 280px) {
-      .card { padding: 10px 12px; }
-      .card-header { margin-bottom: 6px; gap: 4px; }
-      .card-icon-wrap { width: 22px; height: 22px; }
-      .card-icon-wrap svg { width: 13px; height: 13px; }
+      .card { padding: 8px 10px; }
+      .card-header { margin-bottom: 4px; gap: 4px; }
+      .card-icon-wrap { width: 20px; height: 20px; }
+      .card-icon-wrap svg { width: 12px; height: 12px; }
       .card-title-box h4 { font-size: 11px; }
-      .card-badge { font-size: 9px; padding: 1px 4px; }
-      .card-body .btn { padding: 4px 6px !important; font-size: 10.5px !important; }
-      .card-body .btn svg { width: 12px !important; height: 12px !important; }
+      .card-badge { font-size: 8.5px; padding: 1px 4px; }
+      .card-body .btn { padding: 3px 5px !important; font-size: 10px !important; }
+      .card-body .btn svg { width: 11px !important; height: 11px !important; }
       .card-body > div[style*="display:flex"],
-      .card-body > div[style*="display: flex"] { gap: 4px !important; }
-      .metric-big { font-size: 20px !important; }
+      .card-body > div[style*="display: flex"] { gap: 3px !important; }
+      .metric-big { font-size: 18px !important; }
+    }
+
+    @container card (max-width: 180px) {
+      .card { padding: 6px 8px; }
+      .card-header { margin-bottom: 2px; }
+      .card-icon-wrap { width: 18px; height: 18px; }
+      .card-icon-wrap svg { width: 11px; height: 11px; }
+      .card-title-box h4 { font-size: 10px; }
+      .card-badge { display: none; }
+      .metric-big { font-size: 16px !important; }
+      .metric-label { font-size: 8.5px !important; }
     }
 
     .card-badge {
@@ -3043,11 +3035,13 @@
     function toggleWidgetVisibility(cardId, isVisible) {
       const card = document.getElementById(cardId);
       const current = getCurrentDashboardProfile();
-      current.hiddenWidgets = current.hiddenWidgets || [];
+      let hiddenIds = getActiveProfileHidden(current);
+      let layout = getActiveProfileLayout(current);
 
       if (!isVisible) {
-        if (!current.hiddenWidgets.includes(cardId)) {
-          current.hiddenWidgets.push(cardId);
+        if (!hiddenIds.includes(cardId)) {
+          hiddenIds.push(cardId);
+          setActiveProfileHidden(current, hiddenIds);
         }
         if (card) {
           card.style.display = 'none';
@@ -3056,19 +3050,21 @@
           card.style.gridColumn = '';
           card.style.gridRow = '';
         }
-        if (current.layout && current.layout[cardId]) {
-          delete current.layout[cardId];
+        if (layout && layout[cardId]) {
+          delete layout[cardId];
+          setActiveProfileLayout(current, layout);
         }
       } else {
-        // VERIFICACIÓN ESTRICTA DE CAPACIDAD: Impedir caos y solapamientos si no cabe
+        // VERIFICACIÓN ESTRICTA DE CAPACIDAD: Impedir caos y desbordes si no cabe en el lienzo fijo
         if (card) {
           const { spanCol, spanRow } = getCardSpan(card);
           const fits = canWidgetFitOnDashboard(spanCol, spanRow, cardId);
           if (!fits) {
             renderDashboardCustomizationCatalog();
+            const orientLabel = isPortraitOrientation() ? 'Vertical (6×12)' : 'Horizontal (12×6)';
             addSystemNotification(
               'Espacio Insuficiente',
-              `El widget requiere ${spanCol}×${spanRow} celdas libres. No cabe en el espacio disponible del Dashboard.`,
+              `El widget requiere ${spanCol}×${spanRow} celdas libres continuas. No cabe en el espacio disponible del Dashboard ${orientLabel}.`,
               'warning',
               'dashboard'
             );
@@ -3076,7 +3072,8 @@
           }
         }
 
-        current.hiddenWidgets = current.hiddenWidgets.filter(id => id !== cardId);
+        hiddenIds = hiddenIds.filter(id => id !== cardId);
+        setActiveProfileHidden(current, hiddenIds);
         if (card) {
           card.style.display = 'flex';
           delete card.dataset.col;
@@ -3219,69 +3216,69 @@
       }
     }
 
-    // DRAG AND DROP FLUIDO, POSICIONAMIENTO EN CUADRÍCULA PROPORCIONAL Y RESPONSIVE
+    // DRAG AND DROP FLUIDO, MATRIZ DUAL (12x6 HORIZONTAL / 6x12 VERTICAL) Y CERO SCROLL
     function isPortraitOrientation() {
       return window.innerHeight > window.innerWidth;
     }
 
-    function getGridCols() {
-      const grid = document.getElementById('grid-board');
-      if (grid) {
-        const computed = window.getComputedStyle(grid).gridTemplateColumns;
-        if (computed && computed !== 'none') {
-          const cols = computed.trim().split(/\s+/).length;
-          if (cols > 0) return cols;
-        }
-      }
+    function getActiveProfileLayout(profile) {
+      if (!profile) return {};
       if (isPortraitOrientation()) {
-        return window.innerWidth <= 650 ? 4 : 6;
+        return profile.layout_portrait || profile.layout || {};
+      } else {
+        return profile.layout_landscape || profile.layout || {};
       }
-      const w = window.innerWidth;
-      if (w <= 1080) return 6;
-      if (w <= 1360) return 8;
-      return 12;
+    }
+
+    function setActiveProfileLayout(profile, layout) {
+      if (!profile) return;
+      if (isPortraitOrientation()) {
+        profile.layout_portrait = layout;
+      } else {
+        profile.layout_landscape = layout;
+      }
+      profile.layout = layout; // Compatibilidad retroactiva
+    }
+
+    function getActiveProfileHidden(profile) {
+      if (!profile) return [];
+      if (isPortraitOrientation()) {
+        return profile.hidden_portrait || profile.hiddenWidgets || [];
+      } else {
+        return profile.hidden_landscape || profile.hiddenWidgets || [];
+      }
+    }
+
+    function setActiveProfileHidden(profile, hiddenList) {
+      if (!profile) return;
+      if (isPortraitOrientation()) {
+        profile.hidden_portrait = hiddenList;
+      } else {
+        profile.hidden_landscape = hiddenList;
+      }
+      profile.hiddenWidgets = hiddenList; // Compatibilidad retroactiva
+    }
+
+    function getGridCols() {
+      return isPortraitOrientation() ? 6 : 12;
     }
 
     function getMaxVisibleRows() {
-      let highestOccupied = isPortraitOrientation() ? 14 : 8;
-      const grid = document.getElementById('grid-board');
-      if (grid) {
-        const cards = grid.querySelectorAll('.card');
-        cards.forEach(c => {
-          if (c.style.display !== 'none') {
-            const r = parseInt(c.dataset.row || '0', 10);
-            if (r > 0) {
-              const { spanRow } = getCardSpan(c);
-              if (r + spanRow - 1 > highestOccupied) {
-                highestOccupied = r + spanRow - 1;
-              }
-            }
-          }
-        });
-        const current = getCurrentDashboardProfile();
-        if (current && current.layout) {
-          Object.keys(current.layout).forEach(id => {
-            const pos = current.layout[id];
-            if (pos && pos.row) {
-              const card = document.getElementById(id);
-              const { spanRow } = card ? getCardSpan(card) : { spanRow: 2 };
-              if (pos.row + spanRow - 1 > highestOccupied) {
-                highestOccupied = pos.row + spanRow - 1;
-              }
-            }
-          });
-        }
-      }
-      return highestOccupied;
+      return isPortraitOrientation() ? 12 : 6;
     }
 
     function getCardSpan(card) {
       if (card.classList.contains('card-size-banner')) {
-        return { spanCol: 12, spanRow: 2 };
+        return { spanCol: isPortraitOrientation() ? 6 : 12, spanRow: 2 };
       }
       const match = card.className.match(/card-size-(\d+)x(\d+)/);
       if (match) {
-        return { spanCol: parseInt(match[1], 10), spanRow: parseInt(match[2], 10) };
+        let col = parseInt(match[1], 10);
+        let row = parseInt(match[2], 10);
+        if (isPortraitOrientation() && col > 6) {
+          col = 6;
+        }
+        return { spanCol: col, spanRow: row };
       }
       return { spanCol: 3, spanRow: 2 };
     }
@@ -3289,11 +3286,10 @@
     function findNextFreeSlot(gridCols, spanCol, spanRow, occupiedMatrix) {
       const maxVisibleRows = getMaxVisibleRows();
       const effSpanCol = Math.min(spanCol, gridCols);
-      const searchLimit = Math.max(24, maxVisibleRows + 6);
-      if (effSpanCol > gridCols) {
+      if (effSpanCol > gridCols || spanRow > maxVisibleRows) {
         return null;
       }
-      for (let row = 1; row <= searchLimit - spanRow + 1; row++) {
+      for (let row = 1; row <= maxVisibleRows - spanRow + 1; row++) {
         for (let col = 1; col <= gridCols - effSpanCol + 1; col++) {
           let canFit = true;
           for (let r = row; r < row + spanRow; r++) {
@@ -3317,11 +3313,12 @@
       const grid = document.getElementById('grid-board');
       if (!grid) return true;
       const gridCols = getGridCols();
+      const maxRows = getMaxVisibleRows();
       const effSpanCol = Math.min(spanCol, gridCols);
-      if (effSpanCol > gridCols) return false;
+      if (effSpanCol > gridCols || spanRow > maxRows) return false;
 
       const current = getCurrentDashboardProfile();
-      const layout = current ? current.layout || {} : {};
+      const layout = getActiveProfileLayout(current);
       const occupied = {};
       const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none' && c.id !== excludeCardId);
       cards.forEach(c => {
@@ -3418,18 +3415,7 @@
               clone.style.top = `${moveEvent.clientY - grabOffsetY}px`;
             }
 
-            // Auto-scroll controlado en el contenedor del Dashboard cuando desborda en altura
-            const viewContent = document.getElementById('view-dashboard');
-            if (viewContent && viewContent.scrollHeight > viewContent.clientHeight + 10) {
-              const viewRect = viewContent.getBoundingClientRect();
-              if (moveEvent.clientY > viewRect.bottom - 50 && viewContent.scrollTop < viewContent.scrollHeight - viewContent.clientHeight - 5) {
-                viewContent.scrollTop += 8;
-              } else if (moveEvent.clientY < viewRect.top + 50 && viewContent.scrollTop > 5) {
-                viewContent.scrollTop -= 8;
-              }
-            }
-
-            // Calcular columna y fila objetivo en la cuadrícula proporcional
+            // Calcular columna y fila objetivo en la cuadrícula fija proporcional
             const boardRect = grid.getBoundingClientRect();
             const gridCols = getGridCols();
             const maxVisibleRows = getMaxVisibleRows();
@@ -3450,8 +3436,8 @@
             const stepX = colWidth + gap;
             const stepY = rowHeight + gap;
 
-            // Determinar límite estricto de fila: permitir colocar en filas activas o hasta 2 filas de expansión
-            const maxAllowedRow = Math.max(1, (maxVisibleRows + 2) - effSpanRow + 1);
+            // Determinar límite estricto de fila: jamás exceder la cuadrícula visible (cero scroll)
+            const maxAllowedRow = Math.max(1, maxVisibleRows - effSpanRow + 1);
 
             const cardLeft = moveEvent.clientX - grabOffsetX;
             const cardTop = moveEvent.clientY - grabOffsetY;
@@ -3907,7 +3893,7 @@
 
       cards.forEach(card => {
         order.push(card.id);
-        // Solo persistir coordenadas de tarjetas VISIBLES válidas en este perfil
+        // Solo persistir coordenadas de tarjetas VISIBLES válidas en este perfil y orientación
         if (card.style.display !== 'none' && card.dataset.col && card.dataset.row) {
           layout[card.id] = {
             col: parseInt(card.dataset.col, 10),
@@ -3916,7 +3902,7 @@
         }
       });
 
-      current.layout = layout;
+      setActiveProfileLayout(current, layout);
 
       try {
         if (current.id === DEFAULT_DASHBOARD_PROFILE_ID) {
@@ -3937,7 +3923,7 @@
       if (dashboardView && dashboardView.classList.contains('hidden')) return;
 
       const current = getCurrentDashboardProfile();
-      let layout = current.layout || {};
+      let layout = getActiveProfileLayout(current);
 
       // Fallback retroactivo SOLO si es el perfil predeterminado y está completamente vacío al inicio
       if (current.id === DEFAULT_DASHBOARD_PROFILE_ID && Object.keys(layout).length === 0) {
@@ -3953,8 +3939,8 @@
       const gridCols = getGridCols();
       const occupiedMatrix = {};
 
-      // 0. Reseteo universal estricto de coordenadas y aplicación de visibilidad
-      const hiddenIds = current.hiddenWidgets || [];
+      // 0. Reseteo universal estricto de coordenadas y aplicación de visibilidad según la orientación activa
+      const hiddenIds = getActiveProfileHidden(current);
       cards.forEach(card => {
         delete card.dataset.col;
         delete card.dataset.row;
@@ -3971,7 +3957,6 @@
       const visibleCards = cards.filter(c => c.style.display !== 'none');
 
       // Ordenar visibleCards por posición guardada previa (fila, columna)
-      // para que las tarjetas superiores tomen sus celdas primero de manera predecible y determinista
       visibleCards.sort((a, b) => {
         const hasA = layout && layout[a.id] && layout[a.id].row && layout[a.id].col;
         const hasB = layout && layout[b.id] && layout[b.id].row && layout[b.id].col;
@@ -4039,11 +4024,14 @@
             delete card.dataset.row;
             card.style.gridColumn = '';
             card.style.gridRow = '';
-            if (!current.hiddenWidgets.includes(card.id)) {
-              current.hiddenWidgets.push(card.id);
+            let curHidden = getActiveProfileHidden(current);
+            if (!curHidden.includes(card.id)) {
+              curHidden.push(card.id);
+              setActiveProfileHidden(current, curHidden);
             }
-            if (current.layout && current.layout[card.id]) {
-              delete current.layout[card.id];
+            if (layout && layout[card.id]) {
+              delete layout[card.id];
+              setActiveProfileLayout(current, layout);
             }
           }
         }
@@ -4074,11 +4062,14 @@
             delete card.dataset.row;
             card.style.gridColumn = '';
             card.style.gridRow = '';
-            if (!current.hiddenWidgets.includes(card.id)) {
-              current.hiddenWidgets.push(card.id);
+            let curHidden = getActiveProfileHidden(current);
+            if (!curHidden.includes(card.id)) {
+              curHidden.push(card.id);
+              setActiveProfileHidden(current, curHidden);
             }
-            if (current.layout && current.layout[card.id]) {
-              delete current.layout[card.id];
+            if (layout && layout[card.id]) {
+              delete layout[card.id];
+              setActiveProfileLayout(current, layout);
             }
           }
         }
@@ -4094,7 +4085,7 @@
           };
         }
       });
-      current.layout = cleanLayout;
+      setActiveProfileLayout(current, cleanLayout);
       persistDashboardProfilesState();
 
       // Actualizar conteo y estado empty
@@ -4183,7 +4174,11 @@
         id,
         name,
         layout: {},
-        hiddenWidgets: allWidgetIds
+        hiddenWidgets: [...allWidgetIds],
+        layout_landscape: {},
+        layout_portrait: {},
+        hidden_landscape: [...allWidgetIds],
+        hidden_portrait: [...allWidgetIds]
       };
       if (!dashboardProfilesState.profileOrder || !Array.isArray(dashboardProfilesState.profileOrder)) {
         dashboardProfilesState.profileOrder = [DEFAULT_DASHBOARD_PROFILE_ID];
@@ -4258,7 +4253,11 @@
         id,
         name,
         layout: JSON.parse(JSON.stringify(current.layout || {})),
-        hiddenWidgets: [...(current.hiddenWidgets || [])]
+        hiddenWidgets: [...(current.hiddenWidgets || [])],
+        layout_landscape: JSON.parse(JSON.stringify(current.layout_landscape || current.layout || {})),
+        layout_portrait: JSON.parse(JSON.stringify(current.layout_portrait || current.layout || {})),
+        hidden_landscape: [...(current.hidden_landscape || current.hiddenWidgets || [])],
+        hidden_portrait: [...(current.hidden_portrait || current.hiddenWidgets || [])]
       };
       if (!dashboardProfilesState.profileOrder || !Array.isArray(dashboardProfilesState.profileOrder)) {
         dashboardProfilesState.profileOrder = [DEFAULT_DASHBOARD_PROFILE_ID];
@@ -4355,11 +4354,15 @@
           card.style.gridColumn = '';
           card.style.gridRow = '';
           if (current) {
-            if (!current.hiddenWidgets.includes(card.id)) {
-              current.hiddenWidgets.push(card.id);
+            let curHidden = getActiveProfileHidden(current);
+            if (!curHidden.includes(card.id)) {
+              curHidden.push(card.id);
+              setActiveProfileHidden(current, curHidden);
             }
-            if (current.layout && current.layout[card.id]) {
-              delete current.layout[card.id];
+            let curLayout = getActiveProfileLayout(current);
+            if (curLayout && curLayout[card.id]) {
+              delete curLayout[card.id];
+              setActiveProfileLayout(current, curLayout);
             }
           }
         }
@@ -4378,29 +4381,27 @@
       if (!grid) return;
       const gridCols = getGridCols();
       const current = getCurrentDashboardProfile();
-      const hiddenIds = current ? current.hiddenWidgets || [] : [];
-      // Evaluar todas las tarjetas que no estén explícitamente ocultadas por el usuario en el perfil
+      const hiddenIds = getActiveProfileHidden(current);
+      const layout = getActiveProfileLayout(current);
       const cards = Array.from(grid.querySelectorAll('.card')).filter(c => !hiddenIds.includes(c.id));
 
-      // Restaurar visibilidad inicial para re-evaluar si caben en la resolución actual
       cards.forEach(c => {
         c.style.display = 'flex';
       });
 
-      // Ordenar por fila y columna original guardada en dataset o layout
       cards.sort((a, b) => {
-        const rA = parseInt(a.dataset.row || (current.layout && current.layout[a.id] ? current.layout[a.id].row : '1'), 10);
-        const rB = parseInt(b.dataset.row || (current.layout && current.layout[b.id] ? current.layout[b.id].row : '1'), 10);
+        const rA = parseInt(a.dataset.row || (layout && layout[a.id] ? layout[a.id].row : '1'), 10);
+        const rB = parseInt(b.dataset.row || (layout && layout[b.id] ? layout[b.id].row : '1'), 10);
         if (rA !== rB) return rA - rB;
-        const cA = parseInt(a.dataset.col || (current.layout && current.layout[a.id] ? current.layout[a.id].col : '1'), 10);
-        const cB = parseInt(b.dataset.col || (current.layout && current.layout[b.id] ? current.layout[b.id].col : '1'), 10);
+        const cA = parseInt(a.dataset.col || (layout && layout[a.id] ? layout[a.id].col : '1'), 10);
+        const cB = parseInt(b.dataset.col || (layout && layout[b.id] ? layout[b.id].col : '1'), 10);
         return cA - cB;
       });
 
       const occupied = {};
       cards.forEach(card => {
-        const baseCol = parseInt(card.dataset.col || (current.layout && current.layout[card.id] ? current.layout[card.id].col : '0'), 10);
-        const baseRow = parseInt(card.dataset.row || (current.layout && current.layout[card.id] ? current.layout[card.id].row : '0'), 10);
+        const baseCol = parseInt(card.dataset.col || (layout && layout[card.id] ? layout[card.id].col : '0'), 10);
+        const baseRow = parseInt(card.dataset.row || (layout && layout[card.id] ? layout[card.id].row : '0'), 10);
         if (baseCol > 0 && baseRow > 0) {
           const { spanCol, spanRow } = getCardSpan(card);
           const effSpanCol = Math.min(spanCol, gridCols);
@@ -4433,8 +4434,6 @@
           }
 
           if (displayCol && displayRow) {
-            // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización
-            // SIN sobrescribir dataset.col ni dataset.row para que al maximizar vuelva limpiamente a su celda original.
             card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
             card.style.gridRow = `${displayRow} / span ${spanRow}`;
 
@@ -4445,14 +4444,31 @@
               }
             }
           } else {
-            // Si en resolución reducida no cabe sin colisionar, ocultar temporalmente sin superponer
             card.style.display = 'none';
           }
         }
       });
     }
 
-    window.addEventListener('resize', adjustCardsForCurrentGridCols);
+    let lastKnownOrientation = isPortraitOrientation();
+    window.addEventListener('resize', () => {
+      const currentOrientation = isPortraitOrientation();
+      if (currentOrientation !== lastKnownOrientation) {
+        lastKnownOrientation = currentOrientation;
+        // Cambio de orientación física (Horizontal <-> Vertical): Conmutar limpiamente al layout guardado respectivo
+        const grid = document.getElementById('grid-board');
+        if (grid) {
+          grid.querySelectorAll('.card').forEach(c => {
+            delete c.dataset.col;
+            delete c.dataset.row;
+          });
+        }
+        restoreDashboardLayout();
+        renderDashboardCustomizationCatalog();
+      } else {
+        adjustCardsForCurrentGridCols();
+      }
+    });
 
     function dispatchModuleSetting(moduleId, optionId, value, syncDisk = true) {
       const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');

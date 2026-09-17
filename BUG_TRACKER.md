@@ -1556,6 +1556,51 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-054] - Dashboard Dual Kiosk (12x6 Horizontal y 6x12 Vertical) con Cero Scroll, Capacidad Estricta ("Si no cabe, no entra") y Escalado Elástico Multi-Resolución
+- **Fecha**: 17/09/2026
+- **Módulo**: UI / Dashboard / Layout Engine (`ui/index.html`, `src-tauri/tauri.conf.json`)
+- **Severidad**: Alta
+- **Descripción**: 
+  1. La introducción de desplazamiento vertical (scrolling) en BUG-053 permitía que el Dashboard se extendiera indefinidamente en altura al arrastrar o activar widgets, violando el principio de diseño de Pizarra / Kiosk de pantalla completa donde todas las métricas deben ser visibles de un vistazo.
+  2. En resoluciones compactas (720p / 768p / laptops), el intento previo de forzar 8 filas sin scroll provocaba compresión y deformación geométrica en las tarjetas de las filas inferiores, ya que las tarjetas superiores consumían la altura vertical disponible.
+  3. No existía separación entre los layouts en orientación apaisada (Horizontal) y orientación vertical (Portrait): al rotar la pantalla o cambiar de factor de forma, las tarjetas mantenían sus coordenadas fijas provocando superposiciones o colisiones artificiales.
+- **Causa Raíz**:
+  1. *Falta de desacoplamiento de orientación*: Tanto en horizontal como en vertical se compartía el mismo objeto `layout` de 12 columnas, lo que en pantallas verticales (ej. 1080x1920) forzaba a comprimir 12 columnas en un ancho estrecho.
+  2. *Definición de 8 filas en horizontal*: En monitores 720p/768p, una cuadrícula de 8 filas asigna menos de 65px por fila, insuficiente para alojar cabeceras y métricas con tipografías fijas en px, provocando que las tarjetas superiores expandieran sus celdas a costa de las inferiores.
+  3. *Inexistencia de control estricto de capacidad ("Si no cabe, no entra")*: El sistema permitía agregar o arrastrar widgets fuera de los límites de filas visibles (`1..maxVisibleRows`), generando o bien scrollbars o bien aplastamiento.
+- **Solución Implementada**:
+  1. **Modelo Zero-Scroll Kiosk Puro (`overflow: hidden`)**:
+     - Se restableció `overflow: hidden !important;` en `#view-dashboard.view-content`, `.dashboard-container` y `.grid-board`. El Dashboard nunca hace scrolling vertical ni horizontal.
+  2. **Arquitectura Dual de Cuadrícula Desacoplada**:
+     - **Modo Horizontal / Apaisado**: Cuadrícula canónica fija de **12 columnas × 6 filas** (`repeat(12, minmax(0, 1fr))` y `repeat(6, minmax(0, 1fr))`). Con 6 filas en lugar de 8, cada celda cuenta con altura y proporciones ergonómicas holgadas incluso en monitores 720p/768p.
+     - **Modo Vertical / Portrait**: Cuadrícula canónica fija de **6 columnas × 12 filas** (`repeat(6, minmax(0, 1fr))` y `repeat(12, minmax(0, 1fr))`), adaptada ergonómicamente a la verticalidad.
+     - Se desacopló el almacenamiento de perfiles: cada perfil almacena independientemente `layout_landscape`, `layout_portrait`, `hidden_landscape` y `hidden_portrait` (con migración retrocompatible transparente de `layout` previo).
+     - Se añadió detección automática del cambio de orientación (`resize`) para conmutar dinámicamente entre el layout apaisado y vertical sin alterar las posiciones personalizadas del usuario en cada vista.
+  3. **Arranque Maximizado por Defecto**:
+     - Se configuró `"maximized": true` en `src-tauri/tauri.conf.json` para garantizar que la aplicación de escritorio se inicie aprovechando todo el lienzo de trabajo.
+  4. **Escalado Elástico y Adaptabilidad Multi-Resolución (Container Queries & `clamp()`)**:
+     - Se implementaron Container Queries `@container card (max-width: 280px)` y `@container card (max-width: 180px)` en conjunto con `clamp()` para padding, tamaños de fuente de títulos, métricas y badges.
+     - En resoluciones menores (720p/768p) o celdas compactas, los contenidos se escalan proporcionalmente de manera elástica sin que ningún texto se corte, desborde o deforme.
+  5. **Política Estricta de Admisión y Capacidad ("Si no cabe, no entra")**:
+     - `getGridCols()` devuelve 12 en horizontal y 6 en vertical.
+     - `getMaxVisibleRows()` devuelve 6 en horizontal y 12 en vertical de forma inmutable.
+     - `findNextFreeSlot()` limita su búsqueda estrictamente a `[1..gridCols]` y `[1..maxVisibleRows]`. Si no existe un hueco continuo de celdas libres dentro de ese marco, devuelve `null`.
+     - `canWidgetFitOnDashboard()` e interruptores del Drawer: si un widget no cabe en el lienzo visible, no se permite su activación, el switch se mantiene apagado y se muestra una notificación toast formal explicando que no hay espacio suficiente en el Dashboard.
+     - `makeCardDraggable`: el arrastre está acotado matemáticamente a las filas visibles (`Math.min(maxAllowedRow, ...)`), sin desplazamiento ni expansión del lienzo.
+  6. **Compilación Nativa de Escritorio**:
+     - Binario nativo compilado con éxito mediante `cargo build` en `src-tauri` (`src-tauri/target/debug/pc_manager.exe`).
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La reestructuración de la cuadrícula a 12x6 / 6x12 y la reimposición de `overflow: hidden` fue expresamente solicitada y aprobada por el usuario en el plan de implementación para restaurar la naturaleza Kiosk de pantalla completa. Se preservaron intactas todas las funciones de perfiles, drag & drop, catálogo drawer, switches y temas, sin regresiones visuales ni funcionales.
+- **Archivos Afectados**:
+  - [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
