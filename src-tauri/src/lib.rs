@@ -108,6 +108,75 @@ fn show_windows_notification(app: AppHandle, title: String, body: String) -> Res
     Ok(())
 }
 
+fn base64_encode_bytes(data: &[u8]) -> String {
+    const B64_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity((data.len() + 2) / 3 * 4);
+    for chunk in data.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = if chunk.len() > 1 { chunk[1] as u32 } else { 0 };
+        let b2 = if chunk.len() > 2 { chunk[2] as u32 } else { 0 };
+        let triple = (b0 << 16) | (b1 << 8) | b2;
+        out.push(B64_CHARS[((triple >> 18) & 0x3F) as usize] as char);
+        out.push(B64_CHARS[((triple >> 12) & 0x3F) as usize] as char);
+        if chunk.len() > 1 {
+            out.push(B64_CHARS[((triple >> 6) & 0x3F) as usize] as char);
+        } else {
+            out.push('=');
+        }
+        if chunk.len() > 2 {
+            out.push(B64_CHARS[(triple & 0x3F) as usize] as char);
+        } else {
+            out.push('=');
+        }
+    }
+    out
+}
+
+#[tauri::command]
+fn get_disk_telemetry() -> Result<Value, String> {
+    let script = r#"
+$disks = @(Get-PhysicalDisk | Select-Object DeviceId, FriendlyName, Model, SerialNumber, MediaType, BusType, Size, HealthStatus, OperationalStatus)
+$parts = @(Get-Partition | Select-Object DiskNumber, PartitionNumber, DriveLetter, Size)
+$vols = @(Get-Volume | Select-Object DriveLetter, FileSystemLabel, FileSystem, HealthStatus, SizeRemaining, Size)
+$events = @(Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName=@('disk','Ntfs'); Id=7,55,98} -MaxEvents 15 -ErrorAction SilentlyContinue | Select-Object TimeCreated, Id, ProviderName, Message)
+
+[PSCustomObject]@{
+    disks = $disks
+    partitions = $parts
+    volumes = $vols
+    events = $events
+} | ConvertTo-Json -Depth 4
+"#;
+
+    let utf16: Vec<u16> = script.encode_utf16().collect();
+    let mut bytes = Vec::with_capacity(utf16.len() * 2);
+    for u in utf16 {
+        bytes.extend_from_slice(&u.to_le_bytes());
+    }
+    let encoded = base64_encode_bytes(&bytes);
+
+    let mut cmd = std::process::Command::new("powershell");
+    cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", &encoded]);
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    let output = cmd.output().map_err(|e| format!("Error al ejecutar telemetría de almacenamiento: {}", e))?;
+    if !output.status.success() {
+        let err = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Fallo en comando de telemetría de almacenamiento: {}", err));
+    }
+
+    let json_str = String::from_utf8_lossy(&output.stdout);
+    let val: Value = serde_json::from_str(&json_str)
+        .map_err(|e| format!("Error al deserializar telemetría de disco: {}. Salida: {}", e, json_str))?;
+    Ok(val)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -129,7 +198,8 @@ pub fn run() {
             get_saved_settings,
             save_dashboard_order,
             get_dashboard_order,
-            show_windows_notification
+            show_windows_notification,
+            get_disk_telemetry
         ])
         .setup(|app| {
             // 1. Configuración del menú contextual nativo del Tray

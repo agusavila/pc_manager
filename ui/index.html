@@ -108,6 +108,8 @@
     .svg-icon-sm { width: 15px; height: 15px; stroke-width: 2; }
     .svg-icon-lg { width: 22px; height: 22px; }
     .svg-icon-xl { width: 42px; height: 42px; stroke-width: 1.5; }
+    @keyframes spinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .rotating { animation: spinAnim 0.8s linear infinite; }
 
     /* LAYOUT PRINCIPAL */
     .app-shell {
