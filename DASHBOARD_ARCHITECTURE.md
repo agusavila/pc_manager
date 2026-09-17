@@ -405,6 +405,14 @@ Para prevenir el desplazamiento infinito cuando existen decenas de widgets insta
 - Cada grupo funciona como un **acordeón colapsable por defecto**, mostrando el icono del módulo, el total de widgets disponibles y cuántos están activos en el perfil actual.
 - El usuario puede desplegar únicamente los módulos que desea configurar, manteniendo el drawer limpio y organizado.
 
+### 8.5 Protocolo Anti-Superposición Universal y Limpieza Determinista
+
+Para garantizar el cumplimiento de la **Regla 7 (Cero Solapamientos)** bajo cualquier circunstancia o densidad de tarjetas:
+1. **Contención en Drag & Drop**: Al arrastrar y soltar un widget grande (ej. banner de 12x2), las tarjetas desplazadas buscan celdas libres hacia abajo. Si una tarjeta desplazada (ej. tarjeta vertical 3x4) no encuentra celda disponible (`slot === null`), se oculta inmediatamente de la vista (`style.display = 'none'`), se limpian sus coordenadas, se registra en `current.hiddenWidgets` y se elimina de `current.layout`.
+2. **Determinismo en Auto-organización**: En `autoOrganizeDashboard()`, toda tarjeta que no quepa en la cuadrícula compactada es automáticamente ocultada y purgada del layout para impedir que conserve coordenadas colisionadas.
+3. **Reconstrucción Limpia en Persistencia**: `persistDashboardLayout()` y `restoreDashboardLayout()` reconstruyen el objeto de distribución desde cero conteniendo exclusivamente las tarjetas que permanecen visibles y con coordenadas válidas, erradicando entradas huérfanas o fantasma.
+4. **Ordenamiento por Coordenadas Previas**: `restoreDashboardLayout()` ordena las tarjetas visibles por fila y columna antes de verificar colisiones, garantizando que las tarjetas superiores reclamen sus celdas de forma estable y predecible.
+
 ---
 
 ## 9. Capa de Persistencia Dual (IPC Rust + LocalStorage)

@@ -1501,6 +1501,35 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-052] - Superposición de Tarjetas (Widget Banner y Widget 3x4) por Omisión de Ocultamiento en Desplazamiento y Auto-organización
+- **Fecha**: 17/09/2026
+- **Módulo**: UI / Dashboard / Layout Engine (`ui/index.html`)
+- **Severidad**: Crítica
+- **Descripción**: Al ubicar o auto-organizar tarjetas en un Dashboard con alta ocupación, el widget `Widget Banner` (12x2) y la tarjeta vertical `Widget 3x4` (3x4) aparecían montados exactamente en la misma celda de inicio (`col: 1, row: 5`). El banner cubría las dos primeras filas de la tarjeta 3x4, sobresaliendo únicamente las dos filas inferiores de esta última, violando la directiva estricta de cero solapamientos.
+- **Causa Raíz**:
+  1. *Falta de rama de fallo en `autoOrganizeDashboard()`*: Cuando `findNextFreeSlot()` devolvía `null` (al no haber 4 filas contiguas libres para la tarjeta 3x4 tras ubicar el banner en las filas 5-6 de 8 totales), la función no ejecutaba ninguna acción. La tarjeta 3x4 retenía sus coordenadas originales (`col: 1, row: 5`) y su visibilidad en `display: flex`. Inmediatamente después, `persistDashboardLayout()` leía ambas tarjetas visibles y guardaba `{ col: 1, row: 5 }` para ambas en `current.layout` y localStorage.
+  2. *Desplazamiento huérfano en Drag & Drop `onPointerUp`*: Al arrastrar el banner a la fila 5 col 1, las tarjetas restantes colisionadas eran reubicadas. Si la tarjeta desplazada (3x4) no hallaba celda libre hacia abajo (`slot === null`), no se ocultaba de la vista ni se limpiaban sus estilos en línea, quedando montada sobre el banner y persistiendo ambas coordenadas idénticas.
+  3. *Corrupción de coordenadas en `canWidgetFitOnDashboard()`*: La función utilizaba el operador `parseInt(c.dataset.col || '1', 10)`, asignando artificialmente la celda `(1, 1)` a cualquier tarjeta visible que aún no tuviera coordenadas en su dataset, alterando el mapa de ocupación e induciendo falsos positivos de capacidad al activar widgets desde el catálogo.
+  4. *Orden arbitrario del DOM en `restoreDashboardLayout()`*: Las tarjetas visibles se iteraban en el orden de los elementos en el DOM en lugar de su posición previa `(row, col)`. Si una tarjeta inferior se procesaba antes que una superior, desplazaba o bloqueaba a la superior forzándola a colisionar. Asimismo, las tarjetas colisionadas sin celda libre no eran eliminadas de `current.layout`, preservando las coordenadas corruptas en futuros inicios.
+  5. *Persistencia con residuo en `persistDashboardLayout()`*: Inicializaba `const layout = current.layout || {}`, conservando entradas de tarjetas previamente ocultas o eliminadas (ghost coordinates).
+  6. *Brute-force en `toggleModuleActive()`*: Al conmutar el estado del módulo, forzaba `card.style.display = isActive ? 'flex' : 'none'` en todos los widgets del paquete sin verificar si estaban en `hiddenWidgets` ni validar la capacidad en cuadrícula ni llamar a `restoreDashboardLayout()`.
+- **Solución Implementada**:
+  1. **Ocultamiento seguro y limpieza en `autoOrganizeDashboard()`**: Si una tarjeta no cabe en la cuadrícula al auto-organizar (`slot === null`), se oculta de inmediato (`style.display = 'none'`), se limpian sus propiedades `dataset.col`, `dataset.row`, `style.gridColumn`, `style.gridRow`, se registra en `current.hiddenWidgets` y se elimina de `current.layout`.
+  2. **Contención estricta en Drag & Drop `onPointerUp`**: Cuando una tarjeta desplazada colisiona y no dispone de slot libre para ser reubicada, se oculta limpiamente de la cuadrícula, se añade a `hiddenWidgets`, se purga de `layout` y se actualiza el catálogo del drawer.
+  3. **Inspección fidedigna en `canWidgetFitOnDashboard()`**: Se sustituyó el fallback arbitrario por una comprobación rigurosa de coordenadas confirmadas tanto en `dataset` como en `layout`, ignorando tarjetas no ubicadas y evitando contaminar la celda `(1, 1)`.
+  4. **Ordenamiento por coordenadas en `restoreDashboardLayout()`**: Se ordenan las tarjetas visibles por `(layout.row, layout.col)` antes del paso 1, garantizando que las tarjetas superiores y prioritarias reclamen sus celdas de forma predecible y determinista. Cualquier tarjeta que colisione y no halle celda libre se purga de `current.layout` y se oculta.
+  5. **Reconstrucción limpia en `persistDashboardLayout()`**: Se reconstruye el objeto `layout` desde cero conteniendo exclusivamente las tarjetas que permanecen visibles y con coordenadas válidas, erradicando claves huérfanas.
+  6. **Respeto a perfiles en `toggleModuleActive()`**: Al conmutar módulos, se limpia el layout si se desactiva y se respeta la lista de `hiddenWidgets` de cada perfil al reactivarse, sincronizando mediante `restoreDashboardLayout()`.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La intervención en `autoOrganizeDashboard()`, `onPointerUp`, `persistDashboardLayout()`, `restoreDashboardLayout()` y `canWidgetFitOnDashboard()` fue estrictamente requerida para erradicar las superposiciones espaciales entre el banner y widgets de gran escala como 3x4. Se preservó intacto el comportamiento no destructivo, la ergonomía de arrastre y soltado, y la adaptabilidad responsive.
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
