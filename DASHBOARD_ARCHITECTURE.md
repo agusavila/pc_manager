@@ -319,6 +319,19 @@ Para prevenir el desorden, colisiones destructivas y redimensionamientos involun
 
 ---
 
+### 2.5 Protocolo Anti-Superposición y Aislamiento de Fondo
+
+Para erradicar la superposición de widgets al instalar módulos o cambiar de resolución:
+
+1. **Aislamiento de Vista Oculta**: La función `restoreDashboardLayout()` y `adjustCardsForCurrentGridCols()` abortan inmediatamente si `#view-dashboard` tiene la clase `.hidden`. Ninguna operación de fondo (ej. instalación de paquetes `.pcm` en el Gestor de Módulos) puede ejecutar cálculos espaciales ni alterar el Dashboard mientras está invisible.
+2. **Renderizado Just-in-Time**: Al conmutar al Dashboard (`switchView('dashboard')`), la clase `.hidden` se retira primero y el layout se restaura sobre la cuadrícula visible con dimensiones calculadas 100% reales.
+3. **Garantía Cero Superposiciones**: Si una tarjeta colisiona y `findNextFreeSlot()` no halla celdas libres, `displayCol` y `displayRow` se anulan (`null`), impidiendo categóricamente colocar una tarjeta sobre otra. La tarjeta excedente se oculta de forma segura (`style.display = 'none'` y registro en `hiddenWidgets`).
+4. **Reseteo Universal de Coordenadas**: Antes de asignar celdas, se eliminan incondicionalmente `dataset.col`, `dataset.row`, `style.gridColumn` y `style.gridRow` de todas las tarjetas.
+5. **Preservación No Destructiva del Layout Maestro**: Las coordenadas maestras en `current.layout` solo se modifican ante acciones directas del usuario (arrastre en `pointerup`, auto-organización o activación desde el Drawer), impidiendo que resoluciones reducidas o grids temporales corrompan el diseño guardado.
+6. **Sandboxing de Módulos Recién Instalados**: Al instalar o actualizar un paquete `.pcm`, todos sus widgets inician estrictamente ocultos (`style.display = 'none'`) en `hiddenWidgets`, evitando que irrumpan en la pantalla sin consentimiento del usuario.
+
+---
+
 ## 7. Adaptación Responsiva No Destructiva
 
 Uno de los problemas más críticos en interfaces de cuadrícula libre es la pérdida de diseño cuando el usuario desmaximiza o redimensiona la ventana hacia anchos menores.

@@ -1471,6 +1471,37 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-051] Superposición y solapamiento de widgets existentes en el Dashboard al instalar módulos .pcm
+
+- **Fecha**: 2026-09-16
+- **Módulo**: Core Dashboard / Module Manager
+- **Severidad**: Alta
+- **Descripción**: Al instalar un paquete de módulo (.pcm) desde el Gestor de Módulos, las tarjetas y widgets que el usuario ya tenía configurados y activos en el Dashboard se superponían y solapaban unas sobre otras, corrompiendo el diseño y montando múltiples tarjetas en las mismas coordenadas de la cuadrícula.
+- **Causa Raíz**:
+  1. *Invocación prematura en vista oculta*: `handlePcmPackage()` ejecutaba `await restoreDashboardLayout()` mientras el usuario se encontraba en la vista del Gestor de Módulos (`#view-module-manager`). Como `#view-dashboard` poseía la clase `.hidden` (`display: none !important`), `#grid-board` no disponía de propiedades de grid calculadas por el motor de renderizado (`getComputedStyle` devolvía `'none'`).
+  2. *Cálculo degradado por fallback de ventana*: Al fallar el cómputo del grid, `getGridCols()` recurría al fallback de ancho de ventana, calculando 8 columnas (para 1180px) o 6 columnas (en vertical) en lugar de las 12 columnas apaisadas. Esto forzaba a recortar y comprimir hacia la izquierda todas las tarjetas con columna base superior a 5 o 3, provocando colisiones artificiales.
+  3. *Fallback defectuoso ante colisión*: En `restoreDashboardLayout()` y `adjustCardsForCurrentGridCols()`, cuando una tarjeta colisionaba (`collides === true`) y `findNextFreeSlot()` no hallaba celdas libres disponibles, `displayCol` y `displayRow` no se anulaban; permanecían con las coordenadas colisionadas y la tarjeta se posicionaba exactamente en la misma celda de su vecina (`style.gridColumn = displayCol / span ...`).
+  4. *Sobrescritura destructiva del layout maestro*: El paso 3 de `restoreDashboardLayout()` sobrescribía `current.layout` con las posiciones colisionadas y degradadas a 8 o 6 columnas y las persistía en disco mediante `persistDashboardProfilesState()`, destruyendo de forma irreversible el diseño original del usuario.
+  5. *Coordenadas sucias en `dataset.col`*: Al no limpiarse universalmente `dataset.col` al iniciar el layout, tarjetas visibles omitidas en el paso 1 no eran procesadas por el paso 2 y no se registraban en `occupiedMatrix`, permitiendo que otras tarjetas ocuparan sus mismas celdas.
+  6. *Fuga de widgets en reinstalación*: `installModule()` no forzaba el estado oculto en todos los widgets de un módulo instalado o actualizado, inyectándolos en el Dashboard si tenían alguna referencia previa en `layout`.
+- **Solución Implementada**:
+  1. Se eliminó la llamada a `restoreDashboardLayout()` de `handlePcmPackage()`, garantizando que la instalación de extensiones en segundo plano nunca altere la cuadrícula del Dashboard.
+  2. Se incorporó una guarda estricta de vista oculta en `restoreDashboardLayout()` y `adjustCardsForCurrentGridCols()` para abortar inmediatamente si `#view-dashboard` tiene la clase `.hidden`.
+  3. Se conectó `restoreDashboardLayout()` en `switchView('dashboard')` para que el renderizado de la cuadrícula solo se ejecute cuando la vista es visible y las columnas computadas son 100% reales y fidedignas.
+  4. Se implementó el protocolo **Anti-Superimposition**: si una tarjeta colisiona y no existe ninguna celda libre en la cuadrícula, `displayCol` y `displayRow` se anulan (`null`), impidiendo categóricamente que dos tarjetas compartan la misma celda. La tarjeta excedente se oculta de forma segura (`style.display = 'none'` y registro en `hiddenWidgets`).
+  5. Se estableció el reseteo universal incondicional de `dataset.col`, `dataset.row`, `style.gridColumn` y `style.gridRow` para todas las tarjetas al inicio de `restoreDashboardLayout()`.
+  6. Se eliminó la sobrescritura destructiva de `current.layout` en `restoreDashboardLayout()`, preservando las posiciones maestras originales y registrando únicamente tarjetas nuevas que carecían de coordenadas previas.
+  7. Se reforzó `installModule()` para que ante cualquier instalación o actualización (`!isStartup`), todos los widgets del paquete inicien estrictamente ocultos (`style.display = 'none'`) en `hiddenWidgets`, requiriendo su activación explícita desde el Drawer.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La intervención en `restoreDashboardLayout()` y `installModule()` fue indispensable para erradicar el solapamiento de tarjetas y evitar la corrupción irreversible del layout del usuario al instalar módulos. Se preservaron intactas todas las capacidades de drag & drop, cambio de perfiles y auto-organización, validando que no existan regresiones estéticas ni funcionales.
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

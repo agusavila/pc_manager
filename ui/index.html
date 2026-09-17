@@ -2692,6 +2692,11 @@
 
       currentView = viewId;
       updateTopbarContextualActions(viewId);
+
+      // Si se ingresa al Dashboard, restaurar el layout sobre la cuadrícula ahora visible
+      if (viewId === 'dashboard') {
+        restoreDashboardLayout();
+      }
     }
 
     // ACCIONES CONTEXTUALES DINÁMICAS EN LA BARRA SUPERIOR
@@ -3101,10 +3106,6 @@
       renderDashboardCustomizationCatalog();
     }
 
-    function closeAllDrawers() {
-      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
-      document.getElementById('drawer-overlay').classList.remove('active');
-    }
 
     // 4. GESTOR DE MÓDULOS (PESTAÑAS)
     function switchManagerTab(tabId) {
@@ -3175,7 +3176,6 @@
           const record = await invokeFn('install_module_package', { packageBytes });
           if (record && record.manifest) {
             installModule(record.manifest, record.script_code);
-            await restoreDashboardLayout();
             renderDashboardCustomizationCatalog();
             return;
           }
@@ -3209,6 +3209,7 @@
         }
 
         installModule(manifest, scriptCode);
+        renderDashboardCustomizationCatalog();
       } catch (err) {
         console.error('Error al instalar paquete .pcm:', err);
         addSystemNotification('Error de Instalación', `No se pudo instalar el paquete: ${err.message}`, 'warning', 'modules');
@@ -3877,6 +3878,10 @@
     }
 
     async function restoreDashboardLayout() {
+      // Guarda de vista oculta: NUNCA calcular ni alterar posiciones del Dashboard si la vista está oculta
+      const dashboardView = document.getElementById('view-dashboard');
+      if (dashboardView && dashboardView.classList.contains('hidden')) return;
+
       const current = getCurrentDashboardProfile();
       let layout = current.layout || {};
 
@@ -3894,15 +3899,15 @@
       const gridCols = getGridCols();
       const occupiedMatrix = {};
 
-      // 0. Aplicar visibilidad y limpiar coordenadas de tarjetas ocultas en este perfil
+      // 0. Reseteo universal estricto de coordenadas y aplicación de visibilidad
       const hiddenIds = current.hiddenWidgets || [];
       cards.forEach(card => {
+        delete card.dataset.col;
+        delete card.dataset.row;
+        card.style.gridColumn = '';
+        card.style.gridRow = '';
         if (hiddenIds.includes(card.id)) {
           card.style.display = 'none';
-          delete card.dataset.col;
-          delete card.dataset.row;
-          card.style.gridColumn = '';
-          card.style.gridRow = '';
         } else {
           card.style.display = 'flex';
         }
@@ -3939,6 +3944,9 @@
             if (slot) {
               displayCol = slot.col;
               displayRow = slot.row;
+            } else {
+              displayCol = null;
+              displayRow = null;
             }
           }
 
@@ -3954,13 +3962,19 @@
                 occupiedMatrix[r][c] = card.id;
               }
             }
+          } else {
+            // Garantía anti-superposición: Si colisiona y no hay celda libre, ocultar de forma segura sin solapar
+            card.style.display = 'none';
+            if (!current.hiddenWidgets.includes(card.id)) {
+              current.hiddenWidgets.push(card.id);
+            }
           }
         }
       });
 
       // 2. Asignar primera posición libre a tarjetas visibles nuevas o sin posición
       visibleCards.forEach(card => {
-        if (!card.dataset.col) {
+        if (!card.dataset.col && card.style.display !== 'none') {
           const { spanCol, spanRow } = getCardSpan(card);
           const effSpanCol = Math.min(spanCol, gridCols);
           const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupiedMatrix);
@@ -3986,18 +4000,21 @@
         }
       });
 
-      // 3. Sincronizar el layout verificado respetando tarjetas existentes y agregando visibles
-      const verifiedLayout = Object.assign({}, current.layout || {});
+      // 3. Registrar únicamente tarjetas nuevas sin posición previa, preservando el layout maestro
+      if (!current.layout) current.layout = {};
+      let hasNewLayoutEntries = false;
       visibleCards.forEach(c => {
-        if (c.dataset.col && c.dataset.row) {
-          verifiedLayout[c.id] = {
+        if (c.dataset.col && c.dataset.row && !current.layout[c.id]) {
+          current.layout[c.id] = {
             col: parseInt(c.dataset.col, 10),
             row: parseInt(c.dataset.row, 10)
           };
+          hasNewLayoutEntries = true;
         }
       });
-      current.layout = verifiedLayout;
-      persistDashboardProfilesState();
+      if (hasNewLayoutEntries) {
+        persistDashboardProfilesState();
+      }
 
       // Actualizar conteo y estado empty
       const emptyHero = document.querySelector('.empty-dashboard-hero');
@@ -4254,6 +4271,9 @@
     }
 
     function adjustCardsForCurrentGridCols() {
+      const dashboardView = document.getElementById('view-dashboard');
+      if (dashboardView && dashboardView.classList.contains('hidden')) return;
+
       const grid = document.getElementById('grid-board');
       if (!grid) return;
       const gridCols = getGridCols();
@@ -4298,19 +4318,27 @@
             if (slot) {
               displayCol = slot.col;
               displayRow = slot.row;
+            } else {
+              displayCol = null;
+              displayRow = null;
             }
           }
 
-          // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización
-          // SIN sobrescribir dataset.col ni dataset.row para que al maximizar vuelva limpiamente a su celda original.
-          card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
-          card.style.gridRow = `${displayRow} / span ${spanRow}`;
+          if (displayCol && displayRow) {
+            // Adaptación no destructiva: Solo se ajusta la posición calculada para visualización
+            // SIN sobrescribir dataset.col ni dataset.row para que al maximizar vuelva limpiamente a su celda original.
+            card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
+            card.style.gridRow = `${displayRow} / span ${spanRow}`;
 
-          for (let r = displayRow; r < displayRow + spanRow; r++) {
-            if (!occupied[r]) occupied[r] = {};
-            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
-              occupied[r][c] = card.id;
+            for (let r = displayRow; r < displayRow + spanRow; r++) {
+              if (!occupied[r]) occupied[r] = {};
+              for (let c = displayCol; c < displayCol + effSpanCol; c++) {
+                occupied[r][c] = card.id;
+              }
             }
+          } else {
+            // Si en resolución reducida no cabe sin colisionar, ocultar temporalmente sin superponer
+            card.style.display = 'none';
           }
         }
       });
@@ -4501,15 +4529,25 @@
           }
           // Por directiva estricta, los widgets recién instalados (o nuevos widgets introducidos en una actualización)
           // deben iniciar siempre OCULTOS en el Dashboard (disponibles en el Drawer/Catálogo) para no alterar la pantalla del usuario.
-          const isPreviouslyTracked = (currentProfile.layout && currentProfile.layout[cardId]) || currentProfile.hiddenWidgets.includes(cardId);
           if (!isStartup) {
-            if (!isPreviouslyTracked) {
+            card.style.display = 'none';
+            delete card.dataset.col;
+            delete card.dataset.row;
+            card.style.gridColumn = '';
+            card.style.gridRow = '';
+            if (!currentProfile.hiddenWidgets.includes(cardId)) {
+              currentProfile.hiddenWidgets.push(cardId);
+            }
+          } else {
+            if (currentProfile.hiddenWidgets.includes(cardId)) {
+              card.style.display = 'none';
+            } else if (currentProfile.layout && currentProfile.layout[cardId]) {
+              card.style.display = 'flex';
+            } else {
               card.style.display = 'none';
               if (!currentProfile.hiddenWidgets.includes(cardId)) {
                 currentProfile.hiddenWidgets.push(cardId);
               }
-            } else if (currentProfile.hiddenWidgets.includes(cardId)) {
-              card.style.display = 'none';
             }
           }
         });
