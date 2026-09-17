@@ -1,60 +1,56 @@
 # Manual de Usuario: Monitoreo de Almacenamiento (Disk Monitor)
 
-Bienvenido a la guía oficial del módulo de **Monitoreo de Almacenamiento** para **PC Manager**. Este módulo proporciona visibilidad integral, diagnóstico de salud en tiempo real y supervisión continua de las unidades de disco de su equipo.
+Bienvenido a la guía de operación del módulo de **Monitoreo de Almacenamiento** para **PC Manager**. Este módulo proporciona supervisión de salud, diagnóstico de medios físicos y auditoría de sectores en tiempo real.
 
 ---
 
 ## 1. Resumen Ejecutivo
 
-El módulo de Monitoreo de Almacenamiento supervisa activamente todas las unidades de almacenamiento físicas conectadas al sistema:
-- **Detección Automática de Tecnologías**: Identifica al instante si una unidad es **NVMe PCIe** (ultra-rápida), **SATA SSD** (estado sólido) o **HDD Mecánico** (disco duro magnético tradicional).
-- **Ficha Técnica y Diagnóstico**: Muestra modelo de fábrica, número de serie, capacidad formateada, particiones asociadas y estado operativo de salud SMART.
-- **Selección de Vigilancia Personalizada**: Permite decidir exactamente qué unidades mantener bajo monitoreo activo y cuáles omitir.
-- **Detección de Sectores Defectuosos**: Analiza la bitácora del sistema operativo en busca de bloques defectuosos o errores de lectura/escritura.
-- **Auditoría Segura en Modo Dry-Run**: Comprueba la integridad física de las unidades mediante lecturas no destructivas.
+El módulo está diseñado con una arquitectura estándar que no asume configuraciones previas ni hardware predefinido:
+- **Estado Inicial de Fábrica**: El módulo inicia limpio, permitiendo al usuario decidir qué discos desea supervisar.
+- **Descubrimiento y Selección**: Mediante la función **"Buscar Discos"**, el sistema detecta las unidades conectadas al equipo y permite seleccionar cuáles incorporar a la vista activa.
+- **Detección Neutral de Tecnologías**: Clasifica de forma transparente entre **NVMe PCIe**, **SATA SSD**, **HDD Mecánico** y **Almacenamiento USB** según los estándares del bus del sistema operativo.
+- **Ficha Técnica**: Presenta el identificador de disco, modelo comercial reportado por el firmware, número de serie, capacidad formateada y volúmenes asignados (`C:`, `D:`, etc.).
+- **Diagnóstico y Auditoría Segura**: Comprueba la salud SMART y permite ejecutar auditorías de lectura no destructivas (**Dry-Run**).
 
 ---
 
 ## 2. Instrucciones de Uso
 
-### Acceso a la Vista del Módulo
-1. Abra el menú lateral (Sidebar) de PC Manager.
-2. En la sección o grupo **Almacenamiento**, haga clic en **Monitoreo de Almacenamiento**.
-3. Se presentará el panel operativo con el resumen general de capacidades y la lista de discos detectados.
+### Instalación del Módulo
+1. Abra **PC Manager**.
+2. Diríjase a la sección **Gestor de Módulos** desde el menú lateral.
+3. En la pestaña **Catálogo Local**, utilice la opción **Instalar Módulo (.pcm)** y seleccione el archivo `disk-monitor.pcm`.
+4. El módulo se registrará en el sistema bajo el grupo predeterminado **General**.
 
-### Selección de Unidades a Vigilar
-- Cada tarjeta de disco dispone de un interruptor toggle denominado **"Vigilar este Disco"**.
-- Al desactivar el interruptor, el disco se atenúa visualmente y queda excluido del cómputo de salud vigilada.
-- Sus preferencias de vigilancia se guardan automáticamente y se preservan entre reinicios del equipo.
+### Descubrimiento y Selección de Unidades
+1. Ingrese a la vista **Monitoreo de Almacenamiento** desde el menú lateral.
+2. Si no hay unidades agregadas, verá la pantalla de bienvenida. Haga clic en **"Buscar y Agregar Discos"** (o en el botón **"Buscar Discos"** de la barra superior).
+3. Se abrirá la ventana de **Descubrimiento de Unidades Físicas** mostrando todos los discos detectados en el equipo.
+4. Marque las casillas de los discos que desea vigilar y pulse **"Agregar al Monitoreo"**.
+5. El panel se actualizará de inmediato mostrando las métricas y tarjetas de las unidades seleccionadas.
 
-### Filtros Rápidos
-Utilice las píldoras de filtrado ubicadas en la parte superior del listado:
-- **Todos**: Muestra la totalidad de unidades físicas conectadas.
-- **Vigilados**: Muestra únicamente las unidades con monitoreo activo.
-- **NVMe**: Filtra las unidades de estado sólido de alta velocidad por PCIe.
-- **SATA SSD**: Filtra los discos de estado sólido SATA convencionales.
-- **HDD Mecánico**: Filtra los discos duros tradicionales de platos magnéticos.
-- **Alertas**: Muestra de inmediato unidades que presenten advertencias de salud o sectores defectuosos.
+### Gestión de Unidades en el Tablero
+- **Remover Unidad**: En la esquina superior derecha de cualquier tarjeta de disco, pulse el botón **"Remover"** si desea dejar de vigilar esa unidad en particular.
+- **Filtrar por Tecnología**: Utilice las píldoras superiores (**Todos**, **NVMe**, **SATA SSD**, **HDD**, **Alertas**) para enfocar la vista en tipos específicos de medios.
+- **Agregar Nuevas Unidades**: En cualquier momento puede volver a pulsar **"Buscar Discos"** para incorporar discos que no hubiese agregado anteriormente.
 
 ---
 
 ## 3. Modo Seguro y Auditoría de Sectores (Dry-Run)
 
-El módulo incorpora una herramienta de **Auditoría de Sectores en Modo Seguro**:
-1. En la tarjeta de la unidad que desee verificar, pulse el botón **"Auditar Sectores"**.
-2. Se abrirá una ventana que evalúa bloques de almacenamiento mediante operaciones estrictas de **solo lectura**.
-3. **Garantía No Destructiva**: La auditoría jamás escribe, formatea ni altera sus datos o particiones.
-4. Al finalizar, el módulo reportará la latencia media de respuesta, el total de bloques inspeccionados y confirmará si existen sectores dañados.
+Para verificar el estado físico de los bloques de almacenamiento:
+1. En la tarjeta del disco deseado, pulse **"Auditar Sectores"**.
+2. Se iniciará una rutina de diagnóstico que evalúa la integridad de lectura de bloques y consulta el registro de eventos del sistema operativo.
+3. **Garantía No Destructiva**: La operación opera estrictamente en modo de solo lectura, sin formatear ni modificar particiones ni escribir datos en el disco.
+4. Al concluir, se presentará el veredicto de integridad de superficie.
 
 ---
 
 ## 4. Preguntas Frecuentes (FAQ)
 
-**¿El monitoreo continuo degrada el rendimiento de mis discos o consume batería?**  
-No. Las consultas de telemetría son pasivas y leen directamente la información provista por el subsistema de almacenamiento de Windows sin generar carga intensiva de Entrada/Salida.
+**¿Por qué el módulo no muestra discos al instalarse por primera vez?**  
+Porque sigue la filosofía de diseño modular estándar: no precarga unidades de forma arbitraria, otorgando al usuario el control de descubrir y elegir qué unidades supervisar.
 
-**¿Qué debo hacer si una unidad muestra el estado "Advertencia"?**  
-Un estado de advertencia indica que el sistema operativo o el controlador físico ha registrado eventos de reintento de lectura o bloques defectuosos. Se recomienda realizar una copia de seguridad inmediata de los datos importantes de esa unidad.
-
-**¿Puedo cambiar el intervalo de actualización automática?**  
-Sí. Pulse el botón **"Configuración"** en la barra de herramientas del módulo para acceder a las opciones de frecuencia de muestreo (15s, 30s, 1m, 5m o Manual).
+**¿Cómo cambio el grupo del módulo?**  
+Vaya a **Gestor de Módulos -> Grupos**. Allí puede asignar el módulo a cualquier grupo personalizado existente o crear uno nuevo.

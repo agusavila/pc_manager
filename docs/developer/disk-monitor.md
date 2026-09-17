@@ -1,72 +1,68 @@
 # Guía de Desarrollador: Módulo de Monitoreo de Almacenamiento (`disk-monitor`)
 
-Guía técnica de arquitectura, contratos e integración para desarrolladores del ecosistema **PC Manager Core-Modular**.
+Guía técnica de arquitectura, contratos de ciclo de vida e integración para ingenieros del proyecto **PC Manager Core-Modular**.
 
 ---
 
-## 1. Arquitectura y Flujo de Secuencia
+## 1. Arquitectura del Módulo y Flujo de Datos
 
-El módulo `disk-monitor` utiliza una arquitectura híbrida desacoplada entre el runtime nativo de Tauri (Rust) y la capa de presentación Web en WebView2:
+El módulo opera desacoplado del núcleo y sigue el patrón de descubrimiento y suscripción activa:
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant UI as Módulo UI (module.js)
-    participant Core as Core IPC Bridge (ui/index.html)
-    participant Rust as Backend Host (src-tauri/src/lib.rs)
-    participant WinAPI as Windows Storage Subsytem
+    participant Core as Core IPC Bridge
+    participant Rust as Backend Host (src-tauri)
+    participant Storage as Windows Storage API
 
+    Note over UI: Estado Inicial: Empty State (pcm_monitored_drives = [])
+    UI->>UI: Usuario pulsa "Buscar Discos"
     UI->>Core: invoke('get_disk_telemetry')
     Core->>Rust: Tauri Command IPC
-    Rust->>WinAPI: PowerShell Base64 Encoded (CREATE_NO_WINDOW)
-    WinAPI-->>Rust: JSON Telemetría (Disks + Partitions + Volumes + Events)
+    Rust->>Storage: PowerShell Base64 (CREATE_NO_WINDOW)
+    Storage-->>Rust: Raw Storage Telemetry
     Rust-->>Core: Deserializado a serde_json::Value
-    Core-->>UI: Storage Data Payload
-    UI->>UI: renderTelemetry() & renderDiskCardsList()
+    Core-->>UI: Discos Físicos, Particiones, Volúmenes y Eventos
+    UI->>UI: Modal de Descubrimiento muestra unidades
+    UI->>UI: Usuario marca discos y confirma "Agregar"
+    UI->>UI: Persiste IDs en pcm_monitored_drives
+    UI->>UI: Renderiza panel de unidades vigiladas
 ```
 
 ---
 
-## 2. Contratos y Métodos Principales
+## 2. API Global y Contratos de Interfaz
 
 ### `window.__DISK_MONITOR__`
-Objeto expuesto en el ámbito global del WebView para orquestar la vista:
-- **`scanDisks(): Promise<void>`**: Solicita la telemetría actualizada y refresca las tarjetas y resúmenes.
-- **`toggleWatch(deviceId: string, isChecked: boolean): void`**: Modifica la lista de discos vigilados en `localStorage` (`pcm_watched_disks`) y actualiza el estilo de opacidad.
-- **`setFilter(filter: 'all' | 'watched' | 'nvme' | 'ssd' | 'hdd' | 'alerts'): void`**: Alterna la visualización activa de tarjetas.
-- **`startSectorAudit(deviceId: string, diskName: string, techType: string): void`**: Abre el modal de auditoría y ejecuta el proceso de inspección no destructiva.
-- **`cancelAudit(): void`**: Aborta cualquier auditoría activa en curso.
-- **`closeAuditModal(): void`**: Cierra el panel de auditoría.
+Objeto expuesto por el script del módulo para la interacción con la vista:
+- `openDiscoveryModal(): Promise<void>`: Consulta el bus de almacenamiento y abre la ventana de selección de unidades.
+- `closeDiscoveryModal(): void`: Cierra la ventana modal de descubrimiento.
+- `updateDiscoveryCount(): void`: Actualiza el contador de unidades seleccionadas en tiempo real.
+- `addSelectedDisks(): void`: Guarda la lista de identificadores seleccionados en `pcm_monitored_drives` y redibuja el tablero.
+- `removeMonitoredDisk(deviceId: string): void`: Elimina una unidad física de la lista vigilada.
+- `refreshWatchedDisks(): Promise<void>`: Fuerza una actualización de telemetría de las unidades activas.
+- `setFilter(filter: string): void`: Aplica filtros visuales por tecnología o estado de alerta.
+- `startSectorAudit(deviceId: string, diskName: string, techLabel: string): void`: Inicia la rutina no destructiva de comprobación de lectura de bloques.
 
-### Manejo de Ciclo de Vida y Limpieza
-El módulo registra su hook de teardown en `window.__CLEANUP_disk_monitor__`:
-- Cancela el temporizador de muestreo en segundo plano (`refreshTimer`).
-- Aborta cualquier auditoría de sectores activa (`auditInterval`).
-- Desregistra el servicio compartido en `ServiceRegistry`.
-- Elimina el objeto `window.__DISK_MONITOR__` y limpia referencias residuales.
-
----
-
-## 3. Manejo de Errores y Casos Límite
-
-1. **Permisos Restringidos**: Si el usuario ejecuta la aplicación sin permisos de administrador, el comando PowerShell captura los datos disponibles de `Get-PhysicalDisk`, `Get-Partition` y `Get-Volume` y suprime los errores de clases restringidas (`-ErrorAction SilentlyContinue`).
-2. **Entornos Desacoplados o Navegador**: Si la invocación a Tauri no está disponible (ej. previsualización estática), la vista muestra una notificación limpia con botón de reintento en lugar de generar excepciones no controladas.
-3. **Discos sin Letra de Unidad Asignada**: Las particiones de recuperación o particiones EFI no montadas se identifican como particiones sin letra y se omiten de la lista de volúmenes de usuario para evitar saturación visual.
+### Ciclo de Vida y Limpieza Canónica (`__CLEANUP_disk_monitor__`)
+Al desactivarse o desinstalarse el módulo:
+1. Cancela el temporizador de muestreo en segundo plano (`refreshTimer`).
+2. Aborta cualquier auditoría de sectores en curso (`auditInterval`).
+3. Desregistra el servicio `storage.telemetry` del registro central `ServiceRegistry`.
+4. Elimina la referencia `window.__DISK_MONITOR__` del ámbito global.
 
 ---
 
-## 4. Guía de Pruebas y Empaquetado
+## 3. Empaquetado y Distribución
 
-### Empaquetado del Módulo (.pcm)
-Para generar el paquete empaquetado y firmado para distribución:
+Para empaquetar el módulo como un archivo `.pcm` estándar:
 ```powershell
 node build_disk_monitor_pcm.cjs
 ```
-Esto genera `disk-monitor.pcm` en la raíz del proyecto conteniendo `manifest.json`, `module.js` y `README.md`.
+El archivo `disk-monitor.pcm` resultante en la raíz del proyecto es un paquete comprimido que contiene:
+- `manifest.json`: Metadatos formales, permisos, vistas y `meta_options`.
+- `module.js`: Lógica de presentación y telemetría.
+- `README.md`: Documentación del paquete.
 
-### Compilación y Prueba del Binario Nativo
-```powershell
-cd src-tauri
-cargo build
-.\target\debug\pc_manager.exe
-```
+El usuario realiza la instalación de forma manual a través del **Gestor de Módulos** en la interfaz gráfica para verificar el pipeline completo de carga de extensiones.

@@ -1,96 +1,77 @@
 # Especificación Técnica para IA: Módulo de Monitoreo de Almacenamiento (`disk-monitor`)
 
-Documento formal de especificación para modelos de inteligencia artificial y agentes desarrolladores en **PC Manager Core-Modular**.
+Especificación formal del módulo `disk-monitor` para modelos de inteligencia artificial y agentes desarrolladores.
 
 ---
 
 ## 1. Resumen Contextual y Objetivo
 
-El módulo `disk-monitor` proporciona supervisión de hardware de almacenamiento local en sistemas Windows nativos. Expone telemetría física de discos (HDD, SSD SATA, SSD NVMe PCIe), salud SMART, topología de particiones/volúmenes y detección de errores de bloques de superficie a través de comandos IPC de Tauri.
+El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimiento, supervisión y auditoría de unidades físicas de almacenamiento en sistemas operativos Windows. No asume configuraciones predeterminadas de hardware ni precarga discos automáticamente; implementa un flujo de descubrimiento explícito donde el usuario inspecciona el bus de almacenamiento y selecciona qué dispositivos supervisar.
 
 ---
 
-## 2. Esquema de Datos y Contratos IPC
+## 2. Esquema de Datos y Eventos
 
-### Comando IPC Backend: `get_disk_telemetry`
-Invocación: `invoke('get_disk_telemetry') -> Result<Value, String>`
-
-#### Estructura del Payload JSON Retornado:
-```json
-{
-  "disks": [
-    {
-      "DeviceId": "0",
-      "FriendlyName": "STRING",
-      "Model": "STRING",
-      "SerialNumber": "STRING",
-      "MediaType": "SSD | HDD | SCM",
-      "BusType": "NVMe | SATA | SCSI | USB",
-      "Size": 480103981056,
-      "HealthStatus": "Healthy | Warning | Unhealthy",
-      "OperationalStatus": "OK | Degraded | Error"
-    }
-  ],
-  "partitions": [
-    {
-      "DiskNumber": 0,
-      "PartitionNumber": 1,
-      "DriveLetter": "C",
-      "Size": 248901533696
-    }
-  ],
-  "volumes": [
-    {
-      "DriveLetter": "C",
-      "FileSystemLabel": "Windows",
-      "FileSystem": "NTFS",
-      "HealthStatus": "Healthy",
-      "SizeRemaining": 98111770624,
-      "Size": 248901529600
-    }
-  ],
-  "events": [
-    {
-      "TimeCreated": "/Date(1789081496347)/",
-      "Id": 7,
-      "ProviderName": "disk",
-      "Message": "Descripción del evento de bloque"
-    }
-  ]
-}
-```
-
-### Servicio Compartido (`ServiceRegistry`)
-- Identificador del servicio: `storage.telemetry`
-- Interfaz:
-  ```typescript
-  interface IStorageTelemetryService {
-    getDisksData(): StoragePayload | null;
-    getWatchedDisks(): string[] | null;
-    refresh(): Promise<void>;
+### Invocación Nativa IPC: `get_disk_telemetry`
+- **Método**: `invoke('get_disk_telemetry') -> Result<Value, String>`
+- **Comportamiento**: Ejecuta de forma silenciosa (`CREATE_NO_WINDOW`) consultas nativas a Windows Storage PowerShell (`Get-PhysicalDisk`, `Get-Partition`, `Get-Volume`, `Get-WinEvent`).
+- **Esquema de Retorno**:
+  ```json
+  {
+    "disks": [
+      {
+        "DeviceId": "STRING",
+        "FriendlyName": "STRING",
+        "Model": "STRING",
+        "SerialNumber": "STRING",
+        "MediaType": "SSD | HDD | SCM",
+        "BusType": "NVMe | SATA | SCSI | USB",
+        "SpindleSpeed": 0,
+        "Size": 1024209543168,
+        "HealthStatus": "Healthy | Warning | Unhealthy",
+        "OperationalStatus": "OK | Degraded"
+      }
+    ],
+    "partitions": [
+      {
+        "DiskNumber": 0,
+        "PartitionNumber": 1,
+        "DriveLetter": "C",
+        "Size": 248901533696
+      }
+    ],
+    "volumes": [
+      {
+        "DriveLetter": "C",
+        "FileSystemLabel": "Windows",
+        "FileSystem": "NTFS",
+        "HealthStatus": "Healthy",
+        "SizeRemaining": 98111770624,
+        "Size": 248901529600
+      }
+    ],
+    "events": [
+      {
+        "TimeCreated": "DATE_STRING",
+        "Id": 7,
+        "ProviderName": "disk",
+        "Message": "STRING"
+      }
+    ]
   }
   ```
 
 ---
 
-## 3. Invariantes y Restricciones de Generación de Código
+## 3. Invariantes Arquitectónicos de Implementación
 
-1. **Aislamiento y Privacidad (Regla 1)**: Prohibido enviar telemetría de disco fuera del host local. No registrar rutas de usuarios personales.
-2. **Marca Blanca (Regla 2)**: Prohibido hardcodear marcas comerciales fijas (Kingston, Samsung, Western Digital); todos los nombres deben provenir dinámicamente de las propiedades `FriendlyName` / `Model` de la API de hardware.
-3. **Seguridad Operativa y Dry-Run (Regla 5)**: Cualquier rutina de auditoría de sectores debe ejecutarse estrictamente en modo solo lectura (`read-only`). Prohibida toda operación que altere la tabla de particiones o escriba en el disco sin consentimiento explícito.
-4. **Cero Placebos (Regla 7)**: Los contadores de sectores y estados de salud deben reflejar datos reales de la API del sistema operativo. Si no hay eventos de error, el conteo de sectores dañados debe ser `0` demostrable.
-
----
-
-## 4. Comandos CLI de Verificación
-
-```powershell
-# 1. Validar telemetría de discos físicos
-powershell -Command "Get-PhysicalDisk | Select-Object DeviceId, Model, MediaType, BusType, HealthStatus | ConvertTo-Json"
-
-# 2. Validar particiones asociadas
-powershell -Command "Get-Partition | Select-Object DiskNumber, DriveLetter, Size | ConvertTo-Json"
-
-# 3. Compilar el binario nativo de PC Manager
-cd c:\Proyectos\pc_manager\src-tauri; cargo check
-```
+1. **Neutralidad Total (Regla 2 - Marca Blanca)**:
+   - Queda estrictamente prohibido introducir condiciones de código o heurísticas que contengan nombres de marcas comerciales, líneas de productos o modelos de mercado (prohibido `model.includes('...')` para marcas particulares).
+   - La clasificación de tecnologías se basa exclusivamente en enumeradores estándar: `BusType == 'NVMe'` $\to$ NVMe; `MediaType == 'SSD'` o `SpindleSpeed == 0` $\to$ SSD; `MediaType == 'HDD'` o `SpindleSpeed > 0` $\to$ HDD.
+2. **Control de Usuario sobre Selección (Cero Asunciones)**:
+   - El módulo almacena en `localStorage` la clave `pcm_monitored_drives`.
+   - Si la clave está ausente o vacía, la interfaz debe renderizar el **Empty State** invitando a buscar discos. No debe poblar automáticamente el tablero con todos los discos del equipo.
+3. **Seguridad Operativa (Regla 5 - Modo Seguro)**:
+   - Toda rutina de auditoría es estrictamente de solo lectura (Dry-Run).
+4. **Cero Placebos (Regla 7)**:
+   - Todos los datos de números de serie, capacidades, salud y sectores provienen de llamadas reales al subsistema de almacenamiento del sistema operativo.

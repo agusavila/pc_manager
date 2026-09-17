@@ -135,7 +135,7 @@ fn base64_encode_bytes(data: &[u8]) -> String {
 #[tauri::command]
 fn get_disk_telemetry() -> Result<Value, String> {
     let script = r#"
-$disks = @(Get-PhysicalDisk | Select-Object DeviceId, FriendlyName, Model, SerialNumber, MediaType, BusType, Size, HealthStatus, OperationalStatus)
+$disks = @(Get-PhysicalDisk | Select-Object DeviceId, FriendlyName, Model, SerialNumber, MediaType, BusType, SpindleSpeed, Size, HealthStatus, OperationalStatus)
 $parts = @(Get-Partition | Select-Object DiskNumber, PartitionNumber, DriveLetter, Size)
 $vols = @(Get-Volume | Select-Object DriveLetter, FileSystemLabel, FileSystem, HealthStatus, SizeRemaining, Size)
 $events = @(Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName=@('disk','Ntfs'); Id=7,55,98} -MaxEvents 15 -ErrorAction SilentlyContinue | Select-Object TimeCreated, Id, ProviderName, Message)

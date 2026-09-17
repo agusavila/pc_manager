@@ -21,10 +21,10 @@ async function buildDiskMonitorModule() {
   const outputPath = path.join(__dirname, 'disk-monitor.pcm');
   fs.writeFileSync(outputPath, content);
 
-  console.log(`Paquete disk-monitor.pcm generado exitosamente en la raíz: ${outputPath} (${content.length} bytes)`);
+  console.log(`Paquete disk-monitor.pcm compilado exitosamente: ${outputPath} (${content.length} bytes)`);
 }
 
 buildDiskMonitorModule().catch(err => {
-  console.error('Error generando paquete disk-monitor.pcm:', err);
+  console.error('Error empaquetando disk-monitor.pcm:', err);
   process.exit(1);
 });
