@@ -1529,6 +1529,34 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-053] - Compresión y Deformación Geométrica de Widgets Inferiores en Dashboard por Limitación Rígida de Viewport sin Desplazamiento
+- **Fecha**: 17/09/2026
+- **Módulo**: UI / Dashboard / Layout Engine (`ui/index.html`)
+- **Severidad**: Alta
+- **Descripción**: Al agregar o arrastrar múltiples widgets o tarjetas verticales (como `Widget 3x4`, `Widget 6x2` o `Widget Banner`), los widgets situados en las filas inferiores del Dashboard se deformaban, achaparraban y encogían drásticamente (por ejemplo, tarjetas de span 2 que medían 122px en filas 1-2 se comprimían a menos de 94px en las filas 7-8, o widgets de span 4 quedaban cortados por el borde inferior).
+- **Causa Raíz**:
+  1. *Contenedor rígido sellado al 100%*: `#view-dashboard.view-content`, `.dashboard-container` y `.grid-board` poseían `height: 100%; max-height: 100%; overflow: hidden !important;`, impidiendo cualquier desplazamiento vertical.
+  2. *Definición sin altura mínima de track*: `grid-template-rows: repeat(8, minmax(0, 1fr))` permitía que las tarjetas superiores (con `min-content` alto de 120px debido a cabeceras y métricas) consumieran la mayor parte de la altura útil de la ventana (450px-500px en ventanas compactas de 575px), dejando a las filas inferiores apenas un remanente residual de píxeles.
+  3. *Inexistencia de `grid-auto-rows`*: Cuando se ubicaban tarjetas en filas más allá de las 6 u 8 filas declaradas (ej. un widget 3x4 colocado en fila 7 que requiere hasta la fila 10), el navegador creaba filas implícitas con `grid-auto-rows: auto` comprimidas contra el borde.
+  4. *Media queries regresivas*: En resoluciones <= 1360px y <= 1080px, la cuadrícula reducía `grid-template-rows` a 6 filas (`repeat(6, minmax(0, 1fr))`), agravando la colisión cuando el usuario colocaba widgets en filas inferiores.
+  5. *Límite rígido en JavaScript*: `getMaxVisibleRows()` y `findNextFreeSlot()` estaban limitados rígidamente a 8 filas (o 6), impidiendo ubicar tarjetas de forma segura o auto-scrollear durante el arrastre.
+- **Solución Implementada**:
+  1. **Transición a Cuadrícula Adaptativa con Scroll Suave**: Se sustituyó `overflow: hidden !important;` en `#view-dashboard.view-content` por `overflow-y: auto !important; overflow-x: hidden !important;`, integrando la barra de desplazamiento delgada semántica (`scrollbar-width: thin;`) del sistema de diseño.
+  2. **Garantía de Altura Mínima Uniforme por Track**: Se configuró `grid-template-rows: repeat(8, minmax(56px, 1fr))` y `grid-auto-rows: minmax(56px, 1fr)` en `.grid-board` (incluyendo las media queries de 1360px, 1080px y portrait). De esta forma, cualquier tarjeta de 2 filas (`span 2`) mide garantizadamente al menos `124px` tanto en la fila 1 como en la fila 8 o 10. En pantallas amplias (1080p, 2K), el factor `1fr` expande todas las filas equitativamente sin mostrar scrollbar.
+  3. **Auto-Cálculo Dinámico de Filas Ocupadas en JavaScript**: Se actualizó `getMaxVisibleRows()` para inspeccionar dinámicamente las tarjetas visibles y el layout activo, manteniendo una base de 8 filas (o 14 en portrait) y expandiéndose según la fila más alta ocupada.
+  4. **Ampliación del Rango de Búsqueda Libre**: Se actualizó `findNextFreeSlot()` para buscar hasta `Math.max(24, maxVisibleRows + 6)` celdas libres y se limpió `canWidgetFitOnDashboard()` de límites artificiales.
+  5. **Auto-Scroll Inteligente en Drag & Drop**: Se vinculó el auto-scroll de `makeCardDraggable` directamente al contenedor `#view-dashboard`, permitiendo arrastrar tarjetas fluidamente hacia filas inferiores con cálculo de coordenadas compensado por scroll.
+- **Justificación de Modificación de Componente Preexistente (Regla 11)**:
+  La modificación de las propiedades CSS del contenedor y el cálculo de filas en JS fue indispensable para resolver el aplastamiento físico de las tarjetas en resoluciones compactas (720p / ventanas no maximizadas). Se validó que las dimensiones, proporciones y funcionalidades de arrastre, auto-organización y perfiles continúan operando al 100% de manera determinista y sin regresiones.
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

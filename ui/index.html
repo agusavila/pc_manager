@@ -688,49 +688,48 @@
       position: relative;
     }
     #view-dashboard.view-content {
-      overflow: hidden !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
       padding: 20px 24px;
     }
     .hidden {
       display: none !important;
     }
 
-    /* DASHBOARD MODULAR ISOMÉTRICO (CERO ESTIRAMIENTO Y CERO SCROLL) */
+    /* DASHBOARD MODULAR INTELIGENTE (ALTURA UNIFORME Y SCROLL SUAVE INTEGRADO) */
     .dashboard-container {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      height: 100%;
-      max-height: 100%;
+      min-height: 100%;
       flex: 1;
-      overflow: hidden;
       box-sizing: border-box;
     }
 
-    /* CUADRÍCULA PROPORCIONAL TOP-DOWN (12 COLUMNAS x 8 FILAS, CERO RESIDUO) */
+    /* CUADRÍCULA PROPORCIONAL ADAPTATIVA (12 COLUMNAS x FILAS UNIFORMES) */
     .grid-board {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      grid-template-rows: repeat(8, minmax(0, 1fr));
+      grid-template-rows: repeat(8, minmax(56px, 1fr));
+      grid-auto-rows: minmax(56px, 1fr);
       gap: 12px;
       background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
       padding: 16px;
-      height: 100%;
-      max-height: 100%;
+      min-height: 100%;
       flex: 1;
       box-sizing: border-box;
       position: relative;
       background-image: radial-gradient(var(--border-medium) 1px, transparent 1px);
       background-size: 20px 20px;
-      overflow: hidden !important;
     }
 
     @media (max-width: 1360px) {
       .grid-board {
         grid-template-columns: repeat(8, minmax(0, 1fr));
-        grid-template-rows: repeat(6, minmax(0, 1fr));
+        grid-template-rows: repeat(8, minmax(56px, 1fr));
+        grid-auto-rows: minmax(56px, 1fr);
         gap: 10px;
       }
     }
@@ -738,7 +737,8 @@
     @media (max-width: 1080px) {
       .grid-board {
         grid-template-columns: repeat(6, minmax(0, 1fr));
-        grid-template-rows: repeat(6, minmax(0, 1fr));
+        grid-template-rows: repeat(8, minmax(56px, 1fr));
+        grid-auto-rows: minmax(56px, 1fr);
         gap: 10px;
       }
     }
@@ -747,7 +747,8 @@
     @media (orientation: portrait), (max-aspect-ratio: 1/1) {
       .grid-board {
         grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-        grid-template-rows: repeat(14, minmax(0, 1fr)) !important;
+        grid-template-rows: repeat(14, minmax(56px, 1fr)) !important;
+        grid-auto-rows: minmax(56px, 1fr) !important;
         gap: 10px !important;
       }
     }
@@ -755,7 +756,8 @@
     @media (orientation: portrait) and (max-width: 650px) {
       .grid-board {
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        grid-template-rows: repeat(14, minmax(0, 1fr)) !important;
+        grid-template-rows: repeat(14, minmax(56px, 1fr)) !important;
+        grid-auto-rows: minmax(56px, 1fr) !important;
         gap: 8px !important;
       }
     }
@@ -778,6 +780,7 @@
       user-select: none;
       touch-action: none;
       box-sizing: border-box;
+      min-height: 0;
     }
 
     .card:active {
@@ -3240,20 +3243,36 @@
     }
 
     function getMaxVisibleRows() {
+      let highestOccupied = isPortraitOrientation() ? 14 : 8;
       const grid = document.getElementById('grid-board');
       if (grid) {
-        const computed = window.getComputedStyle(grid).gridTemplateRows;
-        if (computed && computed !== 'none') {
-          const rows = computed.trim().split(/\s+/).length;
-          if (rows > 0) return rows;
+        const cards = grid.querySelectorAll('.card');
+        cards.forEach(c => {
+          if (c.style.display !== 'none') {
+            const r = parseInt(c.dataset.row || '0', 10);
+            if (r > 0) {
+              const { spanRow } = getCardSpan(c);
+              if (r + spanRow - 1 > highestOccupied) {
+                highestOccupied = r + spanRow - 1;
+              }
+            }
+          }
+        });
+        const current = getCurrentDashboardProfile();
+        if (current && current.layout) {
+          Object.keys(current.layout).forEach(id => {
+            const pos = current.layout[id];
+            if (pos && pos.row) {
+              const card = document.getElementById(id);
+              const { spanRow } = card ? getCardSpan(card) : { spanRow: 2 };
+              if (pos.row + spanRow - 1 > highestOccupied) {
+                highestOccupied = pos.row + spanRow - 1;
+              }
+            }
+          });
         }
       }
-      if (isPortraitOrientation()) {
-        return 14;
-      }
-      const w = window.innerWidth;
-      if (w <= 1360) return 6;
-      return 8;
+      return highestOccupied;
     }
 
     function getCardSpan(card) {
@@ -3270,10 +3289,11 @@
     function findNextFreeSlot(gridCols, spanCol, spanRow, occupiedMatrix) {
       const maxVisibleRows = getMaxVisibleRows();
       const effSpanCol = Math.min(spanCol, gridCols);
-      if (effSpanCol > gridCols || spanRow > maxVisibleRows) {
+      const searchLimit = Math.max(24, maxVisibleRows + 6);
+      if (effSpanCol > gridCols) {
         return null;
       }
-      for (let row = 1; row <= maxVisibleRows - spanRow + 1; row++) {
+      for (let row = 1; row <= searchLimit - spanRow + 1; row++) {
         for (let col = 1; col <= gridCols - effSpanCol + 1; col++) {
           let canFit = true;
           for (let r = row; r < row + spanRow; r++) {
@@ -3297,9 +3317,8 @@
       const grid = document.getElementById('grid-board');
       if (!grid) return true;
       const gridCols = getGridCols();
-      const maxRows = getMaxVisibleRows();
       const effSpanCol = Math.min(spanCol, gridCols);
-      if (effSpanCol > gridCols || spanRow > maxRows) return false;
+      if (effSpanCol > gridCols) return false;
 
       const current = getCurrentDashboardProfile();
       const layout = current ? current.layout || {} : {};
@@ -3399,18 +3418,18 @@
               clone.style.top = `${moveEvent.clientY - grabOffsetY}px`;
             }
 
-            // Auto-scroll controlado solo si el contenedor realmente desborda en altura
-            const viewContent = document.querySelector('.view-content');
-            if (viewContent && viewContent.scrollHeight > viewContent.clientHeight + 20) {
+            // Auto-scroll controlado en el contenedor del Dashboard cuando desborda en altura
+            const viewContent = document.getElementById('view-dashboard');
+            if (viewContent && viewContent.scrollHeight > viewContent.clientHeight + 10) {
               const viewRect = viewContent.getBoundingClientRect();
-              if (moveEvent.clientY > viewRect.bottom - 40 && viewContent.scrollTop < viewContent.scrollHeight - viewContent.clientHeight - 5) {
-                viewContent.scrollTop += 5;
-              } else if (moveEvent.clientY < viewRect.top + 40 && viewContent.scrollTop > 5) {
-                viewContent.scrollTop -= 5;
+              if (moveEvent.clientY > viewRect.bottom - 50 && viewContent.scrollTop < viewContent.scrollHeight - viewContent.clientHeight - 5) {
+                viewContent.scrollTop += 8;
+              } else if (moveEvent.clientY < viewRect.top + 50 && viewContent.scrollTop > 5) {
+                viewContent.scrollTop -= 8;
               }
             }
 
-            // Calcular columna y fila objetivo en la cuadrícula proporcional 12x8
+            // Calcular columna y fila objetivo en la cuadrícula proporcional
             const boardRect = grid.getBoundingClientRect();
             const gridCols = getGridCols();
             const maxVisibleRows = getMaxVisibleRows();
@@ -3431,8 +3450,8 @@
             const stepX = colWidth + gap;
             const stepY = rowHeight + gap;
 
-            // Determinar límite estricto de fila: jamás superar la altura visible del lienzo (cero residuo)
-            const maxAllowedRow = Math.max(1, maxVisibleRows - effSpanRow + 1);
+            // Determinar límite estricto de fila: permitir colocar en filas activas o hasta 2 filas de expansión
+            const maxAllowedRow = Math.max(1, (maxVisibleRows + 2) - effSpanRow + 1);
 
             const cardLeft = moveEvent.clientX - grabOffsetX;
             const cardTop = moveEvent.clientY - grabOffsetY;
