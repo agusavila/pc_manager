@@ -1860,6 +1860,46 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-030] Separación física de binarios (GUI vs Servicio Windows) y permisos ACL universales de telemetría
+- **Fecha**: 2026-09-17
+- **Versión**: `v0.0.4`
+- **Severidad**: `CRÍTICA`
+- **Componente**: `Core Architecture / Windows Service Daemon / Process Lifecycle / ACL Security`
+- **Descripción del Fallo**: 
+  1. Al registrarse como servicio de Windows, el sistema apuntaba a `pc_manager.exe --service`. Cuando el SCM iniciaba el servicio en segundo plano, Windows bloqueaba el archivo `pc_manager.exe`, impidiendo al usuario abrir la interfaz gráfica o recompilar el proyecto (`Acceso denegado (os error 5)`).
+  2. Si el servicio no estaba instalado en Windows (`services.msc`), la GUI en modo estándar intentaba consultar datos de bajo nivel sin privilegios, arrojando excepción y dejando las métricas en blanco.
+  3. La carpeta de telemetría `C:\ProgramData\PCManager\telemetry` carecía de permisos universales de lectura para usuarios no elevados.
+- **Causa Raíz**: 
+  1. Acoplamiento del despachador de servicios de Windows y el runtime de interfaz WebView2 dentro del mismo archivo binario.
+  2. Ausencia de un ejecutable dedicado para el servicio y falta de asignación ACL al crear la carpeta compartida en `ProgramData`.
+- **Solución Implementada**: 
+  1. **Separación de Binarios en `Cargo.toml`**:
+     - `[[bin]] name = "pc_manager" path = "src/main.rs"`: Ejecutable dedicado para la interfaz gráfica de usuario. Cero código de servicio de Windows y libre de cualquier bloqueo de archivos.
+     - `[[bin]] name = "pc_manager_service" path = "src/bin/service_main.rs"`: Ejecutable ligero para el servicio de Windows (`356 KB`) que corre bajo la cuenta `NT AUTHORITY\SYSTEM` y recolecta telemetría sin interfaz gráfica.
+  2. **Configuración de Permisos ACL Universales**:
+     - En `service.rs`, la creación de `C:\ProgramData\PCManager\telemetry` aplica automáticamente permisos de lectura con `icacls` para el SID neutral de Windows `*S-1-5-32-545:(OI)(CI)R` (grupo *Usuarios*).
+  3. **Comando de Instalación y Scripts de Automatización**:
+     - Se actualizó `request_service_installation` en `src-tauri/src/lib.rs` para vincular específicamente `pc_manager_service.exe`.
+     - Se crearon los scripts de un solo clic `tools/install_service.bat` y `tools/uninstall_service.bat` con auto-elevación para instalar el servicio de una sola vez en Windows.
+  4. **Compilación Continua y Verificación (Reglas 9 y 10)**:
+     - Ambos binarios (`pc_manager.exe` y `pc_manager_service.exe`) compilados exitosamente con `cargo build`.
+     - 9 de 9 pruebas unitarias aprobadas (`cargo test --lib`).
+- **Archivos Afectados**: 
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`src-tauri/src/bin/service_main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/bin/service_main.rs)
+  - [`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs)
+  - [`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`tools/install_service.bat`](file:///c:/Proyectos/pc_manager/tools/install_service.bat)
+  - [`tools/uninstall_service.bat`](file:///c:/Proyectos/pc_manager/tools/uninstall_service.bat)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+  - [`src-tauri/target/debug/pc_manager_service.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager_service.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 

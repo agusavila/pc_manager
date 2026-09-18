@@ -129,19 +129,24 @@ fn request_service_installation() -> Result<String, String> {
 
         let exe_path = std::env::current_exe()
             .map_err(|e| format!("No se pudo determinar la ruta del ejecutable: {}", e))?;
-        let exe_str = exe_path.to_string_lossy().to_string();
+        let parent_dir = exe_path.parent().unwrap_or(std::path::Path::new("."));
+        let service_exe = parent_dir.join("pc_manager_service.exe");
+        let service_exe_str = service_exe.to_string_lossy().to_string();
 
         let ps_code = format!(
             r#"$ErrorActionPreference = 'Stop'
 $svc = Get-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
+$targetBin = '{}'
 if (-not $svc) {{
-    New-Service -Name 'pc_manager_service' -DisplayName 'PC Manager Hardware Telemetry Service' -BinaryPathName '\"{}\" --service' -StartupType Automatic
+    New-Service -Name 'pc_manager_service' -DisplayName 'PC Manager Hardware Telemetry Service' -BinaryPathName ('"' + $targetBin + '"') -StartupType Automatic
+}} else {{
+    & sc.exe config pc_manager_service binPath= ('"' + $targetBin + '"') | Out-Null
 }}
 $svc = Get-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
 if ($svc -and $svc.Status -ne 'Running') {{
     Start-Service -Name 'pc_manager_service'
 }}"#,
-            exe_str.replace('\'', "''")
+            service_exe_str.replace('\'', "''")
         );
 
         let encoded_cmd = format!(

@@ -40,13 +40,6 @@ fn ensure_single_instance() -> bool {
 fn main() {
     #[cfg(target_os = "windows")]
     {
-        if std::env::args().any(|a| a == "--service") {
-            if let Err(e) = pc_manager_lib::service::win_service::run_service() {
-                eprintln!("Error ejecutando servicio de Windows: {}", e);
-            }
-            return;
-        }
-
         if !ensure_single_instance() {
             return;
         }

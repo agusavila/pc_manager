@@ -91,6 +91,10 @@ pub mod win_service {
         SetServiceStatus(handle, &mut status);
     }
 
+    pub fn collect_once() {
+        collect_and_write_storage_telemetry();
+    }
+
     fn collect_and_write_storage_telemetry() {
         use std::process::Command;
         use std::os::windows::process::CommandExt;
@@ -101,6 +105,7 @@ pub mod win_service {
             $dir = "$env:ProgramData\PCManager\telemetry"
             if (-not (Test-Path $dir)) {
                 New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                icacls $dir /grant "*S-1-5-32-545:(OI)(CI)R" /t /q | Out-Null
             }
 
             $pdisks = @(Get-PhysicalDisk -ErrorAction SilentlyContinue)
