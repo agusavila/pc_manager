@@ -318,6 +318,77 @@ fn get_storage_telemetry() -> Option<String> {
     None
 }
 
+#[tauri::command]
+fn get_system_telemetry() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    {
+        let path = std::path::Path::new(r"C:\ProgramData\PCManager\telemetry\system_telemetry.json");
+        if path.exists() {
+            if let Ok(meta) = std::fs::metadata(path) {
+                if let Ok(modified) = meta.modified() {
+                    if let Ok(elapsed) = modified.elapsed() {
+                        if elapsed.as_secs() < 120 {
+                            if let Ok(content) = std::fs::read_to_string(path) {
+                                return Some(content);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+#[tauri::command]
+fn toggle_service_state(start: bool) -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+        let action = if start { "Start-Service" } else { "Stop-Service" };
+        let ps_code = format!(
+            "Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{} -Name pc_manager_service\"'",
+            action
+        );
+
+        let mut cmd = Command::new("powershell.exe");
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &ps_code]);
+        cmd.creation_flags(CREATE_NO_WINDOW);
+
+        let _ = cmd.output().map_err(|e| format!("Error modificando estado del servicio: {}", e))?;
+        std::thread::sleep(std::time::Duration::from_millis(600));
+        let status = check_service_status();
+        return Ok(status.status);
+    }
+    #[allow(unreachable_code)]
+    Ok("STOPPED".to_string())
+}
+
+#[tauri::command]
+fn uninstall_windows_service() -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+        let ps_code = "Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Stop-Service -Name pc_manager_service -Force -ErrorAction SilentlyContinue; sc.exe delete pc_manager_service\"'";
+
+        let mut cmd = Command::new("powershell.exe");
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps_code]);
+        cmd.creation_flags(CREATE_NO_WINDOW);
+
+        let _ = cmd.output().map_err(|e| format!("Error al desinstalar el servicio: {}", e))?;
+        std::thread::sleep(std::time::Duration::from_millis(600));
+        return Ok("Servicio eliminado del sistema.".to_string());
+    }
+    #[allow(unreachable_code)]
+    Ok("Servicio no disponible.".to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -344,7 +415,10 @@ pub fn run() {
             execute_module_script,
             check_service_status,
             request_service_installation,
-            get_storage_telemetry
+            toggle_service_state,
+            uninstall_windows_service,
+            get_storage_telemetry,
+            get_system_telemetry
         ])
         .setup(|app| {
             // 1. Configuración del menú contextual nativo del Tray

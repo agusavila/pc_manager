@@ -2401,6 +2401,43 @@
             </div>
           </div>
 
+          <!-- SERVICIO DE TELEMETRÍA GLOBAL DE WINDOWS -->
+          <div class="settings-card" id="card-windows-telemetry-service">
+            <div class="settings-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                <h4>Servicio de Telemetría de Windows</h4>
+              </div>
+              <div id="core-service-status-pill">
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; background: rgba(148, 163, 184, 0.15); color: var(--text-muted); font-size: 12px; font-weight: 600;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block;"></span>
+                  Verificando...
+                </span>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
+              Servicio nativo desacoplado (<code style="font-size: 11.5px; color: var(--accent-primary);">pc_manager_service.exe</code>) ejecutado como cuenta de sistema local (SYSTEM). Recolecta periódicamente métricas de bajo nivel (CPU, memoria RAM, salud SMART de unidades y registros de integridad) para los módulos del sistema sin requerir elevación administrativa de la aplicación de escritorio.
+            </p>
+
+            <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="flex: 1; min-width: 240px;">
+                  <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);" id="core-service-name-label">pc_manager_service</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;" id="core-service-details">Consultando estado del servicio en el sistema operativo...</div>
+                </div>
+                <div id="core-service-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <!-- Acciones inyectadas dinámicamente -->
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <div><strong>Tipo:</strong> Servicio Nativo Windows (Win32)</div>
+                <div><strong>Ruta:</strong> <code style="font-size: 10.5px;">%ProgramData%\PCManager\telemetry\</code></div>
+                <div><strong>Seguridad:</strong> Zero-Admin para cliente GUI</div>
+              </div>
+            </div>
+          </div>
+
           <!-- MOTOR DE TEMAS Y COLORES: 2 COMBOBOXES + 10 ACENTOS -->
           <div class="settings-card">
             <div class="settings-header">
@@ -2827,6 +2864,57 @@
   <script>
     let currentView = 'dashboard';
 
+    // REGISTRO DE SERVICIOS COMPARTIDOS (RULE 3 - SERVICEREGISTRY)
+    window.ServiceRegistry = {
+      _services: new Map(),
+      _listeners: new Map(),
+
+      register(name, provider, metadata = {}) {
+        this._services.set(name, { provider, metadata });
+        const listeners = this._listeners.get(name) || [];
+        listeners.forEach(cb => {
+          try { cb(provider, metadata); } catch (e) { console.error(`Error en listener de ${name}:`, e); }
+        });
+      },
+
+      get(name) {
+        const entry = this._services.get(name);
+        return entry ? entry.provider : null;
+      },
+
+      getMetadata(name) {
+        const entry = this._services.get(name);
+        return entry ? entry.metadata : null;
+      },
+
+      has(name) {
+        return this._services.has(name);
+      },
+
+      unregister(name) {
+        this._services.delete(name);
+      },
+
+      subscribe(name, callback) {
+        if (!this._listeners.has(name)) {
+          this._listeners.set(name, []);
+        }
+        this._listeners.get(name).push(callback);
+        if (this._services.has(name)) {
+          const entry = this._services.get(name);
+          try { callback(entry.provider, entry.metadata); } catch(e) { console.error(e); }
+        }
+      },
+
+      list() {
+        const list = [];
+        this._services.forEach((val, key) => {
+          list.push({ name: key, metadata: val.metadata });
+        });
+        return list;
+      }
+    };
+
     function getTauriInvoke() {
       if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
         return window.__TAURI__.core.invoke;
@@ -2873,6 +2961,9 @@
       // Si se ingresa al Dashboard, restaurar el layout sobre la cuadrícula ahora visible
       if (viewId === 'dashboard') {
         restoreDashboardLayout();
+      }
+      if (viewId === 'settings') {
+        checkCoreServiceStatus();
       }
     }
 
@@ -6582,8 +6673,184 @@
       }
     }
 
-    function toggleWindowsService(isEnabled) {
-      addSystemNotification('Servicio de Windows', isEnabled ? 'Modo servicio headless pre-logon habilitado.' : 'Modo servicio deshabilitado.', 'warning', 'windows_integration');
+    // GESTIÓN COMPLETA DEL SERVICIO DE TELEMETRÍA DE WINDOWS (SYSTEM)
+    async function checkCoreServiceStatus() {
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      const statusEl = document.getElementById('core-service-status-pill');
+      const detailsEl = document.getElementById('core-service-details');
+      const actionsEl = document.getElementById('core-service-actions');
+      const chk = document.getElementById('chk-service');
+      if (!statusEl) return;
+
+      try {
+        const status = await invokeFn('check_service_status');
+        if (chk) chk.checked = Boolean(status && status.running);
+
+        if (status && status.installed && status.running) {
+          statusEl.innerHTML = `
+            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; background: rgba(34, 197, 94, 0.15); color: #22c55e; font-size: 12px; font-weight: 600;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+              En ejecución (SYSTEM)
+            </span>
+          `;
+          if (detailsEl) {
+            detailsEl.textContent = 'Colectores activos: telemetría continua de CPU, memoria RAM, salud SMART de unidades y registros de integridad.';
+          }
+          if (actionsEl) {
+            actionsEl.innerHTML = `
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="checkCoreServiceStatus()" title="Actualizar estado">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>Verificar</span>
+              </button>
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="stopCoreServiceFromSettings()" title="Detener el servicio">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                <span>Detener</span>
+              </button>
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; color: var(--accent-danger); border-color: rgba(239, 68, 68, 0.3);" onclick="uninstallCoreServiceFromSettings()" title="Desinstalar servicio de Windows">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span>Desinstalar</span>
+              </button>
+            `;
+          }
+        } else if (status && status.installed && !status.running) {
+          statusEl.innerHTML = `
+            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; background: rgba(234, 179, 8, 0.15); color: #eab308; font-size: 12px; font-weight: 600;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #eab308; display: inline-block;"></span>
+              Detenido
+            </span>
+          `;
+          if (detailsEl) {
+            detailsEl.textContent = 'El servicio está instalado en Windows pero actualmente no está en ejecución.';
+          }
+          if (actionsEl) {
+            actionsEl.innerHTML = `
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="checkCoreServiceStatus()" title="Actualizar estado">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>Verificar</span>
+              </button>
+              <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="startCoreServiceFromSettings()" title="Iniciar el servicio">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Iniciar Servicio</span>
+              </button>
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; color: var(--accent-danger); border-color: rgba(239, 68, 68, 0.3);" onclick="uninstallCoreServiceFromSettings()" title="Desinstalar servicio de Windows">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span>Desinstalar</span>
+              </button>
+            `;
+          }
+        } else {
+          statusEl.innerHTML = `
+            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; background: rgba(148, 163, 184, 0.15); color: var(--text-muted); font-size: 12px; font-weight: 600;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block;"></span>
+              No instalado
+            </span>
+          `;
+          if (detailsEl) {
+            detailsEl.textContent = 'No registrado en Windows. Instale el servicio para habilitar telemetría SMART y de bajo nivel para todos los módulos.';
+          }
+          if (actionsEl) {
+            actionsEl.innerHTML = `
+              <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" id="btn-core-service-install" onclick="installCoreServiceFromSettings()" title="Instalar y registrar servicio en Windows (solicita UAC una sola vez)">
+                <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>Instalar y Arrancar Servicio</span>
+              </button>
+            `;
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar estado del servicio del Core:', err);
+      }
+    }
+
+    async function toggleWindowsService(isEnabled) {
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      const chk = document.getElementById('chk-service');
+      try {
+        const status = await invokeFn('check_service_status');
+        if (isEnabled) {
+          if (!status.installed) {
+            if (confirm('El servicio nativo de telemetría de Windows (pc_manager_service) no está instalado todavía.\n\n¿Deseas instalarlo ahora? (Windows solicitará elevación UAC de administrador una sola vez).')) {
+              await installCoreServiceFromSettings();
+            } else {
+              if (chk) chk.checked = false;
+            }
+          } else if (!status.running) {
+            await startCoreServiceFromSettings();
+          }
+        } else {
+          if (status.running) {
+            if (confirm('¿Deseas detener el servicio de telemetría de Windows?')) {
+              await stopCoreServiceFromSettings();
+            } else {
+              if (chk) chk.checked = true;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error al alternar estado del servicio:', err);
+        if (chk) chk.checked = !isEnabled;
+      }
+    }
+
+    async function installCoreServiceFromSettings() {
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      const statusEl = document.getElementById('core-service-status-pill');
+      if (statusEl) {
+        statusEl.innerHTML = '<span style="color: var(--accent-warning); display: inline-flex; align-items: center; gap: 6px; font-size: 12px;"><svg class="svg-icon svg-icon-xs rotating" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg> Configurando servicio en Windows...</span>';
+      }
+      try {
+        const res = await invokeFn('request_service_installation');
+        addSystemNotification('Servicio de Windows', res || 'Servicio instalado y en ejecución.', 'success', 'system');
+        await checkCoreServiceStatus();
+      } catch (err) {
+        addSystemNotification('Servicio de Windows', `Error al configurar servicio: ${err}`, 'warning', 'system');
+        await checkCoreServiceStatus();
+      }
+    }
+
+    async function startCoreServiceFromSettings() {
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      try {
+        const res = await invokeFn('toggle_service_state', { start: true });
+        addSystemNotification('Servicio de Windows', res, 'info', 'system');
+        await checkCoreServiceStatus();
+      } catch (err) {
+        addSystemNotification('Servicio de Windows', `Error al iniciar servicio: ${err}`, 'warning', 'system');
+        await checkCoreServiceStatus();
+      }
+    }
+
+    async function stopCoreServiceFromSettings() {
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      try {
+        const res = await invokeFn('toggle_service_state', { start: false });
+        addSystemNotification('Servicio de Windows', res, 'info', 'system');
+        await checkCoreServiceStatus();
+      } catch (err) {
+        addSystemNotification('Servicio de Windows', `Error al detener servicio: ${err}`, 'warning', 'system');
+        await checkCoreServiceStatus();
+      }
+    }
+
+    async function uninstallCoreServiceFromSettings() {
+      if (!confirm('¿Deseas desinstalar el servicio de telemetría de Windows?\n\nLos módulos continuarán operando, pero métricas avanzadas de bajo nivel (como telemetría SMART y salud) requerirán elevación o no estarán disponibles.')) {
+        return;
+      }
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      try {
+        const res = await invokeFn('uninstall_windows_service');
+        addSystemNotification('Servicio de Windows', res, 'info', 'system');
+        await checkCoreServiceStatus();
+      } catch (err) {
+        addSystemNotification('Servicio de Windows', `Error al desinstalar servicio: ${err}`, 'warning', 'system');
+        await checkCoreServiceStatus();
+      }
     }
 
     function shutdownApplication() {
@@ -6891,6 +7158,40 @@
         loadNotificationHistory();
 
         if (invokeFn) {
+          // Registrar servicio central compartido de telemetría de hardware (Rule 3)
+          if (window.ServiceRegistry) {
+            window.ServiceRegistry.register('system.telemetry', {
+              getSystemTelemetry: async () => {
+                try {
+                  const raw = await invokeFn('get_system_telemetry');
+                  return raw ? JSON.parse(raw) : null;
+                } catch (e) {
+                  console.warn('Error al obtener telemetría del sistema:', e);
+                  return null;
+                }
+              },
+              getStorageTelemetry: async () => {
+                try {
+                  const raw = await invokeFn('get_storage_telemetry');
+                  return raw ? JSON.parse(raw) : null;
+                } catch (e) {
+                  console.warn('Error al obtener telemetría de almacenamiento:', e);
+                  return null;
+                }
+              },
+              checkStatus: async () => {
+                return await invokeFn('check_service_status');
+              }
+            }, {
+              description: 'Telemetría unificada de hardware (CPU, RAM, Discos y Salud SMART) provista por el host nativo y servicio de Windows.',
+              version: '1.0.0',
+              channels: ['cpu', 'memory', 'storage']
+            });
+          }
+
+          // Verificar estado del servicio nativo en segundo plano
+          checkCoreServiceStatus().catch(e => console.warn(e));
+
           const sysInfo = await invokeFn('get_system_info');
           if (sysInfo) {
             console.log('PC Manager Core conectado al host nativo:', sysInfo);

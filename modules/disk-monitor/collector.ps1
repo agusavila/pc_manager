@@ -5,17 +5,20 @@
 $ErrorActionPreference = 'SilentlyContinue'
 
 # 1. Verificar si el Servicio de Windows (SYSTEM) ha generado telemetría reciente
-$telemetryPath = "$env:ProgramData\PCManager\telemetry\storage_smart.json"
+$telemetryPath = "$env:ProgramData\PCManager\telemetry\system_telemetry.json"
+if (-not (Test-Path $telemetryPath)) {
+    $telemetryPath = "$env:ProgramData\PCManager\telemetry\storage_smart.json"
+}
 if (Test-Path $telemetryPath) {
     $raw = Get-Content -Raw -Path $telemetryPath -ErrorAction SilentlyContinue
     if ($raw) {
         $cached = $raw | ConvertFrom-Json -ErrorAction SilentlyContinue
-        if ($cached -and $cached.timestamp) {
-            $ts = [DateTime]$cached.timestamp
-            if ((Get-Date).ToUniversalTime().Subtract($ts).TotalSeconds -lt 90) {
-                Write-Output $raw
-                exit 0
-            }
+        if ($cached -and $cached.storage -and $cached.storage.disks) {
+            Write-Output ($cached.storage | ConvertTo-Json -Depth 5)
+            exit 0
+        } elseif ($cached -and $cached.disks) {
+            Write-Output $raw
+            exit 0
         }
     }
 }

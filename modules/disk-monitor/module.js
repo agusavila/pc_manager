@@ -11,17 +11,20 @@
 $ErrorActionPreference = 'SilentlyContinue'
 
 # 1. Verificar si el Servicio de Windows (SYSTEM) ha generado telemetría reciente
-$telemetryPath = "$env:ProgramData\\PCManager\\telemetry\\storage_smart.json"
+$telemetryPath = "$env:ProgramData\\PCManager\\telemetry\\system_telemetry.json"
+if (-not (Test-Path $telemetryPath)) {
+    $telemetryPath = "$env:ProgramData\\PCManager\\telemetry\\storage_smart.json"
+}
 if (Test-Path $telemetryPath) {
     $raw = Get-Content -Raw -Path $telemetryPath -ErrorAction SilentlyContinue
     if ($raw) {
         $cached = $raw | ConvertFrom-Json -ErrorAction SilentlyContinue
-        if ($cached -and $cached.timestamp) {
-            $ts = [DateTime]$cached.timestamp
-            if ((Get-Date).ToUniversalTime().Subtract($ts).TotalSeconds -lt 90) {
-                Write-Output $raw
-                exit 0
-            }
+        if ($cached -and $cached.storage -and $cached.storage.disks) {
+            Write-Output ($cached.storage | ConvertTo-Json -Depth 5)
+            exit 0
+        } elseif ($cached -and $cached.disks) {
+            Write-Output $raw
+            exit 0
         }
     }
 }
@@ -254,7 +257,27 @@ $events = @(Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName=@('di
     if (!invokeFn) return null;
 
     try {
-      // 1. Intentar primero consumir la telemetría del Servicio de Windows (bajo nivel SYSTEM)
+      // 1. Intentar primero consumir la telemetría del Servicio mediante ServiceRegistry o IPC directo
+      if (window.ServiceRegistry && window.ServiceRegistry.has('system.telemetry')) {
+        try {
+          const sysSvc = window.ServiceRegistry.get('system.telemetry');
+          if (sysSvc && typeof sysSvc.getStorageTelemetry === 'function') {
+            const parsed = await sysSvc.getStorageTelemetry();
+            if (parsed && Array.isArray(parsed.disks) && parsed.disks.length > 0) {
+              rawTelemetryData = parsed;
+              updateDisksCache(parsed.disks);
+              const timeEl = document.getElementById('dm-last-scan-time');
+              if (timeEl) {
+                timeEl.textContent = `Actualizado (Servicio): ${new Date().toLocaleTimeString()}`;
+              }
+              return parsed;
+            }
+          }
+        } catch (regErr) {
+          // Fallback al IPC directo
+        }
+      }
+
       try {
         const serviceTelemetry = await invokeFn('get_storage_telemetry');
         if (serviceTelemetry) {

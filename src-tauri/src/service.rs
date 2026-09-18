@@ -82,8 +82,8 @@ pub mod win_service {
 
         // Bucle de telemetría de hardware de bajo nivel en segundo plano (Solo Lectura)
         while RUNNING.load(Ordering::SeqCst) {
-            collect_and_write_storage_telemetry();
-            thread::sleep(Duration::from_secs(8));
+            collect_and_write_system_telemetry();
+            thread::sleep(Duration::from_secs(6));
         }
 
         status.dwCurrentState = SERVICE_STOPPED;
@@ -92,10 +92,10 @@ pub mod win_service {
     }
 
     pub fn collect_once() {
-        collect_and_write_storage_telemetry();
+        collect_and_write_system_telemetry();
     }
 
-    fn collect_and_write_storage_telemetry() {
+    fn collect_and_write_system_telemetry() {
         use std::process::Command;
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -108,6 +108,30 @@ pub mod win_service {
                 icacls $dir /grant "*S-1-5-32-545:(OI)(CI)R" /t /q | Out-Null
             }
 
+            # 1. Telemetría de Procesador (CPU)
+            $cpuObj = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+            $cpuData = [PSCustomObject]@{
+                Name = if ($cpuObj -and $cpuObj.Name) { $cpuObj.Name.Trim() } else { 'Procesador Principal' }
+                Cores = if ($cpuObj) { [int]$cpuObj.NumberOfCores } else { 0 }
+                LogicalProcessors = if ($cpuObj) { [int]$cpuObj.NumberOfLogicalProcessors } else { 0 }
+                MaxClockSpeedMHz = if ($cpuObj) { [int]$cpuObj.MaxClockSpeed } else { 0 }
+                LoadPercentage = if ($cpuObj -and $cpuObj.LoadPercentage -ne $null) { [int]$cpuObj.LoadPercentage } else { 0 }
+            }
+
+            # 2. Telemetría de Memoria RAM
+            $osObj = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+            $totalRam = if ($osObj -and $osObj.TotalVisibleMemorySize) { [int64]$osObj.TotalVisibleMemorySize * 1024 } else { 0 }
+            $freeRam = if ($osObj -and $osObj.FreePhysicalMemory) { [int64]$osObj.FreePhysicalMemory * 1024 } else { 0 }
+            $usedRam = [Math]::Max(0, $totalRam - $freeRam)
+            $ramPercent = if ($totalRam -gt 0) { [Math]::Round(($usedRam / $totalRam) * 100, 1) } else { 0 }
+            $ramData = [PSCustomObject]@{
+                TotalBytes = $totalRam
+                UsedBytes = $usedRam
+                FreeBytes = $freeRam
+                UsedPercent = $ramPercent
+            }
+
+            # 3. Telemetría de Unidades Físicas y SMART
             $pdisks = @(Get-PhysicalDisk -ErrorAction SilentlyContinue)
             $counters = @(Get-PhysicalDisk -ErrorAction SilentlyContinue | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue)
             $parts = @(Get-Partition -ErrorAction SilentlyContinue | Select-Object DiskNumber, PartitionNumber, DriveLetter, Size)
@@ -177,6 +201,7 @@ pub mod win_service {
                 }
             })
 
+            # 4. Eventos Reales de Controladores y Almacenamiento
             $events = @(Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName=@('disk','Ntfs','stornvme','partmgr'); Id=7,55,98,153} -MaxEvents 12 -ErrorAction SilentlyContinue | ForEach-Object {
                 [PSCustomObject]@{
                     TimeCreated = $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss')
@@ -186,17 +211,33 @@ pub mod win_service {
                 }
             })
 
-            $payload = [PSCustomObject]@{
+            # 5. Payload Global Unificado del Core
+            $systemPayload = [PSCustomObject]@{
+                service_active = $true
+                timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+                cpu = $cpuData
+                ram = $ramData
+                disks = $disks
+                events = $events
+            } | ConvertTo-Json -Depth 5
+
+            $targetSys = "$dir\system_telemetry.json"
+            $tempSys = "$dir\system_telemetry.tmp"
+            $systemPayload | Set-Content -Path $tempSys -Encoding utf8
+            Move-Item -Path $tempSys -Destination $targetSys -Force
+
+            # 6. Copia de retrocompatibilidad directa para storage_smart.json
+            $storagePayload = [PSCustomObject]@{
                 service_active = $true
                 disks = $disks
                 events = $events
                 timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
             } | ConvertTo-Json -Depth 5
 
-            $targetFile = "$dir\storage_smart.json"
-            $tempFile = "$dir\storage_smart.tmp"
-            $payload | Set-Content -Path $tempFile -Encoding utf8
-            Move-Item -Path $tempFile -Destination $targetFile -Force
+            $targetStorage = "$dir\storage_smart.json"
+            $tempStorage = "$dir\storage_smart.tmp"
+            $storagePayload | Set-Content -Path $tempStorage -Encoding utf8
+            Move-Item -Path $tempStorage -Destination $targetStorage -Force
         "#;
 
         let mut cmd = Command::new("powershell.exe");

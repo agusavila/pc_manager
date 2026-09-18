@@ -10,8 +10,8 @@
     "system:storage",
     "system:execute"
   ],
-  "requires_service": true,
-  "service_reason": "Lectura directa de telemetría física SMART y porcentaje de salud y vida útil de celdas SSD a través del colector nativo de Windows.",
+  "requires_service": false,
+  "service_reason": "Consume telemetría física SMART y porcentaje de salud a través del servicio central de telemetría de Windows.",
   "dependencies": [],
   "provides_services": [
     "storage.telemetry"

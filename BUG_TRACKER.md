@@ -1899,6 +1899,54 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager_service.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager_service.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-031] Centralización de la Telemetría de Windows (CPU, RAM, Discos) en el Core, panel de gestión en Configuraciones con 1-click UAC y registro de servicios compartidos (ServiceRegistry)
+- **Fecha**: 2026-09-17
+- **Versión**: `v0.0.4`
+- **Severidad**: `ALTA`
+- **Componente**: `Core Settings UI / ServiceRegistry / Windows Telemetry Service / disk-monitor Module`
+- **Descripción del Fallo**: 
+  1. El servicio de Windows estaba conceptualizado de forma aislada para el módulo `disk-monitor`, requiriendo interacción específica desde su modal en lugar de ser un componente de infraestructura transversal del Core para métricas de todo el hardware (CPU, RAM, Almacenamiento).
+  2. En la sección de Configuraciones de la aplicación de escritorio (`ui/index.html`), el switch "Modo Servicio de Windows (Pre-logon)" era un control estático y desconectado de la lógica real del sistema operativo.
+  3. No existía un panel visible e interactivo en Configuraciones que reflejara en tiempo real el estado del servicio en Windows (`🟢 En ejecución (SYSTEM)`, `🟡 Detenido`, `⚪ No instalado`) ni permitiera instalarlo, iniciarlo, detenerlo o desinstalarlo con 1-click UAC directamente desde la aplicación sin requerir consolas ni scripts externos.
+  4. Los módulos carecían de un `ServiceRegistry` global accesible en el Core para consumir telemetría unificada de hardware sin acoplamiento.
+- **Causa Raíz**: 
+  Falta de centralización del colector de telemetría a nivel del sistema y ausencia de cableado entre los comandos IPC de servicio de Rust (`check_service_status`, `request_service_installation`, `toggle_service_state`, `uninstall_windows_service`, `get_system_telemetry`) y la interfaz de usuario en Configuraciones.
+- **Solución Implementada**: 
+  1. **Expansión del Colector a Nivel Core (`src-tauri/src/service.rs`)**:
+     - `collect_and_write_system_telemetry()` recolecta CPU (`Win32_Processor`: núcleos, hilos, reloj, carga %), RAM (`Win32_OperatingSystem`: total, usada, libre, % en uso) y Storage (`PhysicalDisk` SMART, counters, volúmenes, eventos NTFS/controlador).
+     - Escritura dual en `system_telemetry.json` y `storage_smart.json` (retrocompatibilidad).
+  2. **Comandos IPC de Gestión de Servicios en Rust (`src-tauri/src/lib.rs`)**:
+     - Implementados y registrados: `check_service_status`, `request_service_installation`, `toggle_service_state`, `uninstall_windows_service`, `get_storage_telemetry`, `get_system_telemetry`.
+  3. **Panel de Gestión Material Expressive en Configuraciones (`ui/index.html`)**:
+     - Tarjeta dedicada `#card-windows-telemetry-service` con badge dinámico (`En ejecución (SYSTEM)`, `Detenido`, `No instalado`).
+     - Botones de acción dinámicos: "Instalar y Arrancar Servicio" (1-click UAC), "Detener", "Iniciar", "Desinstalar", y "Verificar".
+     - Switch de pre-logon sincronizado bidireccionalmente con el estado real del servicio en Windows.
+  4. **Implementación canónica de `ServiceRegistry` (Regla 3)**:
+     - `window.ServiceRegistry` implementado en el Core con métodos `register()`, `get()`, `subscribe()`, `list()`, y `has()`.
+     - El Core registra automáticamente el servicio `'system.telemetry'` en el arranque (`DOMContentLoaded`).
+  5. **Desacoplamiento del módulo `disk-monitor`**:
+     - `manifest.json`: `"requires_service": false`.
+     - `collector.ps1` y `module.js`: consumen `'system.telemetry'` desde `ServiceRegistry` o `system_telemetry.json` de forma transparente.
+     - Módulo recompilado, firmado criptográficamente (`Ed25519`) y sincronizado a AppData.
+  6. **Compilación Nativa y Pruebas (Reglas 9 y 10)**:
+     - 9 de 9 pruebas unitarias aprobadas (`cargo test --lib`).
+     - Compilación exitosa de binarios nativos de escritorio (`cargo build`).
+- **Archivos Afectados**: 
+  - [`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`modules/disk-monitor/manifest.json`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/manifest.json)
+  - [`modules/disk-monitor/collector.ps1`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/collector.ps1)
+  - [`modules/disk-monitor/module.js`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/module.js)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+  - [`src-tauri/target/debug/pc_manager_service.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager_service.exe)
+- **Estado**: `RESUELTO`
+
+
 
 
 
