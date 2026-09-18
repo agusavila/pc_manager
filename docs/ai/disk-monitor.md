@@ -12,10 +12,10 @@ El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimien
 
 ## 2. Esquema de Datos y Eventos
 
-### Invocación Nativa IPC: `get_disk_telemetry`
-- **Método**: `invoke('get_disk_telemetry') -> Result<Value, String>`
-- **Comportamiento**: Ejecuta de forma silenciosa (`CREATE_NO_WINDOW`) consultas nativas a Windows Storage PowerShell (`Get-PhysicalDisk`, `Get-Partition`, `Get-Volume`, `Get-WinEvent`).
-- **Esquema de Retorno**:
+### Invocación Nativa IPC: `execute_module_script`
+- **Método**: `invoke('execute_module_script', { moduleId: 'disk-monitor', script: COLLECTOR_SCRIPT, interpreter: 'powershell' }) -> Result<String, String>`
+- **Comportamiento**: El Core Microkernel valida permisos de ejecución (`system:storage`, `system:execute`) en `registry.json` mediante `module_manager::can_module_execute`. Si está autorizado, ejecuta el script PowerShell del módulo en un proceso sin ventana (`CREATE_NO_WINDOW`) y retorna la cadena JSON de stdout.
+- **Esquema de Retorno Deserializado**:
   ```json
   {
     "disks": [
@@ -24,30 +24,24 @@ El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimien
         "FriendlyName": "STRING",
         "Model": "STRING",
         "SerialNumber": "STRING",
-        "MediaType": "SSD | HDD | SCM",
+        "DriveType": "NVMe | SSD | HDD | USB | STRING",
+        "MediaType": "SSD | HDD | Removable | Fixed",
         "BusType": "NVMe | SATA | SCSI | USB",
-        "SpindleSpeed": 0,
         "Size": 1024209543168,
         "HealthStatus": "Healthy | Warning | Unhealthy",
-        "OperationalStatus": "OK | Degraded"
-      }
-    ],
-    "partitions": [
-      {
-        "DiskNumber": 0,
-        "PartitionNumber": 1,
-        "DriveLetter": "C",
-        "Size": 248901533696
-      }
-    ],
-    "volumes": [
-      {
-        "DriveLetter": "C",
-        "FileSystemLabel": "Windows",
-        "FileSystem": "NTFS",
-        "HealthStatus": "Healthy",
-        "SizeRemaining": 98111770624,
-        "Size": 248901529600
+        "OperationalStatus": "OK | Degraded",
+        "HealthPercent": 100, // null si la lectura SMART detallada no está disponible por falta de elevación UAC (Regla 7: Cero Datos Inventados)
+        "IsRemovable": false,
+        "FileSystems": ["NTFS", "exFAT"],
+        "Volumes": [
+          {
+            "DriveLetter": "C",
+            "FileSystemLabel": "Windows",
+            "FileSystem": "NTFS",
+            "SizeRemaining": 98111770624,
+            "Size": 248901529600
+          }
+        ]
       }
     ],
     "events": [
@@ -66,12 +60,16 @@ El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimien
 ## 3. Invariantes Arquitectónicos de Implementación
 
 1. **Neutralidad Total (Regla 2 - Marca Blanca)**:
-   - Queda estrictamente prohibido introducir condiciones de código o heurísticas que contengan nombres de marcas comerciales, líneas de productos o modelos de mercado (prohibido `model.includes('...')` para marcas particulares).
-   - La clasificación de tecnologías se basa exclusivamente en enumeradores estándar: `BusType == 'NVMe'` $\to$ NVMe; `MediaType == 'SSD'` o `SpindleSpeed == 0` $\to$ SSD; `MediaType == 'HDD'` o `SpindleSpeed > 0` $\to$ HDD.
+   - Queda estrictamente prohibido introducir condiciones de código o heurísticas que contengan nombres de marcas comerciales, líneas de productos o modelos de mercado.
+   - La clasificación de tecnologías se basa exclusivamente en enumeradores estándar: `BusType == 'USB' || IsRemovable` $\to$ Almacenamiento USB (Externo); `BusType == 'NVMe'` $\to$ NVMe; `MediaType == 'SSD'` o `SpindleSpeed == 0` $\to$ SSD; `MediaType == 'HDD'` o `SpindleSpeed > 0` $\to$ HDD.
 2. **Control de Usuario sobre Selección (Cero Asunciones)**:
-   - El módulo almacena en `localStorage` la clave `pcm_monitored_drives`.
-   - Si la clave está ausente o vacía, la interfaz debe renderizar el **Empty State** invitando a buscar discos. No debe poblar automáticamente el tablero con todos los discos del equipo.
-3. **Seguridad Operativa (Regla 5 - Modo Seguro)**:
+   - El módulo almacena en `localStorage` la clave `pcm_disk_monitor_drives`.
+   - Si la clave está ausente o vacía, la interfaz debe renderizar el **Empty State** invitando a buscar discos.
+3. **Limpieza Absoluta en Desinstalación**:
+   - Expone `__CLEANUP_disk_monitor__(opts)` y `__PURGE_disk_monitor__()` para eliminar todas las claves de persistencia local en desinstalación.
+4. **Disposición Matricial a 2 Columnas**:
+   - Las tarjetas de discos configurados se despliegan en `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;`.
+5. **Seguridad Operativa (Regla 5 - Modo Seguro)**:
    - Toda rutina de auditoría es estrictamente de solo lectura (Dry-Run).
-4. **Cero Placebos (Regla 7)**:
-   - Todos los datos de números de serie, capacidades, salud y sectores provienen de llamadas reales al subsistema de almacenamiento del sistema operativo.
+6. **Cero Placebos (Regla 7)**:
+   - Todos los datos de números de serie, capacidades, salud porcentual, filesystem y sectores provienen de llamadas reales al subsistema de almacenamiento del sistema operativo.

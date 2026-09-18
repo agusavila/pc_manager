@@ -196,14 +196,31 @@ Módulo demostrativo que exporta 19 widgets vacíos cubriendo todos los factores
 - banner: Banner panorámico 12x2 (Horizontal)
 `;
 
-  zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-  zip.file('module.js', moduleJs);
-  zip.file('README.md', readme);
+  const { ensureKeyPair, signModuleFiles } = require('./tools/module_signer.cjs');
+
+  const manifestBuffer = Buffer.from(JSON.stringify(manifest, null, 2), 'utf8');
+  const moduleJsBuffer = Buffer.from(moduleJs, 'utf8');
+  const readmeBuffer = Buffer.from(readme, 'utf8');
+
+  const filesMap = {
+    'manifest.json': manifestBuffer,
+    'module.js': moduleJsBuffer,
+    'README.md': readmeBuffer
+  };
+
+  const { pubHex, privateKey } = ensureKeyPair();
+  const sigData = signModuleFiles(filesMap, privateKey, pubHex, manifest);
+
+  for (const [name, buf] of Object.entries(filesMap)) {
+    zip.file(name, buf);
+  }
+  zip.file('signature.sig', JSON.stringify(sigData, null, 2));
 
   const content = await zip.generateAsync({ type: 'nodebuffer' });
   const outputPath = path.join(__dirname, 'dummy-widgets.pcm');
   fs.writeFileSync(outputPath, content);
-  console.log(`Paquete dummy-widgets.pcm generado exitosamente en la raíz: ${outputPath} (${content.length} bytes)`);
+  console.log(`Paquete dummy-widgets.pcm firmado y generado exitosamente en la raíz: ${outputPath} (${content.length} bytes)`);
+  console.log(`Firma criptográfica Ed25519 generada con llave pública: ${pubHex}`);
 
   // Guardar también en modules/dummy-widgets para referencia en el repositorio
   const modDir = path.join(__dirname, 'modules', 'dummy-widgets');
@@ -213,6 +230,7 @@ Módulo demostrativo que exporta 19 widgets vacíos cubriendo todos los factores
   fs.writeFileSync(path.join(modDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
   fs.writeFileSync(path.join(modDir, 'module.js'), moduleJs);
   fs.writeFileSync(path.join(modDir, 'README.md'), readme);
+  fs.writeFileSync(path.join(modDir, 'signature.sig'), JSON.stringify(sigData, null, 2));
   console.log(`Archivos fuente del módulo guardados en modules/dummy-widgets/`);
 }
 

@@ -59,6 +59,10 @@ pub struct ModuleManifest {
     pub widgets: Vec<ModuleWidget>,
     #[serde(default)]
     pub views: Vec<ModuleView>,
+    #[serde(default)]
+    pub requires_service: Option<bool>,
+    #[serde(default)]
+    pub service_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,6 +71,26 @@ pub struct InstalledModuleRecord {
     pub script_code: String,
     pub active: bool,
     pub install_date: String,
+    #[serde(default)]
+    pub signature_status: String,
+    #[serde(default)]
+    pub author_fingerprint: Option<String>,
+    #[serde(default)]
+    pub file_hashes: HashMap<String, String>,
+    #[serde(default)]
+    pub granted_permissions: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PackageInspectionPayload {
+    pub manifest: ModuleManifest,
+    pub security_status: String,
+    pub author: String,
+    pub fingerprint: Option<String>,
+    pub file_hashes: HashMap<String, String>,
+    pub security_message: String,
+    pub requires_service: bool,
+    pub service_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -138,12 +162,15 @@ pub fn save_registry(app: &AppHandle, state: &RegistryState) -> Result<(), Strin
     save_registry_unlocked(app, state)
 }
 
-/// Instala un paquete físico .pcm (descomprime en disco, persiste en registro)
-pub fn install_package_bytes(app: &AppHandle, bytes: Vec<u8>) -> Result<InstalledModuleRecord, String> {
+/// Inspecciona un paquete físico .pcm antes de su instalación (auditoría previa)
+pub fn inspect_package_bytes(bytes: &[u8]) -> Result<PackageInspectionPayload, String> {
+    // 1. Verificación criptográfica y cálculo de hashes SHA-256
+    let sec_result = crate::module_security::verify_archive_security(bytes)?;
+
+    // 2. Extraer y parsear manifest.json
     let mut archive = zip::ZipArchive::new(Cursor::new(bytes))
         .map_err(|e| format!("El archivo no es un paquete .pcm (ZIP) válido: {}", e))?;
 
-    // 1. Leer y validar manifest.json
     let mut manifest_str = String::new();
     {
         let mut manifest_file = archive
@@ -161,7 +188,58 @@ pub fn install_package_bytes(app: &AppHandle, bytes: Vec<u8>) -> Result<Installe
         return Err("El manifest.json debe contener id y name válidos".to_string());
     }
 
-    // 2. Extraer archivos en %APPDATA%\com.pcmanager.core\modules\<id>\
+    let requires_service = manifest.requires_service.unwrap_or(false);
+    let service_reason = manifest.service_reason.clone();
+
+    Ok(PackageInspectionPayload {
+        manifest,
+        security_status: sec_result.status_code,
+        author: sec_result.author,
+        fingerprint: sec_result.fingerprint,
+        file_hashes: sec_result.file_hashes,
+        security_message: sec_result.message,
+        requires_service,
+        service_reason,
+    })
+}
+
+/// Instala un paquete físico .pcm con verificación criptográfica y permisos concedidos
+pub fn install_package_bytes(
+    app: &AppHandle,
+    bytes: Vec<u8>,
+    granted_permissions: Option<Vec<String>>,
+) -> Result<InstalledModuleRecord, String> {
+    // 1. Verificación obligatoria de integridad criptográfica
+    let sec_result = crate::module_security::verify_archive_security(&bytes)?;
+    if sec_result.status == crate::module_security::SecurityStatus::Tampered {
+        return Err(format!(
+            "Instalación bloqueada por seguridad: {}",
+            sec_result.message
+        ));
+    }
+
+    let mut archive = zip::ZipArchive::new(Cursor::new(&bytes))
+        .map_err(|e| format!("El archivo no es un paquete .pcm (ZIP) válido: {}", e))?;
+
+    // 2. Leer y validar manifest.json
+    let mut manifest_str = String::new();
+    {
+        let mut manifest_file = archive
+            .by_name("manifest.json")
+            .map_err(|_| "El paquete .pcm no contiene un manifest.json en su raíz".to_string())?;
+        manifest_file
+            .read_to_string(&mut manifest_str)
+            .map_err(|e| format!("Error al leer manifest.json: {}", e))?;
+    }
+
+    let manifest: ModuleManifest = serde_json::from_str(&manifest_str)
+        .map_err(|e| format!("Error al parsear manifest.json: {}", e))?;
+
+    if manifest.id.trim().is_empty() || manifest.name.trim().is_empty() {
+        return Err("El manifest.json debe contener id y name válidos".to_string());
+    }
+
+    // 3. Extraer archivos en %APPDATA%\com.pcmanager.core\modules\<id>\
     let storage_dir = get_storage_dir(app)?;
     let module_dir = storage_dir.join("modules").join(&manifest.id);
     if !module_dir.exists() {
@@ -201,16 +279,23 @@ pub fn install_package_bytes(app: &AppHandle, bytes: Vec<u8>) -> Result<Installe
         }
     }
 
-    // 3. Registrar en registry.json
+    // 4. Registrar en registry.json con auditoría de seguridad
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
+
+    let perms = granted_permissions.unwrap_or_else(|| manifest.permissions.clone());
+
     let record = InstalledModuleRecord {
         manifest: manifest.clone(),
         script_code,
         active: true,
         install_date: format!("{}", now),
+        signature_status: sec_result.status_code,
+        author_fingerprint: sec_result.fingerprint,
+        file_hashes: sec_result.file_hashes,
+        granted_permissions: perms,
     };
 
     {
@@ -221,10 +306,10 @@ pub fn install_package_bytes(app: &AppHandle, bytes: Vec<u8>) -> Result<Installe
     }
 
     log::info!(
-        "Módulo '{}' (v{}) instalado físicamente en {:?}",
+        "Módulo '{}' (v{}) instalado físicamente. Firma: {}",
         manifest.name,
         manifest.version,
-        module_dir
+        record.signature_status
     );
 
     Ok(record)
@@ -287,3 +372,42 @@ pub fn set_dashboard_order(app: &AppHandle, order: Vec<String>) -> Result<(), St
     save_registry_unlocked(app, &registry)?;
     Ok(())
 }
+
+/// Valida si un módulo tiene permisos de ejecución en su manifiesto y no ha sido vulnerado
+pub fn can_module_execute(app: &AppHandle, module_id: &str) -> Result<bool, String> {
+    let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let registry = load_registry_unlocked(app);
+    if let Some(record) = registry.modules.get(module_id) {
+        if !record.active {
+            return Err(format!("El módulo '{}' está desactivado", module_id));
+        }
+
+        if record.signature_status == "TAMPERED" {
+            return Err(format!(
+                "Ejecución bloqueada por seguridad: La firma del módulo '{}' está corrupta o el paquete fue manipulado tras la instalación.",
+                module_id
+            ));
+        }
+
+        let perms = if !record.granted_permissions.is_empty() {
+            &record.granted_permissions
+        } else {
+            &record.manifest.permissions
+        };
+
+        let has_perm = perms.iter().any(|p| {
+            p == "system:execute" || p == "system:storage" || p == "system:hardware" || p == "system:all"
+        });
+
+        if !has_perm {
+            return Err(format!(
+                "El módulo '{}' no posee permisos autorizados para ejecutar scripts en el sistema operativo (requiere 'system:execute' o 'system:storage')",
+                module_id
+            ));
+        }
+        Ok(true)
+    } else {
+        Err(format!("Módulo '{}' no encontrado en el registro", module_id))
+    }
+}
+

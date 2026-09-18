@@ -181,6 +181,35 @@ El Gestor de Módulos integra canónicamente cuatro pestañas ordenadas:
    - Interruptor: *Modo Servicio de Windows (Pre-logon)* (para colectores previos al inicio de sesión).
    - Interruptor: *Modo Simulación Permanente (Dry-Run)* (activo por defecto para seguridad).
 
+### 3.8 Arquitectura de Seguridad Criptográfica y Gobernanza de Módulos
+Para garantizar que ningún módulo pueda comprometer la estabilidad o privacidad del sistema anfitrión, se establece un modelo de defensa en profundidad compuesto por 5 capas inmutables:
+
+1. **Firma Criptográfica Asimétrica (Ed25519 + SHA-256)**:
+   - Todo paquete `.pcm` incorpora un archivo sellado `signature.sig` que contiene los hashes SHA-256 individuales de todos sus archivos y una firma digital Ed25519.
+   - El Core valida la firma contra una lista de claves públicas de confianza (clave oficial de desarrollo del Core y claves de autores verificados).
+   - Cualquier archivo añadido, alterado o suprimido produce un estado `TAMPERED` que bloquea completamente la instalación y ejecución.
+
+2. **Auditoría Previa y Diálogo de Consentimiento Explícito**:
+   - Queda prohibida la instalación automática o silenciosa de módulos.
+   - Antes de instalar, el Core inspecciona el paquete (`inspect_module_package`) y despliega el **Modal de Seguridad y Auditoría de Permisos**:
+     - Muestra el estado criptográfico (Verificado / Autor No Oficial / Alterado).
+     - Despliega la huella pública del autor (Ed25519 fingerprint).
+     - Presenta la lista granular de permisos solicitados (`system:execute`, `system:storage`, etc.) permitiendo al usuario concederlos o denegarlos selectivamente.
+     - Detalla si el módulo requiere el servicio de Windows de fondo (`requires_service`), su justificación técnica (`service_reason`) y el estado actual del servicio.
+
+3. **Sandbox y Validación Estática de Scripts en Host Nativo**:
+   - Todo script PowerShell o ejecutable asociado a un módulo pasa por un filtro de seguridad en Rust (`validate_script_safety`).
+   - Bloqueo estricto de accesos a rutas críticas del sistema (`C:\Windows\System32`, `WinSxS`, registros `SAM`/`SECURITY`).
+   - Bloqueo de comandos destructivos (`Format-Volume`, `diskpart`, `rmdir /s /q`).
+
+4. **Integridad Dinámica en Caliente**:
+   - Antes de permitir la ejecución de cualquier script o servicio (`can_module_execute`), el Core recalcula en caliente los hashes SHA-256 de los archivos en disco frente al registro sellado de instalación.
+   - Modificaciones no autorizadas en disco suspenden la ejecución de inmediato.
+
+5. **Gobernanza del Servicio de Windows (Host de Fondo)**:
+   - Los módulos no pueden ejecutar comandos remotos arbitrarios en el contexto del servicio de Windows (`LocalSystem`).
+   - El servicio de Windows se limita a exponer colectores tipados y de solo lectura (lectura de contadores SMART y telemetría de hardware).
+
 ---
 
 ## 4. Estándares de Calidad, Bitácora y Control de Versiones

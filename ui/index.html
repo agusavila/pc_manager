@@ -536,6 +536,12 @@
       background-color: var(--bg-card);
       border-color: var(--accent-primary);
     }
+    .btn-secondary.active {
+      background-color: var(--accent-primary);
+      color: #ffffff;
+      border-color: var(--accent-primary);
+      box-shadow: 0 2px 8px var(--accent-primary-dim);
+    }
 
     .btn-icon {
       width: 38px;
@@ -1449,6 +1455,99 @@
     input:checked + .slider:before {
       transform: translate(18px, -50%);
       background-color: #ffffff;
+    }
+
+    /* CUSTOM CHECKBOX (MATERIAL EXPRESSIVE) */
+    .custom-checkbox {
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+    .custom-checkbox input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+    .checkbox-indicator {
+      width: 18px;
+      height: 18px;
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-medium);
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .custom-checkbox:hover .checkbox-indicator {
+      border-color: var(--accent-primary);
+      background-color: var(--bg-elevated);
+    }
+    .custom-checkbox input:checked ~ .checkbox-indicator {
+      background-color: var(--accent-primary);
+      border-color: var(--accent-primary);
+      box-shadow: 0 2px 8px var(--accent-primary-dim);
+    }
+    .checkbox-indicator svg {
+      width: 12px;
+      height: 12px;
+      stroke: #ffffff;
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transform: scale(0);
+      transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .custom-checkbox input:checked ~ .checkbox-indicator svg {
+      transform: scale(1);
+    }
+
+    /* FILTER CHIPS (MATERIAL EXPRESSIVE) */
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-medium);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .filter-chip:hover {
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+      background: var(--bg-elevated);
+    }
+    .filter-chip.active {
+      background: var(--accent-primary);
+      color: #ffffff;
+      border-color: var(--accent-primary);
+      box-shadow: 0 2px 8px var(--accent-primary-dim);
+      font-weight: 600;
+    }
+    .filter-chip .chip-count {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: var(--radius-full);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .filter-chip.active .chip-count {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
     }
 
     /* COLOR SWATCHES */
@@ -2639,6 +2738,87 @@
       </div>
     </div>
 
+    <!-- MODAL CANÓNICO: AUDITORÍA DE SEGURIDAD Y PERMISOS DE MÓDULO -->
+    <div class="modal-backdrop" id="modal-module-security" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.68); backdrop-filter: blur(8px); z-index: 999999; align-items: center; justify-content: center;" onclick="if(event.target===this) closeModuleSecurityModal()">
+      <div class="modal-card" style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); width: 560px; max-width: 92vw; max-height: 88vh; padding: 22px; box-shadow: var(--shadow-floating); display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
+        
+        <!-- Cabecera -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="sec-modal-icon-badge" style="width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--accent-primary-dim); color: var(--accent-primary); display: flex; align-items: center; justify-content: center;">
+              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; color: var(--text-primary);" id="sec-modal-title">Auditoría de Seguridad e Instalación</h4>
+              <div style="font-size: 11.5px; color: var(--text-muted);" id="sec-modal-subtitle">Inspección de integridad criptográfica y alcance operativo</div>
+            </div>
+          </div>
+          <button class="btn-icon btn-icon-xs" onclick="closeModuleSecurityModal()" title="Cerrar">
+            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <!-- Banner de Estado Criptográfico -->
+        <div id="sec-modal-status-banner" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-medium);">
+          <!-- Inyectado dinámicamente -->
+        </div>
+
+        <!-- Ficha Resumen del Módulo -->
+        <div style="display: flex; flex-direction: column; gap: 8px; background: var(--bg-elevated); padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);" id="sec-module-name">-</div>
+            <div style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-subtle);" id="sec-module-version">-</div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;" id="sec-module-desc">-</div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 6px; margin-top: 4px;">
+            <span>Identificador: <strong style="color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;" id="sec-module-id">-</strong></span>
+            <span>Autor: <strong style="color: var(--text-secondary);" id="sec-module-author">-</strong></span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; word-break: break-all;" id="sec-module-fingerprint-box">
+            Huella (Ed25519): <span id="sec-module-fingerprint" style="color: var(--text-secondary);">-</span>
+          </div>
+        </div>
+
+        <!-- Bloque de Permisos Requeridos (Consentimiento Explícito) -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">Permisos Operativos Solicitados:</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Configure los privilegios concedidos</span>
+          </div>
+          <div id="sec-modal-permissions-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 160px; overflow-y: auto;">
+            <!-- Inyectado dinámicamente con checkboxes estilizados -->
+          </div>
+        </div>
+
+        <!-- Bloque de Requerimiento de Servicio de Windows (si aplica) -->
+        <div id="sec-modal-service-box" style="display: none; flex-direction: column; gap: 10px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: var(--radius-md); padding: 12px 14px;">
+          <div style="display: flex; align-items: center; gap: 8px; color: var(--accent-primary);">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+            <strong style="font-size: 12.5px;">Requerimiento: Servicio de Windows (Host de Fondo)</strong>
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.4;" id="sec-modal-service-reason">
+            Este módulo requiere que el servicio de Windows de PC Manager esté instalado y activo para telemetría de hardware y colectores de bajo nivel.
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(59, 130, 246, 0.15); padding-top: 8px;">
+            <span style="font-size: 11.5px; color: var(--text-muted);" id="sec-modal-service-status">Estado: Verificando...</span>
+            <button class="btn btn-secondary" id="btn-sec-install-service" style="font-size: 11.5px; padding: 4px 10px; display: none;" onclick="requestServiceInstallationFromModal()">
+              Instalar y Arrancar Servicio
+            </button>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-top: 4px;">
+          <button class="btn btn-secondary" onclick="closeModuleSecurityModal()">Cancelar</button>
+          <button class="btn btn-primary" id="btn-sec-confirm-install" onclick="confirmModuleInstallation()">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span id="btn-sec-confirm-text">Aceptar Riesgos e Instalar</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
     <!-- MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE) -->
     <div class="custom-context-menu" id="app-context-menu"></div>
 
@@ -3161,6 +3341,245 @@
       input.click();
     }
 
+    const KNOWN_PERMISSIONS = {
+      'system:execute': {
+        title: 'Ejecución de Scripts de Telemetría',
+        desc: 'Permite ejecutar scripts de bajo nivel (PowerShell / Diagnóstico) bajo el sandbox inmutable de seguridad.'
+      },
+      'system:storage': {
+        title: 'Supervisión de Almacenamiento Físico',
+        desc: 'Permite consultar telemetría de hardware, buses de disco y métricas operativas de unidades físicas.'
+      },
+      'system:network': {
+        title: 'Telemetría de Red y Conectividad',
+        desc: 'Permite consultar el estado de interfaces de red y tráfico de adaptadores locales.'
+      }
+    };
+
+    let pendingModulePackage = null;
+
+    function closeModuleSecurityModal() {
+      const modal = document.getElementById('modal-module-security');
+      if (modal) modal.style.display = 'none';
+      pendingModulePackage = null;
+    }
+
+    function openModuleSecurityModal(inspection, serviceStatus) {
+      const modal = document.getElementById('modal-module-security');
+      if (!modal) return;
+
+      const m = inspection.manifest || {};
+      document.getElementById('sec-module-name').textContent = m.name || 'Módulo Sin Nombre';
+      document.getElementById('sec-module-version').textContent = `v${m.version || '1.0.0'}`;
+      document.getElementById('sec-module-desc').textContent = m.description || 'Sin descripción detallada proporcionada en el manifiesto.';
+      document.getElementById('sec-module-id').textContent = m.id || 'desconocido';
+      document.getElementById('sec-module-author').textContent = inspection.author || m.author || 'No especificado';
+      
+      const fpEl = document.getElementById('sec-module-fingerprint');
+      if (inspection.fingerprint) {
+        fpEl.textContent = inspection.fingerprint;
+        document.getElementById('sec-module-fingerprint-box').style.display = 'block';
+      } else {
+        document.getElementById('sec-module-fingerprint-box').style.display = 'none';
+      }
+
+      // Banner de Estado Criptográfico
+      const banner = document.getElementById('sec-modal-status-banner');
+      const btnInstall = document.getElementById('btn-sec-confirm-install');
+      const btnText = document.getElementById('btn-sec-confirm-text');
+      const iconBadge = document.getElementById('sec-modal-icon-badge');
+
+      if (inspection.security_status === 'VERIFIED') {
+        banner.style.background = 'var(--accent-success-dim)';
+        banner.style.borderColor = 'var(--accent-success)';
+        banner.style.color = 'var(--accent-success)';
+        iconBadge.style.background = 'var(--accent-success-dim)';
+        iconBadge.style.color = 'var(--accent-success)';
+        banner.innerHTML = `
+          <svg class="svg-icon" style="flex-shrink: 0; width: 20px; height: 20px;" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Firma Criptográfica Verificada (Ed25519)</div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">
+              Este módulo fue firmado con la clave criptográfica oficial del Núcleo y todos los archivos (.js, .json, .ps1) coinciden estrictamente con el manifiesto inmutable SHA-256.
+            </div>
+          </div>
+        `;
+        btnInstall.disabled = false;
+        btnInstall.style.display = 'inline-flex';
+        btnInstall.className = 'btn btn-primary';
+        btnText.textContent = 'Instalar Módulo Seguro';
+      } else if (inspection.security_status === 'UNVERIFIED_AUTHOR') {
+        banner.style.background = 'var(--accent-warning-dim)';
+        banner.style.borderColor = 'var(--accent-warning)';
+        banner.style.color = 'var(--accent-warning)';
+        iconBadge.style.background = 'var(--accent-warning-dim)';
+        iconBadge.style.color = 'var(--accent-warning)';
+        banner.innerHTML = `
+          <svg class="svg-icon" style="flex-shrink: 0; width: 20px; height: 20px;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Firma Válida - Autor Externo No Oficial</div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">
+              La firma criptográfica es auténtica y los archivos no han sido alterados, pero el autor no pertenece a la lista de confianza del Core de PC Manager. Proceda bajo su propio criterio.
+            </div>
+          </div>
+        `;
+        btnInstall.disabled = false;
+        btnInstall.style.display = 'inline-flex';
+        btnInstall.className = 'btn btn-primary';
+        btnText.textContent = 'Aceptar Riesgos e Instalar';
+      } else {
+        // TAMPERED / CORRUPTO
+        banner.style.background = 'var(--accent-danger-dim)';
+        banner.style.borderColor = 'var(--accent-danger)';
+        banner.style.color = 'var(--accent-danger)';
+        iconBadge.style.background = 'var(--accent-danger-dim)';
+        iconBadge.style.color = 'var(--accent-danger)';
+        banner.innerHTML = `
+          <svg class="svg-icon" style="flex-shrink: 0; width: 20px; height: 20px;" viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">¡ALERTA DE SEGURIDAD: PAQUETE ALTERADO O CORRUPTO!</div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">
+              ${inspection.security_message || 'Los archivos del paquete no coinciden con la firma o el manifiesto SHA-256. La instalación ha sido bloqueada para proteger el sistema anfitrión.'}
+            </div>
+          </div>
+        `;
+        btnInstall.disabled = true;
+        btnInstall.style.display = 'none';
+      }
+
+      // Permisos Solicitados
+      const permList = document.getElementById('sec-modal-permissions-list');
+      permList.innerHTML = '';
+      const perms = m.permissions || [];
+      if (perms.length === 0) {
+        permList.innerHTML = `<div style="font-size: 12px; color: var(--text-muted); font-style: italic; padding: 6px 0;">Este módulo opera de forma aislada y no requiere permisos especiales del sistema.</div>`;
+      } else {
+        perms.forEach(perm => {
+          const info = KNOWN_PERMISSIONS[perm] || {
+            title: `Acceso al Sistema: ${perm}`,
+            desc: `Permiso operativo declarado en el manifiesto (${perm}).`
+          };
+          const row = document.createElement('label');
+          row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: var(--bg-elevated); padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); cursor: pointer; transition: var(--transition-smooth);';
+          row.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 2px; padding-right: 12px;">
+              <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${info.title}</span>
+              <span style="font-size: 11px; color: var(--text-muted); line-height: 1.3;">${info.desc}</span>
+            </div>
+            <input type="checkbox" class="sec-perm-checkbox" value="${perm}" checked style="accent-color: var(--accent-primary); width: 17px; height: 17px; flex-shrink: 0; cursor: pointer;">
+          `;
+          permList.appendChild(row);
+        });
+      }
+
+      // Requerimiento de Servicio de Windows
+      const serviceBox = document.getElementById('sec-modal-service-box');
+      if (inspection.requires_service) {
+        serviceBox.style.display = 'flex';
+        if (inspection.service_reason) {
+          document.getElementById('sec-modal-service-reason').textContent = inspection.service_reason;
+        }
+        const statusEl = document.getElementById('sec-modal-service-status');
+        const btnSvc = document.getElementById('btn-sec-install-service');
+        if (serviceStatus && serviceStatus.installed && serviceStatus.running) {
+          statusEl.innerHTML = '<span style="color: var(--accent-success); font-weight: 600;">● Servicio de Windows en ejecución</span>';
+          btnSvc.style.display = 'none';
+        } else if (serviceStatus && serviceStatus.installed && !serviceStatus.running) {
+          statusEl.innerHTML = '<span style="color: var(--accent-warning); font-weight: 600;">● Servicio instalado pero detenido</span>';
+          btnSvc.style.display = 'inline-flex';
+          btnSvc.textContent = 'Iniciar Servicio';
+        } else {
+          statusEl.innerHTML = '<span style="color: var(--accent-warning); font-weight: 600;">● Servicio de Windows no instalado</span>';
+          btnSvc.style.display = 'inline-flex';
+          btnSvc.textContent = 'Instalar y Arrancar Servicio';
+        }
+      } else {
+        serviceBox.style.display = 'none';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    async function requestServiceInstallationFromModal() {
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+      const btn = document.getElementById('btn-sec-install-service');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Configurando servicio...';
+      }
+      try {
+        const res = await invokeFn('request_service_installation');
+        addSystemNotification('Servicio de Windows', res || 'Servicio configurado.', 'info', 'system');
+        const serviceStatus = await invokeFn('check_service_status');
+        const statusEl = document.getElementById('sec-modal-service-status');
+        if (statusEl) {
+          if (serviceStatus.running) {
+            statusEl.innerHTML = '<span style="color: var(--accent-success); font-weight: 600;">● Servicio de Windows en ejecución</span>';
+            if (btn) btn.style.display = 'none';
+          } else {
+            statusEl.innerHTML = '<span style="color: var(--accent-warning); font-weight: 600;">● Servicio configurado</span>';
+            if (btn) btn.disabled = false;
+          }
+        }
+      } catch (err) {
+        addSystemNotification('Error de Servicio', `No se pudo configurar el servicio: ${err}`, 'warning', 'system');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Reintentar Instalación';
+        }
+      }
+    }
+
+    async function confirmModuleInstallation() {
+      if (!pendingModulePackage) return;
+      const { packageBytes, inspection } = pendingModulePackage;
+      const invokeFn = getTauriInvoke();
+      if (!invokeFn) return;
+
+      const checkboxes = document.querySelectorAll('.sec-perm-checkbox');
+      const grantedPermissions = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) grantedPermissions.push(cb.value);
+      });
+
+      const btn = document.getElementById('btn-sec-confirm-install');
+      const btnText = document.getElementById('btn-sec-confirm-text');
+      if (btn) {
+        btn.disabled = true;
+        if (btnText) btnText.textContent = 'Instalando módulo...';
+      }
+
+      try {
+        const record = await invokeFn('install_module_package', { 
+          packageBytes, 
+          grantedPermissions 
+        });
+        
+        closeModuleSecurityModal();
+
+        if (record && record.manifest) {
+          installModule(record.manifest, record.script_code);
+          renderDashboardCustomizationCatalog();
+          addSystemNotification(
+            'Módulo Instalado', 
+            `El módulo '${record.manifest.name}' se instaló con éxito bajo el protocolo de seguridad Ed25519.`,
+            'success',
+            'modules'
+          );
+        }
+      } catch (err) {
+        console.error('Error al instalar módulo verificado:', err);
+        addSystemNotification('Fallo de Instalación', `No se pudo completar la instalación: ${err}`, 'warning', 'modules');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          if (btnText) btnText.textContent = 'Aceptar Riesgos e Instalar';
+        }
+        pendingModulePackage = null;
+      }
+    }
+
     async function handlePcmPackage(file) {
       if (!file) return;
       try {
@@ -3172,15 +3591,33 @@
         const arrayBuffer = await file.arrayBuffer();
         const invokeFn = getTauriInvoke();
 
-        // 1. Vía Nativa Rust (Software de Escritorio)
+        // 1. Vía Nativa Rust (Software de Escritorio con Auditoría de Seguridad Previa)
         if (invokeFn) {
           const packageBytes = Array.from(new Uint8Array(arrayBuffer));
-          const record = await invokeFn('install_module_package', { packageBytes });
-          if (record && record.manifest) {
-            installModule(record.manifest, record.script_code);
-            renderDashboardCustomizationCatalog();
+          
+          let inspection;
+          try {
+            inspection = await invokeFn('inspect_module_package', { packageBytes });
+          } catch (err) {
+            addSystemNotification('Fallo de Inspección', `No se pudo analizar el paquete: ${err}`, 'warning', 'modules');
             return;
           }
+
+          let serviceStatus = { installed: false, running: false };
+          try {
+            serviceStatus = await invokeFn('check_service_status');
+          } catch (e) {
+            console.warn('No se pudo verificar el estado del servicio de Windows:', e);
+          }
+
+          pendingModulePackage = {
+            packageBytes,
+            inspection,
+            serviceStatus
+          };
+
+          openModuleSecurityModal(inspection, serviceStatus);
+          return;
         }
 
         // 2. Fallback de descompresión en memoria si se ejecuta fuera de Tauri
@@ -4771,6 +5208,23 @@
                         <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">${opt.desc}</div>
                       </div>
                     `;
+                  } else if (opt.type === 'number' || opt.type === 'text') {
+                    return `
+                      <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                        <div>
+                          <strong style="font-size: 13px;">${opt.name}</strong>
+                          <div style="font-size: 11.5px; color: var(--text-muted);">${opt.desc}</div>
+                        </div>
+                        <input type="${opt.type}" id="opt-${manifest.id}-${opt.id}"
+                               style="width: 100px; padding: 6px 10px; background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px; font-family: inherit; text-align: ${opt.type === 'number' ? 'right' : 'left'}; outline: none; transition: var(--transition-smooth);"
+                               onfocus="this.style.borderColor='var(--border-focus)'"
+                               onblur="this.style.borderColor='var(--border-medium)'"
+                               value="${opt.default ?? ''}"
+                               ${opt.min !== undefined ? `min="${opt.min}"` : ''}
+                               ${opt.max !== undefined ? `max="${opt.max}"` : ''}
+                               onchange="dispatchModuleSetting('${manifest.id}', '${opt.id}', this.type === 'number' ? Number(this.value) : this.value)">
+                      </div>
+                    `;
                   }
                   return '';
                 }).join('')}
@@ -4932,11 +5386,42 @@
         invokeFn('uninstall_module', { moduleId }).catch(e => console.warn('Error al desinstalar en disco:', e));
       }
 
-      // Llamar a cleanup si existe
+      // Llamar a hook de desinstalación o cleanup con flag de purge
       const cleanId = moduleId.replace(/[^a-zA-Z0-9_]/g, '_');
       const cleanupKey = `__CLEANUP_${cleanId}__`;
       if (window[cleanupKey] && typeof window[cleanupKey] === 'function') {
-        try { window[cleanupKey](); } catch(e) {}
+        try { window[cleanupKey]({ purge: true, uninstall: true }); } catch(e) {}
+      }
+      const purgeKey = `__PURGE_${cleanId}__`;
+      if (window[purgeKey] && typeof window[purgeKey] === 'function') {
+        try { window[purgeKey](); } catch(e) {}
+      }
+
+      // Purgar exhaustivamente claves en localStorage pertenecientes al módulo desinstalado
+      try {
+        const keysToRemove = [];
+        const lowMod = moduleId.toLowerCase().replace(/-/g, '_');
+        const origMod = moduleId.toLowerCase();
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k) {
+            const lowK = k.toLowerCase();
+            if (
+              lowK.includes(origMod) ||
+              lowK.includes(lowMod) ||
+              lowK.startsWith(`pcm_${origMod}`) ||
+              lowK.startsWith(`pcm_${lowMod}`) ||
+              lowK.startsWith(`pcm_mod_${origMod}`) ||
+              lowK.startsWith(`pcm_mod_${lowMod}`) ||
+              (moduleId === 'disk-monitor' && (lowK.includes('monitored_drives') || lowK.includes('disk_monitor')))
+            ) {
+              keysToRemove.push(k);
+            }
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+      } catch (e) {
+        console.warn('Error al purgar localStorage durante la desinstalación:', e);
       }
 
       installedModules.delete(moduleId);

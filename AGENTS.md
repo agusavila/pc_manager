@@ -45,9 +45,15 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
 2. **Especificación para IA** (`docs/ai/`): Contratos, esquemas de datos, APIs y directivas de contexto para modelos de IA.
 3. **Guía de Desarrollador** (`docs/developer/`): Arquitectura, contratos de interfaz, patrones de diseño y guías de extensión.
 
-### Regla 5: Seguridad Operativa del Sistema
-- Las operaciones con potencial de modificación o eliminación de archivos o procesos deben contar obligatoriamente con modo de simulación previa (**Dry-Run**).
-- El núcleo debe contener una lista inmutable de exclusión para proteger la estabilidad del sistema operativo anfitrión.
+### Regla 5: Seguridad Operativa y Criptográfica del Sistema
+- **Modelo de Seguridad de Módulos (5 Capas Inmutables)**:
+  1. **Firma Criptográfica Asimétrica (Ed25519 + SHA-256)**: Todo módulo `.pcm` debe incluir `signature.sig` con los hashes SHA-256 de cada archivo y la firma digital Ed25519 del autor. Módulos alterados quedan bloqueados (`TAMPERED`).
+  2. **Auditoría Previa y Consentimiento Explícito**: Ningún módulo se instala silenciosamente. Se presenta el modal de seguridad con huella del autor, estado criptográfico y checkboxes granulares para conceder permisos.
+  3. **Sandbox y Validación Estática en Host Nativo**: Los scripts de PowerShell o diagnóstico se analizan en Rust (`validate_script_safety`) bloqueando rutas protegidas del sistema operativo (`System32`, `WinSxS`, registros `SAM`/`SECURITY`) y comandos destructivos (`Format-Volume`, `diskpart`).
+  4. **Integridad Dinámica en Caliente**: Antes de ejecutar cualquier script o servicio (`can_module_execute`), el Core verifica que los archivos en disco no hayan sido alterados externamente tras la instalación.
+  5. **Gobernanza del Servicio de Windows**: El servicio de Windows solo atiende telemetría tipada de bajo nivel de solo lectura; prohibida la ejecución de comandos remotos arbitrarios en el servicio.
+- **Principio Dry-Run**: Las operaciones con potencial de modificación o eliminación de archivos o procesos deben contar obligatoriamente con modo de simulación previa.
+- **Lista Inmutable de Exclusión**: El núcleo mantiene una lista inmutable de rutas y procesos del sistema protegidos contra cualquier alteración.
 
 ### Regla 6: Sistema de Diseño e Iconografía (Material Expressive)
 - **Cero emojis como iconos**: Todo icono de la interfaz debe ser un gráfico vectorial SVG limpio, moderno y con trazo uniforme.

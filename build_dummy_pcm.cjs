@@ -69,7 +69,7 @@ async function buildDummyModule() {
       {
         id: "card-system-clock",
         name: "Reloj del Sistema",
-        size: "4x2",
+        size: "2x1",
         icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
         html: `
           <header class="card-header">
@@ -77,23 +77,23 @@ async function buildDummyModule() {
               <div class="card-icon-wrap">
                 <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
-              <h4>Reloj del Sistema</h4>
+              <h4>Reloj</h4>
             </div>
             <span class="card-badge" id="clock-format-badge">24H</span>
           </header>
           <div class="card-body">
             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-              <div class="metric-big" id="clock-time-display" style="font-size:19px;white-space:nowrap;font-variant-numeric:tabular-nums;">--:--:--</div>
+              <div class="metric-big" id="clock-time-display" style="font-size:20px;white-space:nowrap;font-variant-numeric:tabular-nums;">--:--:--</div>
               <span class="card-badge" style="color:var(--accent-success);border-color:rgba(16,185,129,0.3);flex-shrink:0;">EN VIVO</span>
             </div>
-            <div class="metric-label" id="clock-date-display" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0;">Sincronizado con tiempo local</div>
+            <div class="metric-label" id="clock-date-display" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">Sincronizado con tiempo local</div>
           </div>
         `
       },
       {
         id: "card-system-stopwatch",
         name: "Cronómetro del Sistema",
-        size: "4x2",
+        size: "2x2",
         icon: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M5 3L2 6"></path><path d="M22 6l-3-3"></path><path d="M12 2v3"></path></svg>`,
         html: `
           <header class="card-header">
@@ -106,7 +106,7 @@ async function buildDummyModule() {
             <span class="card-badge" id="sw-status-badge">LISTO</span>
           </header>
           <div class="card-body" style="justify-content:flex-start;">
-            <div class="metric-big" id="stopwatch-display" style="font-size:26px;text-align:center;letter-spacing:1px;margin-bottom:6px;">00:00.00</div>
+            <div class="metric-big" id="stopwatch-display" style="font-size:24px;text-align:center;letter-spacing:1px;margin-bottom:6px;">00:00.00</div>
             
             <div style="display:flex;gap:6px;margin-bottom:8px;">
               <button class="btn btn-primary" id="btn-sw-toggle" onclick="window.__SYSTEM_CLOCK_MODULE__.toggleStopwatch()" style="flex:1;padding:6px 8px;font-size:11.5px;justify-content:center;">
@@ -131,7 +131,7 @@ async function buildDummyModule() {
       {
         id: "card-system-timer",
         name: "Temporizador",
-        size: "4x2",
+        size: "2x2",
         icon: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg>`,
         html: `
           <header class="card-header">
@@ -534,15 +534,33 @@ async function buildDummyModule() {
 Paquete .pcm de actualización con reloj en tiempo real, cronómetro con registro de vueltas y temporizador con alarma sonora.
 `;
 
-  zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-  zip.file('module.js', moduleJs);
-  zip.file('icon.svg', iconSvg);
-  zip.file('README.md', readme);
+  const { ensureKeyPair, signModuleFiles } = require('./tools/module_signer.cjs');
+  const { pubHex, privateKey } = ensureKeyPair();
+
+  const manifestBuffer = Buffer.from(JSON.stringify(manifest, null, 2), 'utf8');
+  const moduleJsBuffer = Buffer.from(moduleJs, 'utf8');
+  const iconSvgBuffer = Buffer.from(iconSvg, 'utf8');
+  const readmeBuffer = Buffer.from(readme, 'utf8');
+
+  const filesMap = {
+    'manifest.json': manifestBuffer,
+    'module.js': moduleJsBuffer,
+    'icon.svg': iconSvgBuffer,
+    'README.md': readmeBuffer
+  };
+
+  const sigData = signModuleFiles(filesMap, privateKey, pubHex, manifest);
+
+  zip.file('manifest.json', manifestBuffer);
+  zip.file('module.js', moduleJsBuffer);
+  zip.file('icon.svg', iconSvgBuffer);
+  zip.file('README.md', readmeBuffer);
+  zip.file('signature.sig', JSON.stringify(sigData, null, 2));
 
   const content = await zip.generateAsync({ type: 'nodebuffer' });
   const outputPath = path.join(__dirname, 'system-clock.pcm');
   fs.writeFileSync(outputPath, content);
-  console.log(`Paquete v1.1.0 generado exitosamente: ${outputPath} (${content.length} bytes)`);
+  console.log(`Paquete firmado v1.1.0 generado exitosamente: ${outputPath} (${content.length} bytes)`);
 }
 
 buildDummyModule().catch(err => {

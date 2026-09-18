@@ -6,7 +6,7 @@ Guía técnica de arquitectura, contratos de ciclo de vida e integración para i
 
 ## 1. Arquitectura del Módulo y Flujo de Datos
 
-El módulo opera desacoplado del núcleo y sigue el patrón de descubrimiento y suscripción activa:
+El módulo opera totalmente desacoplado del núcleo (arquitectura Microkernel) y sigue el patrón de permisos declarativos y suscripción activa:
 
 ```mermaid
 sequenceDiagram
@@ -14,20 +14,23 @@ sequenceDiagram
     participant UI as Módulo UI (module.js)
     participant Core as Core IPC Bridge
     participant Rust as Backend Host (src-tauri)
-    participant Storage as Windows Storage API
+    participant Perms as Registry & Permissions
+    participant Storage as Windows Storage PowerShell
 
-    Note over UI: Estado Inicial: Empty State (pcm_monitored_drives = [])
+    Note over UI: Estado Inicial: Empty State (pcm_disk_monitor_drives = [])
     UI->>UI: Usuario pulsa "Buscar Discos"
-    UI->>Core: invoke('get_disk_telemetry')
+    UI->>Core: invoke('execute_module_script', { moduleId: 'disk-monitor', script, interpreter })
     Core->>Rust: Tauri Command IPC
-    Rust->>Storage: PowerShell Base64 (CREATE_NO_WINDOW)
-    Storage-->>Rust: Raw Storage Telemetry
-    Rust-->>Core: Deserializado a serde_json::Value
-    Core-->>UI: Discos Físicos, Particiones, Volúmenes y Eventos
+    Rust->>Perms: module_manager::can_module_execute('disk-monitor')
+    Perms-->>Rust: Ok(true) [Tiene system:storage / system:execute]
+    Rust->>Storage: PowerShell Base64 Encoded (CREATE_NO_WINDOW)
+    Storage-->>Rust: Raw JSON stdout
+    Rust-->>Core: Result<String, String>
+    Core-->>UI: Deserializado a Objeto Telemetría
     UI->>UI: Modal de Descubrimiento muestra unidades
     UI->>UI: Usuario marca discos y confirma "Agregar"
-    UI->>UI: Persiste IDs en pcm_monitored_drives
-    UI->>UI: Renderiza panel de unidades vigiladas
+    UI->>UI: Persiste IDs en pcm_disk_monitor_drives
+    UI->>UI: Renderiza cuadrícula a 2 columnas por fila
 ```
 
 ---
@@ -36,21 +39,26 @@ sequenceDiagram
 
 ### `window.__DISK_MONITOR__`
 Objeto expuesto por el script del módulo para la interacción con la vista:
-- `openDiscoveryModal(): Promise<void>`: Consulta el bus de almacenamiento y abre la ventana de selección de unidades.
+- `openDiscoveryModal(): Promise<void>`: Consulta el bus de almacenamiento y abre la ventana de selección de unidades con soporte para discos fijos y unidades extraíbles USB.
 - `closeDiscoveryModal(): void`: Cierra la ventana modal de descubrimiento.
 - `updateDiscoveryCount(): void`: Actualiza el contador de unidades seleccionadas en tiempo real.
-- `addSelectedDisks(): void`: Guarda la lista de identificadores seleccionados en `pcm_monitored_drives` y redibuja el tablero.
+- `addSelectedDisks(): void`: Guarda la lista de identificadores seleccionados en `pcm_disk_monitor_drives` y redibuja el tablero en cuadrícula de 2 columnas por fila.
 - `removeMonitoredDisk(deviceId: string): void`: Elimina una unidad física de la lista vigilada.
 - `refreshWatchedDisks(): Promise<void>`: Fuerza una actualización de telemetría de las unidades activas.
-- `setFilter(filter: string): void`: Aplica filtros visuales por tecnología o estado de alerta.
-- `startSectorAudit(deviceId: string, diskName: string, techLabel: string): void`: Inicia la rutina no destructiva de comprobación de lectura de bloques.
+- `setFilter(filter: string): void`: Aplica filtros visuales por tecnología (`all`, `nvme`, `ssd`, `hdd`, `usb`, `alerts`).
+- `openRealAudit(deviceId: string): void`: Abre el modal de diagnóstico técnico con contadores de lectura/escritura y eventos reales del registro de Windows (IDs 7, 55, 98, 153).
+- `closeAuditModal(): void`: Cierra la ventana de diagnóstico de bloques.
 
-### Ciclo de Vida y Limpieza Canónica (`__CLEANUP_disk_monitor__`)
+### Manejador Dinámico de Configuraciones (`__SETTING_CHANGE_disk_monitor__`)
+- Procesa cambios en caliente para `auto_refresh`, `refresh_interval` y `custom_interval_seconds`, ajustando dinámicamente el temporizador de muestreo en segundo plano.
+
+### Ciclo de Vida, Limpieza y Purga Canónica (`__CLEANUP_disk_monitor__`, `__PURGE_disk_monitor__`)
 Al desactivarse o desinstalarse el módulo:
 1. Cancela el temporizador de muestreo en segundo plano (`refreshTimer`).
 2. Aborta cualquier auditoría de sectores en curso (`auditInterval`).
 3. Desregistra el servicio `storage.telemetry` del registro central `ServiceRegistry`.
-4. Elimina la referencia `window.__DISK_MONITOR__` del ámbito global.
+4. Si se indica desinstalación o purga (`opts.purge`), remueve permanentemente las claves de `localStorage` (`pcm_disk_monitor_drives`, `pcm_monitored_drives`).
+5. Elimina las referencias globales de la ventana del navegador.
 
 ---
 

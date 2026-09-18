@@ -1600,6 +1600,270 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-053] Purga Profunda de Datos en Desinstalación, Porcentaje de Salud en Discos, Corrección Estética de Widgets de Reloj, Frecuencia Personalizada, Grid a 2 Columnas y Soporte Integral USB/Filesystem
+- **Fecha**: 2026-09-17
+- **Commit**: `[PENDIENTE]`
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `Core Lifecycle (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`), Backend Nativo (`[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`), Módulo de Reloj (`[`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)`) y Módulo de Almacenamiento (`[`modules/disk-monitor/`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/)`)`
+- **Descripción del Fallo**:
+  1. Al desinstalar un módulo desde la interfaz, sus datos almacenados en `localStorage` (como las unidades monitoreadas o configuraciones en caliente) persistían intactos, provocando que al reinstalar el módulo este apareciera previamente configurado en lugar de iniciar limpio de fábrica (*Empty State*).
+  2. En el módulo de monitoreo de discos no se exhibía el porcentaje numérico de salud de los discos.
+  3. Los widgets del módulo de reloj (`card-system-clock`, cronómetro y temporizador) se mostraban deformados y enormes al haberse cambiado erróneamente su tamaño a `4x2`, consumiendo 1/3 de pantalla con grandes huecos vacíos y tipografía desproporcionada.
+  4. En las opciones de muestreo del módulo de discos sólo existían preajustes estáticos y modo manual, sin posibilidad de ingresar un tiempo personalizado en segundos.
+  5. La vista de discos ocupaba el 100% horizontal de la pantalla en una lista vertical monótona, en lugar de organizarse en tarjetas cuadradas a 2 por fila.
+  6. No se detectaban unidades de almacenamiento USB (pendrives, discos externos USB, lectores de memoria).
+  7. No se mostraba de manera prominente el tipo de sistema de archivos (`NTFS`, `exFAT`, `FAT32`, `ReFS`) de cada volumen.
+- **Causa Raíz**:
+  1. `uninstallModule` eliminaba elementos del DOM y el directorio físico en disco, pero no borraba las claves de `localStorage` asociadas al módulo ni ejecutaba un hook de purga de estado.
+  2. `get_disk_telemetry` solo extraía el estado cualitativo (`Healthy`/`OK`) de WMI/CIM sin calcular ni exponer el porcentaje de vida restante o desgaste (`Wear`).
+  3. En un commit anterior se alteraron las dimensiones de `manifest.json` en `build_dummy_pcm.cjs` a `4x2` afectando la armonía visual de los widgets de tiempo.
+  4. El renderizador de `meta_options` en el Core solo procesaba selectores y switches, ignorando inputs de tipo `number` o `text`.
+  5. El contenedor principal de unidades vigiladas utilizaba un contenedor `flex-direction: column` de ancho completo.
+  6. Se dependía exclusivamente de `Get-PhysicalDisk`, el cual en Windows Storage Spaces ignora pendrives y ciertas unidades extraíbles USB que sí son reportadas por `Get-Disk`.
+- **Solución Implementada**:
+  1. **Purga Profunda en `uninstallModule`**:
+     - Se implementó la llamada al hook `window[cleanupKey]({ purge: true, uninstall: true })` y `window[purgeKey]()`.
+     - Se implementó el barrido de `localStorage` para purgar todas las claves que coincidan con `moduleId`, `cleanId`, `pcm_mod_*`, `pcm_disk_monitor_*` y afines.
+  2. **Detección Unificada y Porcentaje de Salud en Rust**:
+     - En `src-tauri/src/lib.rs` se enlazó `Get-Disk` con `Get-PhysicalDisk` y `Get-StorageReliabilityCounter` (con captura segura en caso de falta de privilegios administrativos).
+     - Se calcula y expone `HealthPercent` (100% - Wear en SSDs con SMART, y cálculo ponderado según `HealthStatus` y eventos críticos de sector ID 7 en HDD/discos estándar).
+  3. **Restauración de Proporciones en Widgets de Reloj (Regla 11)**:
+     - Se restauraron las dimensiones canónicas equilibradas en `build_dummy_pcm.cjs`: `card-system-clock` (`2x1`), `card-system-stopwatch` (`2x2`), `card-system-timer` (`2x2`) y `card-system-seconds` (`1x1`).
+     - Se recompiló `system-clock.pcm` y se actualizó el manifiesto instalado en AppData.
+  4. **Frecuencia Personalizada y Soporte de Inputs Numéricos**:
+     - Se incorporó soporte nativo para inputs `type: "number"` y `type: "text"` en el renderizador dinámico de `meta_options` en `ui/index.html` y `core_shell.html`.
+     - Se añadió la opción `"Personalizado"` y el campo `custom_interval_seconds` en `modules/disk-monitor/manifest.json` y `module.js`.
+  5. **Diseño de 2 Tarjetas por Fila Formando Cuadros**:
+     - Se reestructuró la cuadrícula de unidades vigiladas a `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;`.
+     - Cada tarjeta individual se rediseñó como un cuadro equilibrado con insignia de salud numérica, barra de integridad, matriz de especificaciones, desglose de particiones y botón de auditoría.
+  6. **Detección y Filtro de Almacenamiento USB**:
+     - Se identifican dispositivos con `BusType -eq 'USB'` o `IsRemovable -eq $true`.
+     - En `detectTechnology` se etiquetan formalmente como `Almacenamiento USB (Externo)` con icono dedicado y color distintivo.
+     - Se incorporó el botón de filtro `USB` en la barra superior de filtros rápidos.
+  7. **Insignia Destacada de Sistema de Archivos**:
+     - Cada partición exhibe una insignia estilizada con su filesystem (`NTFS`, `exFAT`, `FAT32`, etc.).
+  8. **Compilación Nativa de Escritorio (Regla 10)**:
+     - Paquetes `.pcm` actualizados y binario nativo compilado con éxito (`pc_manager.exe`).
+- **Archivos Afectados**:
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`modules/disk-monitor/manifest.json`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/manifest.json)
+  - [`modules/disk-monitor/module.js`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/module.js)
+  - [`build_disk_monitor_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_disk_monitor_pcm.cjs)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+---
+
+### [BUG-054] Desacoplamiento Total del Core Microkernel (Eliminación de get_disk_telemetry y Reemplazo por execute_module_script con Permisos), Eliminación de Simulación de Salud y Reconstrucción Limpia de disk-monitor
+- **Fecha**: 2026-09-17
+- **Commit**: `[PENDIENTE]`
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `Core Microkernel (`[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`, [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`), Módulo de Almacenamiento (`[`modules/disk-monitor/`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/)`, [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)`)`
+- **Descripción del Fallo**:
+  1. El Core de Tauri contenía la función especializada `get_disk_telemetry` con script de PowerShell de almacenamiento embebido en Rust, violando el principio de microkernel puro y extensible (Regla 3).
+  2. En `get_disk_telemetry`, cuando el proceso no contaba con elevación de permisos (UAC) para leer el desgaste SMART (`Get-StorageReliabilityCounter.Wear`), se caía en un fallback que asignaba 100% de salud estimado, dando la apariencia de un valor inventado (violación de Regla 7: Cero Datos Inventados). Asimismo, el módulo utilizaba un bucle `setInterval` simulando el avance de una barra de auditoría de sectores en vez de reportar eventos reales.
+  3. En una ejecución anterior el agente había instalado el módulo de discos y creado un grupo de prueba en `registry.json`, privando al usuario de evaluar el flujo de instalación manual y el estado limpio de fábrica.
+- **Causa Raíz**:
+  Acoplamiento directo del Core a lógica de un módulo específico y utilización de estimaciones en lugar de un reporte honesto y transparente cuando los datos de telemetría física no están accesibles sin privilegios de administrador.
+- **Solución Implementada**:
+  1. **Purga Total de Lógica de Almacenamiento del Core**:
+     - Se eliminó por completo `get_disk_telemetry` de `src-tauri/src/lib.rs`.
+  2. **Capacidad Genérica Gobernada por Permisos**:
+     - Se implementó `execute_module_script(app, module_id, script, interpreter)` en `src-tauri/src/lib.rs`.
+     - Se valida formalmente mediante `module_manager::can_module_execute` que el módulo solicitante esté instalado, activo y tenga permisos autorizados (`system:execute` o `system:storage`).
+  3. **Reconstrucción Limpia y Honesta de `disk-monitor`**:
+     - `collector.ps1`: Script colector de hardware que reporta datos reales y transparentes, devolviendo `null` en `HealthPercent` cuando no hay acceso al contador de desgaste SMART por permisos de usuario.
+     - `manifest.json`: Declara permisos `system:storage` y `system:execute`, opciones de muestreo con entrada numérica (`custom_interval_seconds`) y vistas dedicadas.
+     - `module.js`: Desacoplado, consume `execute_module_script`, reporta con total honestidad el estado de salud (mostrando estado cualitativo real y aclarando con transparencia que el desgaste SMART detallado requiere elevación UAC), elimina temporizadores ficticios y provee diagnóstico real basado en eventos del subsistema de almacenamiento de Windows (IDs 7, 55, 98, 153).
+     - Cuadrícula de 2 columnas balanceadas formando cuadros proporcionados con volúmenes, filesystems (`NTFS`, `exFAT`, `FAT32`), detección USB completa y filtros rápidos.
+  4. **Empaquetado y Cero Residuos**:
+     - Se compiló el paquete `disk-monitor.pcm` con `build_disk_monitor_pcm.cjs`.
+     - Se verificó que `registry.json` y el directorio de módulos en AppData no contengan registros de `disk-monitor`, garantizando que el usuario realice la instalación manual.
+  5. **Compilación Continua Obligatoria (Regla 10)**:
+     - Se compiló exitosamente el binario nativo de escritorio `pc_manager.exe` mediante `cargo build` en `src-tauri`.
+- **Archivos Afectados**:
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`modules/disk-monitor/collector.ps1`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/collector.ps1)
+  - [`modules/disk-monitor/manifest.json`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/manifest.json)
+  - [`modules/disk-monitor/module.js`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/module.js)
+  - [`build_disk_monitor_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_disk_monitor_pcm.cjs)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+---
+
+### [BUG-055] Arquitectura de Seguridad Criptográfica de Módulos (Ed25519 + SHA-256), Diálogo de Consentimiento de Permisos, Sandbox de Scripts y Gobernanza del Servicio de Windows
+- **Fecha**: 2026-09-17
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `CRÍTICA`
+- **Componente**: `Core / Seguridad Criptográfica (`[`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)`, `[`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`, `[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`), UI (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, `[`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)`), Herramientas (`[`tools/module_signer.cjs`](file:///c:/Proyectos/pc_manager/tools/module_signer.cjs)`) y Documentación Triad`
+- **Descripción del Fallo**: 
+  1. Vulnerabilidad de seguridad ante módulos de terceros: cualquier archivo comprimido `.pcm` podía instalarse sin verificar la autenticidad del autor ni la integridad de sus archivos internos.
+  2. Falta de diálogo de consentimiento previo: los módulos se instalaban directamente sin solicitar autorización del usuario para privilegios sensibles (`system:execute`, `system:storage`).
+  3. Ausencia de sandbox estático: no existía un filtro en el host nativo que analizara el código de los scripts (`collector.ps1` o llamadas PowerShell) para bloquear accesos a carpetas críticas del sistema o comandos destructivos.
+  4. Falta de gobernanza en dependencias del servicio de Windows: los módulos no declaraban formalmente si requerían el servicio de fondo ni explicaban su justificación técnica.
+- **Causa Raíz**: 
+  - La arquitectura inicial de módulos `.pcm` utilizaba compresión ZIP estándar sin firma criptográfica asimétrica ni validación estática previa a la descompresión.
+- **Solución Implementada**: 
+  1. **Motor Criptográfico en Rust (`src-tauri/src/module_security.rs`)**:
+     - Implementación de verificación asimétrica Ed25519 (`ed25519-dalek = "2.1"`) y hashes de archivo SHA-256 (`sha2 = "0.10"`).
+     - Validación del manifiesto sellado inmutable en `signature.sig`. Si un archivo es modificado o no coincide su hash, el estado pasa inmediatamente a `TAMPERED`.
+     - Clave pública oficial de desarrollo del Core embebida (`73472dc909e4221426a807d52c9f6438ad58688183bfbeaf40d992be7eae71a5`).
+     - Sandbox estático de comandos (`validate_script_safety`) que bloquea comandos destructivos (`Format-Volume`, `diskpart`, etc.) y rutas protegidas del sistema operativo (`C:\Windows\System32`, `WinSxS`, registros `SAM`/`SECURITY`).
+  2. **Gestión de Inspección y Registro en `module_manager.rs`**:
+     - Nuevo comando `inspect_module_package` que realiza la auditoría previa sin escribir en disco y retorna `PackageInspectionPayload`.
+     - Ampliación de `ModuleManifest` con `requires_service` y `service_reason`.
+     - Registro de permisos autorizados por el usuario (`granted_permissions`) y huella del autor en `InstalledModuleRecord`.
+     - Verificación de integridad en caliente (`can_module_execute`) antes de ejecutar cualquier script o servicio.
+  3. **Modal Canónico de Seguridad en Frontend (`ui/index.html` y `core_shell.html`)**:
+     - Modal `#modal-module-security` que intercepta la instalación y presenta insignias de estado (Verificado verde, Autor no oficial amarillo, Alterado rojo bloqueante).
+     - Despliegue de huella Ed25519 del autor, resumen de archivos y casillas de verificación para conceder permisos granulares.
+     - Caja informativa de requerimiento del servicio de Windows con botón para iniciar o instalar el servicio directamente.
+  4. **Herramienta Oficial de Firmado (`tools/module_signer.cjs`)**:
+     - Generación y persistencia de par de claves Ed25519 (`tools/keys/core_dev.key` y `tools/keys/core_dev.pub`).
+     - Cálculo de hashes SHA-256 y firma digital canónica. Módulos de prueba (`system-clock.pcm` y `disk-monitor.pcm`) generados y firmados oficialmente.
+  5. **Sincronización de Documentación Triad y Reglas**:
+     - Actualización de `.agents/rules/isolation_and_security.md` (5 capas de seguridad).
+     - Actualización de `AGENTS.md` (Regla 5).
+     - Actualización de `PROJECT_SPECIFICATION.md` (Sección 3.8).
+     - Creación de [`docs/user/security_and_permissions.md`](file:///c:/Proyectos/pc_manager/docs/user/security_and_permissions.md).
+     - Creación de [`docs/developer/module_signing_guide.md`](file:///c:/Proyectos/pc_manager/docs/developer/module_signing_guide.md).
+     - Creación de [`docs/ai/SECURITY_ARCHITECTURE_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/SECURITY_ARCHITECTURE_AI_SPEC.md).
+  6. **Compilación Continua Nativa (Regla 10)**:
+     - Compilación exitosa del binario de escritorio `src-tauri/target/debug/pc_manager.exe` (15.9 MB) con 0 errores.
+- **Archivos Afectados**:
+  - [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml)
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`tools/module_signer.cjs`](file:///c:/Proyectos/pc_manager/tools/module_signer.cjs)
+  - [`tools/keys/core_dev.pub`](file:///c:/Proyectos/pc_manager/tools/keys/core_dev.pub)
+  - [`build_dummy_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_pcm.cjs)
+  - [`system-clock.pcm`](file:///c:/Proyectos/pc_manager/system-clock.pcm)
+  - [`build_disk_monitor_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_disk_monitor_pcm.cjs)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`modules/disk-monitor/manifest.json`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/manifest.json)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`core_shell.html`](file:///c:/Proyectos/pc_manager/core_shell.html)
+  - [`.agents/rules/isolation_and_security.md`](file:///c:/Proyectos/pc_manager/.agents/rules/isolation_and_security.md)
+  - [`AGENTS.md`](file:///c:/Proyectos/pc_manager/AGENTS.md)
+  - [`PROJECT_SPECIFICATION.md`](file:///c:/Proyectos/pc_manager/PROJECT_SPECIFICATION.md)
+  - [`docs/user/security_and_permissions.md`](file:///c:/Proyectos/pc_manager/docs/user/security_and_permissions.md)
+  - [`docs/developer/module_signing_guide.md`](file:///c:/Proyectos/pc_manager/docs/developer/module_signing_guide.md)
+  - [`docs/ai/SECURITY_ARCHITECTURE_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/SECURITY_ARCHITECTURE_AI_SPEC.md)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+---
+
+### [BUG-056] Corrección de Falso Positivo en Sandbox de Scripts ($diskParts), Despachador de Modo Servicio Nativo de Windows y Contrato IPC de ServiceStatusPayload
+- **Fecha**: 2026-09-17
+- **Versión**: `v0.0.4-alpha`
+- **Severidad**: `ALTA`
+- **Componente**: `Seguridad / Sandbox de Scripts (`[`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)`), Servicio de Windows (`[`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)`, `[`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs)`, `[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`), Módulo Almacenamiento (`[`modules/disk-monitor/collector.ps1`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/collector.ps1)`, `[`modules/disk-monitor/module.js`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/module.js)`)`
+- **Descripción del Fallo**: 
+  1. El módulo de monitoreo de almacenamiento dejó de escanear unidades de disco tras la activación del sandbox criptográfico (Regla 5).
+  2. En el diálogo de consentimiento de instalación de módulos con `requires_service: true`, el botón de instalación o arranque del servicio no activaba el servicio de Windows ("No activa el servicio").
+- **Causa Raíz**: 
+  1. La función `validate_script_safety` buscaba la subcadena literal `"diskpart"`. En el script colector del módulo de disco, las líneas 25-28 definían la variable legítima de PowerShell `$diskParts`. La búsqueda de subcadena cruda clasificó la variable como una invocación del comando prohibido `diskpart`, arrojando una excepción de seguridad y cancelando la lectura de discos.
+  2. La función Tauri `check_service_status` devolvía un tipo `String` (`"RUNNING"`, `"STOPPED"`, `"NOT_INSTALLED"`), mientras que el frontend en `ui/index.html` y `core_shell.html` esperaba el objeto `{ installed: bool, running: bool, status: string }`, provocando que `serviceStatus.running` fuera evaluado como `undefined` (falso) permanentemente.
+  3. `request_service_installation` intentaba registrar el servicio ejecutando PowerShell sin elevación administrativa de privilegios (UAC), lo cual es rechazado por el Service Control Manager (SCM) de Windows, y apuntaba a una ruta binaria inexistente (`pc_manager_service.exe`) en lugar de vincular dinámicamente el ejecutable activo (`current_exe() --service`).
+  4. El binario `pc_manager.exe` carecía de un despachador nativo de servicios Windows (`StartServiceCtrlDispatcherW`), lo cual impedía su ejecución pre-logon en la sesión 0 del sistema.
+- **Solución Implementada**: 
+  1. **Detección Contextual por Límites de Palabra en `validate_script_safety`**:
+     - Se rediseñó la comprobación de comandos destructivos (`diskpart`, `format`, `clean all`, `clear-disk`, `remove-partition`, `format-volume`) para discriminar tokens de variables de PowerShell (precedidos por `$`) e identificadores mayores, permitiendo `$diskParts` o `$diskPartitions` y bloqueando llamadas a comandos ejecutables.
+     - Se refactorizó la variable a `$diskPartitions` en `collector.ps1` y `module.js` y se reempaquetó y firmó `disk-monitor.pcm` con la clave oficial Ed25519.
+  2. **Contrato Tipado `ServiceStatusPayload` en Rust y Consulta SCM**:
+     - Se implementó la estructura `ServiceStatusPayload { installed: bool, running: bool, status: String }` serializable hacia el frontend.
+     - `check_service_status` evalúa el estado del SCM y retorna el payload tipado exacto esperado por el modal de seguridad.
+  3. **Elevación UAC Dinámica en `request_service_installation`**:
+     - Se actualizó el comando para resolver la ruta absoluta en caliente con `std::env::current_exe()`.
+     - Invocación con elevación administrativa mediante `Start-Process powershell -Verb RunAs` para la creación y arranque con permisos de administrador en Windows.
+  4. **Módulo Despachador de Servicio Nativo (`src-tauri/src/service.rs`)**:
+     - Implementación con `windows-sys` de `StartServiceCtrlDispatcherW`, `RegisterServiceCtrlHandlerW` y `SetServiceStatus` bajo el flag `--service` en `main.rs`, permitiendo la ejecución en segundo plano y pre-logon sin colisionar con el mutex de la interfaz gráfica de usuario.
+  5. **Pruebas y Compilación Continua (Regla 10)**:
+     - 8 pruebas unitarias superadas (`cargo test --lib`), incluyendo validación íntegra de `collector.ps1`.
+     - Compilación nativa exitosa de `src-tauri/target/debug/pc_manager.exe`.
+- **Archivos Afectados**: 
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)
+  - [`src-tauri/src/main.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/main.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`modules/disk-monitor/collector.ps1`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/collector.ps1)
+  - [`modules/disk-monitor/module.js`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/module.js)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+---
+
+### [BUG-029] Desacoplamiento de privilegios UAC en GUI con telemetría del Servicio, anulación de desgaste en HDD, reactividad USB y firma de widgets
+- **Fecha**: 2026-09-17
+- **Versión**: `v0.0.4`
+- **Severidad**: `CRÍTICA`
+- **Componente**: `Storage Telemetry / Windows Service / UI Controls / Cryptographic Security`
+- **Descripción del Fallo**: 
+  1. La aplicación de escritorio requería ejecutarse como Administrador para que `Get-StorageReliabilityCounter` pudiera leer el desgaste SMART de las unidades físicas. El usuario exige explícitamente no ejecutar la GUI como administrador ("Zero-Admin GUI") y que el servicio de Windows provea dichos datos.
+  2. En discos mecánicos (HDD), la fórmula matemática `100 - Wear` evaluaba a 100% debido a que en platos magnéticos `Wear` es 0 o nulo, reportando un porcentaje de desgaste de celdas flash inexistente en discos rotacionales.
+  3. Al desconectar un pendrive USB previamente añadido al monitoreo, la interfaz no reaccionaba a la extracción del dispositivo, manteniendo la tarjeta activa o intentando auditar hardware inexistente.
+  4. El paquete modular de widgets de prueba (`dummy-widgets.pcm`) carecía de firma digital asimétrica Ed25519 (`signature.sig`), siendo bloqueado por la compuerta de seguridad criptográfica (Regla 5).
+  5. Los checkboxes en la ventana modal de descubrimiento y los botones de filtro utilizaban controles HTML nativos del navegador sin integración con las líneas de diseño semánticas (Material Expressive).
+- **Causa Raíz**: 
+  1. La GUI en espacio de usuario no elevado no tiene permisos CIM sobre `MSFT_StorageReliabilityCounter`. El servicio de Windows (`pc_manager_service`), que corre como `SYSTEM`, no estaba recolectando ni publicando el archivo de telemetría de almacenamiento.
+  2. Asimilación errónea de tecnologías: el desgaste de celdas flash sólo aplica a medios SSD y NVMe; en HDDs mecánicos, la salud se determina por sectores reasignados y errores I/O no corregidos, no por porcentaje de desgaste de silicio.
+  3. La lista de vigilancia en `module.js` no correlacionaba los identificadores persistidos contra los dispositivos físicos vivos del bus, omitiendo el estado "Desconectado/Extraído".
+  4. El script `build_dummy_pcm.cjs` empaquetaba el zip sin invocar `tools/module_signer.cjs`.
+  5. Falta de clases de diseño `.custom-checkbox` y `.filter-chip` con estados activos en la hoja de estilos de la aplicación.
+- **Solución Implementada**: 
+  1. **Motor de Telemetría en el Servicio de Windows (`src-tauri/src/service.rs`)**:
+     - Implementación de `collect_and_write_storage_telemetry()` dentro del bucle de trabajo del servicio `SYSTEM`, emitiendo `C:\ProgramData\PCManager\telemetry\storage_smart.json` de forma atómica cada 8 segundos.
+     - Nuevo comando Tauri `get_storage_telemetry` en `src-tauri/src/lib.rs` para lectura de alta velocidad en memoria sin elevación UAC en la interfaz gráfica.
+  2. **Tratamiento Riguroso de Medios Electromecánicos (HDD)**:
+     - En `collector.ps1`, `service.rs` y `module.js`, se fijó explícitamente `$healthPercent = $null` para todo disco clasificado como HDD.
+     - La tarjeta de HDD en el frontend presenta "Integridad de Superficie y Sectores" con conteo real de errores I/O no corregidos y la nota técnica explicativa sobre platos magnéticos.
+  3. **Reactividad ante Extracción USB**:
+     - Implementación de caché de metadatos de unidades (`pcm_disk_monitor_meta_cache`) y renderizado reactivo de `renderDisconnectedDiskCard()`.
+     - Si un pendrive es retirado, la tarjeta muestra el estado "Dispositivo Extraído / Desconectado", inhabilita auditorías falsas y ofrece el botón "Quitar de la lista de vigilancia". Al reconectarse, vuelve automáticamente al estado operativo en el siguiente muestreo.
+  4. **Firma Asimétrica de `dummy-widgets.pcm`**:
+     - Actualización de `build_dummy_widgets_pcm.cjs` con generación de firma Ed25519 y `signature.sig`.
+     - Nueva prueba unitaria `test_verify_dummy_widgets_pcm` en `src-tauri/src/module_security.rs` (9/9 pruebas superadas).
+  5. **Controles Material Expressive en UI**:
+     - Se incorporaron los componentes `.custom-checkbox` (con indicador vectorial SVG animado) y `.filter-chip` con contadores dinámicos y realce de acento primario activo.
+  6. **Compilación Continua (Regla 10)**:
+     - Ejecutable nativo `src-tauri/target/debug/pc_manager.exe` compilado y validado sin errores.
+- **Archivos Afectados**: 
+  - [`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`modules/disk-monitor/collector.ps1`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/collector.ps1)
+  - [`modules/disk-monitor/module.js`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/module.js)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`build_dummy_widgets_pcm.cjs`](file:///c:/Proyectos/pc_manager/build_dummy_widgets_pcm.cjs)
+  - [`dummy-widgets.pcm`](file:///c:/Proyectos/pc_manager/dummy-widgets.pcm)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+- **Estado**: `RESUELTO`
+
+
+
+
+
 
 
 

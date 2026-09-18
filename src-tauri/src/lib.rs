@@ -1,4 +1,6 @@
 mod module_manager;
+mod module_security;
+pub mod service;
 
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
@@ -56,8 +58,119 @@ fn get_installed_modules(app: AppHandle) -> Vec<InstalledModuleRecord> {
 }
 
 #[tauri::command]
-fn install_module_package(app: AppHandle, package_bytes: Vec<u8>) -> Result<InstalledModuleRecord, String> {
-    module_manager::install_package_bytes(&app, package_bytes)
+fn inspect_module_package(package_bytes: Vec<u8>) -> Result<module_manager::PackageInspectionPayload, String> {
+    module_manager::inspect_package_bytes(&package_bytes)
+}
+
+#[tauri::command]
+fn install_module_package(
+    app: AppHandle,
+    package_bytes: Vec<u8>,
+    granted_permissions: Option<Vec<String>>,
+) -> Result<InstalledModuleRecord, String> {
+    module_manager::install_package_bytes(&app, package_bytes, granted_permissions)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceStatusPayload {
+    pub installed: bool,
+    pub running: bool,
+    pub status: String,
+}
+
+#[tauri::command]
+fn check_service_status() -> ServiceStatusPayload {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+        let mut cmd = Command::new("sc.exe");
+        cmd.args(["query", "pc_manager_service"]);
+        cmd.creation_flags(CREATE_NO_WINDOW);
+
+        if let Ok(output) = cmd.output() {
+            let out = String::from_utf8_lossy(&output.stdout).to_string()
+                + &String::from_utf8_lossy(&output.stderr);
+            if out.contains("RUNNING") {
+                return ServiceStatusPayload {
+                    installed: true,
+                    running: true,
+                    status: "RUNNING".to_string(),
+                };
+            } else if out.contains("STOPPED")
+                || out.contains("PAUSED")
+                || out.contains("START_PENDING")
+                || out.contains("STOP_PENDING")
+            {
+                return ServiceStatusPayload {
+                    installed: true,
+                    running: false,
+                    status: "STOPPED".to_string(),
+                };
+            }
+        }
+    }
+    ServiceStatusPayload {
+        installed: false,
+        running: false,
+        status: "NOT_INSTALLED".to_string(),
+    }
+}
+
+#[tauri::command]
+fn request_service_installation() -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+        let exe_path = std::env::current_exe()
+            .map_err(|e| format!("No se pudo determinar la ruta del ejecutable: {}", e))?;
+        let exe_str = exe_path.to_string_lossy().to_string();
+
+        let ps_code = format!(
+            r#"$ErrorActionPreference = 'Stop'
+$svc = Get-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
+if (-not $svc) {{
+    New-Service -Name 'pc_manager_service' -DisplayName 'PC Manager Hardware Telemetry Service' -BinaryPathName '\"{}\" --service' -StartupType Automatic
+}}
+$svc = Get-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -ne 'Running') {{
+    Start-Service -Name 'pc_manager_service'
+}}"#,
+            exe_str.replace('\'', "''")
+        );
+
+        let encoded_cmd = format!(
+            "Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{}\"'",
+            ps_code.replace('"', "\\\"")
+        );
+
+        let mut cmd = Command::new("powershell.exe");
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &encoded_cmd]);
+        cmd.creation_flags(CREATE_NO_WINDOW);
+
+        let output = cmd.output().map_err(|e| format!("Error al solicitar elevación UAC: {}", e))?;
+        if !output.status.success() {
+            return Err("La solicitud de instalación del servicio fue denegada o cancelada.".to_string());
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(600));
+
+        let status = check_service_status();
+        return if status.running {
+            Ok("Servicio de telemetría de Windows instalado y en ejecución.".to_string())
+        } else if status.installed {
+            Ok("Servicio de telemetría de Windows registrado correctamente.".to_string())
+        } else {
+            Err("No se pudo confirmar el registro del servicio en Windows Service Manager.".to_string())
+        };
+    }
+    #[allow(unreachable_code)]
+    Ok("Servicio no disponible en esta plataforma.".to_string())
 }
 
 #[tauri::command]
@@ -133,48 +246,71 @@ fn base64_encode_bytes(data: &[u8]) -> String {
 }
 
 #[tauri::command]
-fn get_disk_telemetry() -> Result<Value, String> {
-    let script = r#"
-$disks = @(Get-PhysicalDisk | Select-Object DeviceId, FriendlyName, Model, SerialNumber, MediaType, BusType, SpindleSpeed, Size, HealthStatus, OperationalStatus)
-$parts = @(Get-Partition | Select-Object DiskNumber, PartitionNumber, DriveLetter, Size)
-$vols = @(Get-Volume | Select-Object DriveLetter, FileSystemLabel, FileSystem, HealthStatus, SizeRemaining, Size)
-$events = @(Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName=@('disk','Ntfs'); Id=7,55,98} -MaxEvents 15 -ErrorAction SilentlyContinue | Select-Object TimeCreated, Id, ProviderName, Message)
+fn execute_module_script(
+    app: AppHandle,
+    module_id: String,
+    script: String,
+    interpreter: Option<String>,
+) -> Result<String, String> {
+    // 1. Validar permisos del módulo en el registro y que no esté vulnerado
+    module_manager::can_module_execute(&app, &module_id)?;
 
-[PSCustomObject]@{
-    disks = $disks
-    partitions = $parts
-    volumes = $vols
-    events = $events
-} | ConvertTo-Json -Depth 4
-"#;
+    // 2. Validar que el script no atente contra la lista negra inmutable del sistema (Regla 5)
+    module_security::validate_script_safety(&script)?;
 
-    let utf16: Vec<u16> = script.encode_utf16().collect();
-    let mut bytes = Vec::with_capacity(utf16.len() * 2);
-    for u in utf16 {
-        bytes.extend_from_slice(&u.to_le_bytes());
+    // 3. Determinar intérprete (default: powershell)
+    let interp = interpreter.unwrap_or_else(|| "powershell".to_string());
+    if interp == "powershell" || interp == "pwsh" {
+        let utf16: Vec<u16> = script.encode_utf16().collect();
+        let mut bytes = Vec::with_capacity(utf16.len() * 2);
+        for u in utf16 {
+            bytes.extend_from_slice(&u.to_le_bytes());
+        }
+        let encoded = base64_encode_bytes(&bytes);
+
+        let mut cmd = std::process::Command::new("powershell");
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", &encoded]);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        let output = cmd.output().map_err(|e| format!("Error al ejecutar script para el módulo {}: {}", module_id, e))?;
+        if !output.status.success() {
+            let err = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Fallo en la ejecución del script del módulo {}: {}", module_id, err));
+        }
+
+        let stdout_str = String::from_utf8_lossy(&output.stdout).to_string();
+        Ok(stdout_str)
+    } else {
+        Err(format!("Intérprete no soportado o no autorizado: {}", interp))
     }
-    let encoded = base64_encode_bytes(&bytes);
+}
 
-    let mut cmd = std::process::Command::new("powershell");
-    cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", &encoded]);
-
+#[tauri::command]
+fn get_storage_telemetry() -> Option<String> {
     #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
+        let path = std::path::Path::new(r"C:\ProgramData\PCManager\telemetry\storage_smart.json");
+        if path.exists() {
+            if let Ok(meta) = std::fs::metadata(path) {
+                if let Ok(modified) = meta.modified() {
+                    if let Ok(elapsed) = modified.elapsed() {
+                        if elapsed.as_secs() < 120 {
+                            if let Ok(content) = std::fs::read_to_string(path) {
+                                return Some(content);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-
-    let output = cmd.output().map_err(|e| format!("Error al ejecutar telemetría de almacenamiento: {}", e))?;
-    if !output.status.success() {
-        let err = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("Fallo en comando de telemetría de almacenamiento: {}", err));
-    }
-
-    let json_str = String::from_utf8_lossy(&output.stdout);
-    let val: Value = serde_json::from_str(&json_str)
-        .map_err(|e| format!("Error al deserializar telemetría de disco: {}. Salida: {}", e, json_str))?;
-    Ok(val)
+    None
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -191,6 +327,7 @@ pub fn run() {
             minimize_to_tray,
             quit_app,
             get_installed_modules,
+            inspect_module_package,
             install_module_package,
             uninstall_module,
             toggle_module_active,
@@ -199,7 +336,10 @@ pub fn run() {
             save_dashboard_order,
             get_dashboard_order,
             show_windows_notification,
-            get_disk_telemetry
+            execute_module_script,
+            check_service_status,
+            request_service_installation,
+            get_storage_telemetry
         ])
         .setup(|app| {
             // 1. Configuración del menú contextual nativo del Tray
