@@ -16,7 +16,7 @@
     "system-tray",
     "white-label"
   ],
-  "author": "aavila",
+  "author": "PC Manager Team",
   "license": "MIT",
   "dependencies": {
     "jszip": "^3.10.2"
