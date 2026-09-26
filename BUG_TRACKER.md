@@ -2141,6 +2141,28 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### BUG-060: Sustitución de Popups Nativos del Navegador (`confirm`/`alert`) por Diálogo Canónico de Confirmación Material Expressive
+
+- **Fecha**: 2026-09-26
+- **Severidad**: `MEDIA` (Infracción de Sistema de Diseño y Regla 6)
+- **Componente**: Core Frontend (`ui/index.html`, `ui/css/style.css`, `ui/js/app.js`)
+- **Síntoma**: Al pulsar "Desinstalar" en un módulo del Gestor de Módulos (o al eliminar grupos o alterar el servicio de Windows), el navegador WebView desplegaba un popup nativo genérico de Windows con el encabezado `tauri.localhost dice: ¿Confirmas la desinstalación de "..."?`, violando la directiva de homogeneidad y estética Material Expressive.
+- **Causa Raíz**: El código utilizaba directamente las funciones bloqueantes del navegador `confirm(...)` y `alert(...)`, las cuales renderizan diálogos propios del motor WebView2 sin respetar las variables semánticas, bordes redondeados, temas oscuros/claros ni animaciones de la aplicación.
+- **Solución Implementada**:
+  1. Se incorporó en [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) el modal canónico `#modal-app-confirm` con backdrop desenfocado (`backdrop-filter: blur(8px)`), tarjeta flotante con sombras elevadas y badge vectorial SVG.
+  2. Se añadieron en [`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css) las clases `.modal-backdrop`, `.modal-card`, `.btn-danger` y la animación `@keyframes modalFadeIn` con curva `cubic-bezier(0.16, 1, 0.3, 1)`.
+  3. Se implementó en [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js) el controlador asíncrono universal `window.showConfirmDialog(options)` basado en `Promise<boolean>`, con soporte para acciones destructivas (`danger: true`), textos explicativos de detalle y atajos de teclado (`Escape` / `Enter`).
+  4. Se migraron todas las ocurrencias de `confirm()` y `alert()` en el Core (`uninstallModule`, `deleteGroup`, `toggleWindowsServiceStatus`, `uninstallCoreServiceFromSettings`, `shutdownApplication`).
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css)
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

@@ -1,4 +1,4 @@
-﻿    let currentView = 'dashboard';
+    let currentView = 'dashboard';
 
     // REGISTRO DE SERVICIOS COMPARTIDOS (RULE 3 - SERVICEREGISTRY)
     window.ServiceRegistry = {
@@ -2562,11 +2562,19 @@
       }
     }
 
-    function uninstallModule(moduleId) {
+    async function uninstallModule(moduleId) {
       const mod = installedModules.get(moduleId);
       if (!mod) return;
 
-      if (!confirm(`¿Confirmas la desinstalación de "${mod.manifest.name}"?`)) return;
+      const confirmed = await showConfirmDialog({
+        title: 'Desinstalar Módulo',
+        message: `¿Confirmas la desinstalación de "${mod.manifest.name}"?`,
+        details: 'Esta acción removerá el módulo, sus vistas dedicadas, widgets del Dashboard y configuraciones asociadas.',
+        confirmText: 'Desinstalar',
+        cancelText: 'Cancelar',
+        danger: true
+      });
+      if (!confirmed) return;
 
       const cardEl = document.getElementById(`installed-mod-${moduleId}`);
       if (cardEl) cardEl.remove();
@@ -3225,6 +3233,69 @@
       updateNotificationBadgesAndSummaries();
     }
 
+    function showConfirmDialog(options = {}) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('modal-app-confirm');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const msgEl = document.getElementById('confirm-modal-message');
+        const detailsEl = document.getElementById('confirm-modal-details');
+        const btnConfirm = document.getElementById('confirm-modal-btn-confirm');
+        const btnCancel = document.getElementById('confirm-modal-btn-cancel');
+        const badgeEl = document.getElementById('confirm-modal-icon-badge');
+
+        if (!modal) {
+          resolve(window.confirm(options.message || '¿Confirmar acción?'));
+          return;
+        }
+
+        titleEl.textContent = options.title || 'Confirmar Acción';
+        msgEl.textContent = options.message || '¿Estás seguro de continuar con esta operación?';
+
+        if (options.details) {
+          detailsEl.textContent = options.details;
+          detailsEl.style.display = 'block';
+        } else {
+          detailsEl.style.display = 'none';
+          detailsEl.textContent = '';
+        }
+
+        btnConfirm.textContent = options.confirmText || 'Aceptar';
+        btnCancel.textContent = options.cancelText || 'Cancelar';
+
+        const isDanger = options.danger !== false;
+        if (isDanger) {
+          btnConfirm.className = 'btn btn-danger';
+          badgeEl.style.background = 'rgba(239, 68, 68, 0.15)';
+          badgeEl.style.color = '#ef4444';
+          badgeEl.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+        } else {
+          btnConfirm.className = 'btn btn-primary';
+          badgeEl.style.background = 'var(--accent-primary-dim)';
+          badgeEl.style.color = 'var(--accent-primary)';
+          badgeEl.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+        }
+
+        const closeHandler = (result) => {
+          modal.style.display = 'none';
+          document.removeEventListener('keydown', keyHandler);
+          window._resolveAppConfirm = null;
+          resolve(result);
+        };
+
+        const keyHandler = (e) => {
+          if (e.key === 'Escape') closeHandler(false);
+          if (e.key === 'Enter') closeHandler(true);
+        };
+
+        document.addEventListener('keydown', keyHandler);
+        window._resolveAppConfirm = closeHandler;
+
+        modal.style.display = 'flex';
+        btnConfirm.focus();
+      });
+    }
+    window.showConfirmDialog = showConfirmDialog;
+
     function toggleSystemNotifPermission(enabled) {
       notificationSettings.systemEnabled = enabled;
       const container = document.getElementById('settings-system-notif-events');
@@ -3729,15 +3800,21 @@
       addSystemNotification('Grupo Renombrado', `El grupo "${oldName}" ahora se llama "${newName}".`, 'success', 'modules');
     }
 
-    function deleteGroup(groupName) {
+    async function deleteGroup(groupName) {
       if (groupName === DEFAULT_MODULE_GROUP) {
         addSystemNotification('Acción No Permitida', 'El grupo "General" es predeterminado e inborrable.', 'warning', 'modules');
         return;
       }
 
-      if (!confirm(`¿Confirmas la eliminación del grupo "${groupName}"? Todos sus módulos se reasignarán automáticamente a "${DEFAULT_MODULE_GROUP}".`)) {
-        return;
-      }
+      const confirmed = await showConfirmDialog({
+        title: 'Eliminar Grupo',
+        message: `¿Confirmas la eliminación del grupo "${groupName}"?`,
+        details: `Todos sus módulos se reasignarán automáticamente al grupo "${DEFAULT_MODULE_GROUP}".`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        danger: true
+      });
+      if (!confirmed) return;
 
       let reassignedCount = 0;
       installedModules.forEach((mod, modId) => {
@@ -4034,7 +4111,15 @@
         const status = await invokeFn('check_service_status');
         if (isEnabled) {
           if (!status.installed) {
-            if (confirm('El servicio nativo de telemetría de Windows (pc_manager_service) no está instalado todavía.\n\n¿Deseas instalarlo ahora? (Windows solicitará elevación UAC de administrador una sola vez).')) {
+            const confirmed = await showConfirmDialog({
+              title: 'Instalar Servicio Nativo',
+              message: 'El servicio nativo de telemetría de Windows (pc_manager_service) no está instalado todavía.',
+              details: '¿Deseas instalarlo ahora? Windows solicitará elevación UAC de administrador una sola vez.',
+              confirmText: 'Instalar Servicio',
+              cancelText: 'Cancelar',
+              danger: false
+            });
+            if (confirmed) {
               await installCoreServiceFromSettings();
             } else {
               if (chk) chk.checked = false;
@@ -4044,7 +4129,15 @@
           }
         } else {
           if (status.running) {
-            if (confirm('¿Deseas detener el servicio de telemetría de Windows?')) {
+            const confirmed = await showConfirmDialog({
+              title: 'Detener Servicio',
+              message: '¿Deseas detener el servicio de telemetría de Windows?',
+              details: 'Los módulos seguirán activos pero algunas métricas avanzadas requerirán ejecución local.',
+              confirmText: 'Detener',
+              cancelText: 'Cancelar',
+              danger: true
+            });
+            if (confirmed) {
               await stopCoreServiceFromSettings();
             } else {
               if (chk) chk.checked = true;
@@ -4101,9 +4194,15 @@
     }
 
     async function uninstallCoreServiceFromSettings() {
-      if (!confirm('¿Deseas desinstalar el servicio de telemetría de Windows?\n\nLos módulos continuarán operando, pero métricas avanzadas de bajo nivel (como telemetría SMART y salud) requerirán elevación o no estarán disponibles.')) {
-        return;
-      }
+      const confirmed = await showConfirmDialog({
+        title: 'Desinstalar Servicio de Windows',
+        message: '¿Deseas desinstalar el servicio de telemetría de Windows?',
+        details: 'Los módulos continuarán operando, pero métricas avanzadas de bajo nivel (como telemetría SMART y salud) requerirán elevación o no estarán disponibles.',
+        confirmText: 'Desinstalar Servicio',
+        cancelText: 'Cancelar',
+        danger: true
+      });
+      if (!confirmed) return;
       const invokeFn = getTauriInvoke();
       if (!invokeFn) return;
       try {
@@ -4116,16 +4215,24 @@
       }
     }
 
-    function shutdownApplication() {
-      if (confirm('¿Confirmas el cierre total de PC Manager?\n\nSe detendrán todos los servicios y colectores de fondo.')) {
-        addSystemNotification('Cierre Total del Core', 'Todos los servicios han sido detenidos limpiamente.', 'warning', 'windows_integration');
-        if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
-          window.__TAURI_INTERNALS__.invoke('quit_app');
-        } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
-          window.__TAURI__.core.invoke('quit_app');
-        } else {
-          alert('PC Manager: Parada completa ejecutada con éxito.');
-        }
+    async function shutdownApplication() {
+      const confirmed = await showConfirmDialog({
+        title: 'Cierre Total del Sistema',
+        message: '¿Confirmas el cierre total de PC Manager?',
+        details: 'Se detendrán de forma determinista todos los servicios de telemetría, colectores y subprocesos activos.',
+        confirmText: 'Cerrar Sistema',
+        cancelText: 'Cancelar',
+        danger: true
+      });
+      if (!confirmed) return;
+
+      addSystemNotification('Cierre Total del Core', 'Todos los servicios han sido detenidos limpiamente.', 'warning', 'windows_integration');
+      if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
+        window.__TAURI_INTERNALS__.invoke('quit_app');
+      } else if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+        window.__TAURI__.core.invoke('quit_app');
+      } else {
+        addSystemNotification('Parada Completa', 'Parada completa ejecutada con éxito.', 'info', 'system');
       }
     }
 

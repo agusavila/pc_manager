@@ -874,6 +874,31 @@
       </div>
     </div>
 
+    <!-- MODAL CANÓNICO DE CONFIRMACIÓN / ACCIONES CRÍTICAS (MATERIAL EXPRESSIVE) -->
+    <div class="modal-backdrop" id="modal-app-confirm" style="display: none; z-index: 9999999;" onclick="if(event.target===this) window._resolveAppConfirm && window._resolveAppConfirm(false)">
+      <div class="modal-card" style="width: 460px; max-width: 92vw; padding: 22px; display: flex; flex-direction: column; gap: 16px;">
+        
+        <div style="display: flex; align-items: flex-start; gap: 14px;">
+          <div id="confirm-modal-icon-badge" style="width: 40px; height: 40px; border-radius: var(--radius-md); background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg class="svg-icon" id="confirm-modal-icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+            <h4 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0;" id="confirm-modal-title">Confirmar Acción</h4>
+            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.45;" id="confirm-modal-message">¿Estás seguro de continuar con esta operación?</div>
+            <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.4; margin-top: 4px; display: none;" id="confirm-modal-details"></div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-top: 2px;">
+          <button class="btn btn-secondary" id="confirm-modal-btn-cancel" onclick="window._resolveAppConfirm && window._resolveAppConfirm(false)">Cancelar</button>
+          <button class="btn btn-danger" id="confirm-modal-btn-confirm" onclick="window._resolveAppConfirm && window._resolveAppConfirm(true)">Aceptar</button>
+        </div>
+
+      </div>
+    </div>
+
     <!-- MENÚ CONTEXTUAL NATIVO PERSONALIZADO (MATERIAL EXPRESSIVE) -->
     <div class="custom-context-menu" id="app-context-menu"></div>
 

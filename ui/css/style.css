@@ -1,4 +1,4 @@
-﻿    :root {
+    :root {
       --bg-base: #0a0c10;
       --bg-surface: #11141c;
       --bg-elevated: #161b26;
@@ -530,6 +530,46 @@
       color: #ffffff;
       border-color: var(--accent-primary);
       box-shadow: 0 2px 8px var(--accent-primary-dim);
+    }
+
+    .btn-danger {
+      background-color: #ef4444;
+      color: #ffffff;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.68);
+      backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-floating);
+      animation: modalFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
 
     .btn-icon {
