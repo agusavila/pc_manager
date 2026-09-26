@@ -1,4 +1,4 @@
-# Manual de Usuario: PC Manager Core (v0.0.4-alpha)
+# Manual de Usuario: PC Manager Core (v0.0.4)
 
 Bienvenido a la guía oficial de usuario de **PC Manager**. Este documento describe el funcionamiento, navegación y opciones del núcleo central del sistema sin tecnicismos innecesarios.
 

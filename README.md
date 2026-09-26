@@ -1,6 +1,6 @@
 # PC Manager
 
-[![Versión](https://img.shields.io/badge/version-0.0.1--alpha-blue.svg)](https://github.com/agusavila/pc_manager)
+[![Versión](https://img.shields.io/badge/version-0.0.4-blue.svg)](https://github.com/agusavila/pc_manager)
 [![Plataforma](https://img.shields.io/badge/platform-Windows%20Desktop-informational.svg)](#arquitectura-core-modular)
 [![Stack](https://img.shields.io/badge/stack-Rust%20%2B%20Tauri-orange.svg)](#arquitectura-core-modular)
 [![Bandeja](https://img.shields.io/badge/integration-System%20Tray-purple.svg)](#principios-white-label-y-seguridad)
@@ -72,5 +72,5 @@ pc_manager/
 
 ## 📄 Licencia y Versión
 
-- **Versión Actual**: `0.0.1-alpha`
+- **Versión Actual**: `0.0.4`
 - Diseñado para despliegues independientes y distribución limpia en entornos Windows.

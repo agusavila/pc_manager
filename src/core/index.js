@@ -1,6 +1,6 @@
 /**
  * PC Manager Core - Microkernel Entrypoint
- * Version: 0.0.1-alpha
+ * Version: 0.0.4
  * 
  * Orquestador principal que integra el EventBus, ServiceRegistry,
  * ModuleManager, ThemeEngine y LifecycleManager.
@@ -14,7 +14,7 @@ import { LifecycleManager } from './lifecycle_manager.js';
 
 export class PCManagerCore {
   constructor() {
-    this.version = '0.0.1-alpha';
+    this.version = '0.0.4';
     this.eventBus = new EventBus();
     this.serviceRegistry = new ServiceRegistry();
     this.moduleManager = new ModuleManager(this.eventBus, this.serviceRegistry);

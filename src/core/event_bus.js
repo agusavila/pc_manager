@@ -1,6 +1,6 @@
 /**
  * PC Manager Core - Event Bus
- * Version: 0.0.1-alpha
+ * Version: 0.0.4
  * 
  * Implementa un bus de eventos pub/sub desacoplado y tipado
  * para la comunicación inter-modular sin dependencias directas.

@@ -1,6 +1,6 @@
 /**
  * PC Manager Core - Lifecycle Manager
- * Version: 0.0.1-alpha
+ * Version: 0.0.4
  * 
  * Gestiona el ciclo de vida del Core y su integración con el sistema operativo Windows:
  * arranque, inicio con Windows, minimizado al área de notificación (System Tray),
@@ -19,7 +19,7 @@ export class LifecycleManager {
     this.moduleManager = moduleManager;
 
     this.state = 'INITIAL';
-    this.version = '0.0.1-alpha';
+    this.version = '0.0.4';
 
     // Opciones de integración con Windows
     this.windowsConfig = {

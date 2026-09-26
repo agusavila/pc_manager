@@ -1,6 +1,6 @@
 /**
  * PC Manager Core - Module Manager
- * Version: 0.0.1-alpha
+ * Version: 0.0.4
  * 
  * Gestiona el ciclo de vida de los módulos (plugins), resolución de dependencias
  * y agrupación dinámica con grupo 'General' canónico predeterminado e inborrable.

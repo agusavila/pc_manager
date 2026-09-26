@@ -74,20 +74,27 @@ Cada componente y capacidad del sistema se clasifica estrictamente en una de las
 
 ---
 
-## 5. Auditoría de Versiones
+## 5. Auditoría y Sincronización de Versiones (Fase 2)
 
-Existe divergencia en las declaraciones de versión del sistema:
+La versión del sistema ha sido centralizada canónicamente en `0.0.4` (`Cargo.toml` como fuente de verdad en Rust con `env!("CARGO_PKG_VERSION")`, `package.json` en NPM y sincronizada en UI, Core JS, tests y documentación):
 
 | Archivo | Versión Declarada | Estado |
 | :--- | :--- | :--- |
-| [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml) | `0.0.4` | Canónico |
-| [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json) | `0.0.4` | Canónico |
-| [`package.json`](file:///c:/Proyectos/pc_manager/package.json) | `0.0.4` | Canónico |
-| [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs) (`get_system_info`) | `"0.0.4"` | Canónico |
-| [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) (`<title>`) | `v0.0.4` | Canónico |
-| [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) (`#sidebar-core-version`) | `v0.0.4-alpha` | Desincronizado (sufijo `-alpha`) |
-| [`src/core/index.js`](file:///c:/Proyectos/pc_manager/src/core/index.js) | `0.0.1-alpha` | **Obsoleto / Desincronizado** |
-| [`test/core_test.js`](file:///c:/Proyectos/pc_manager/test/core_test.js) | `0.0.1-alpha` | **Obsoleto / Desincronizado** |
+| [`src-tauri/Cargo.toml`](file:///c:/Proyectos/pc_manager/src-tauri/Cargo.toml) | `0.0.4` | Canónico (Fuente de verdad) |
+| [`src-tauri/tauri.conf.json`](file:///c:/Proyectos/pc_manager/src-tauri/tauri.conf.json) | `0.0.4` | Sincronizado |
+| [`package.json`](file:///c:/Proyectos/pc_manager/package.json) | `0.0.4` | Sincronizado |
+| [`package-lock.json`](file:///c:/Proyectos/pc_manager/package-lock.json) | `0.0.4` | Sincronizado |
+| [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs) (`get_system_info`) | `env!("CARGO_PKG_VERSION")` | Dinámico / Canónico |
+| [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) (`<title>`) | `v0.0.4` | Sincronizado |
+| [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html) (`#sidebar-core-version`) | `v0.0.4` | Sincronizado |
+| [`src/core/index.js`](file:///c:/Proyectos/pc_manager/src/core/index.js) | `0.0.4` | Sincronizado |
+| [`src/core/lifecycle_manager.js`](file:///c:/Proyectos/pc_manager/src/core/lifecycle_manager.js) | `0.0.4` | Sincronizado |
+| [`test/core_test.js`](file:///c:/Proyectos/pc_manager/test/core_test.js) | `0.0.4` | Sincronizado |
+| [`README.md`](file:///c:/Proyectos/pc_manager/README.md) | `0.0.4` | Sincronizado |
+| [`docs/user/core_user_manual.md`](file:///c:/Proyectos/pc_manager/docs/user/core_user_manual.md) | `v0.0.4` | Sincronizado |
+| [`docs/ai/core_ai_spec.md`](file:///c:/Proyectos/pc_manager/docs/ai/core_ai_spec.md) | `v0.0.4` | Sincronizado |
+| [`docs/developer/core_developer_guide.md`](file:///c:/Proyectos/pc_manager/docs/developer/core_developer_guide.md) | `v0.0.4` | Sincronizado |
+| [`docs/mockups/core_shell.html`](file:///c:/Proyectos/pc_manager/docs/mockups/core_shell.html) | `v0.0.4` | Sincronizado |
 
 ---
 

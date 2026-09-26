@@ -1,6 +1,6 @@
 /**
  * PC Manager Core - Theme Engine
- * Version: 0.0.1-alpha
+ * Version: 0.0.4
  * 
  * Gestiona el sistema de temas dinámico Material Expressive,
  * aplicando variables CSS semánticas para modos Oscuro/Claro y paleta de acentos.

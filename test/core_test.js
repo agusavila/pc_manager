@@ -1,5 +1,5 @@
 /**
- * PC Manager Core - Pruebas Unitarias de Arquitectura (Alpha 0.0.1)
+ * PC Manager Core - Pruebas Unitarias de Arquitectura (v0.0.4)
  */
 
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ async function runTests() {
   console.log('--- Iniciando Pruebas Unitarias del Core ---');
 
   const core = new PCManagerCore();
-  assert.equal(core.version, '0.0.1-alpha', 'Versión debe ser 0.0.1-alpha');
+  assert.equal(core.version, '0.0.4', 'Versión debe ser 0.0.4');
 
   // 1. Prueba de EventBus
   console.log('1. Verificando EventBus...');

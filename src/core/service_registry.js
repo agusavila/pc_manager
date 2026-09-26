@@ -1,6 +1,6 @@
 /**
  * PC Manager Core - Service Registry
- * Version: 0.0.1-alpha
+ * Version: 0.0.4
  * 
  * Gestiona el registro y consumo de servicios compartidos entre módulos,
  * evitando la duplicación de código y desacoplando implementaciones concretas.
