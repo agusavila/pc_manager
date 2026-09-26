@@ -128,6 +128,14 @@ Cada módulo o funcionalidad agregada al sistema debe mantener actualizada la do
     4. **Orientación Vertical y Split-Screen (Ventanas Estrechas)**: Contención obligatoria con reflow dinámico para evitar que las tarjetas se corten o queden inaccesibles fuera de pantalla.
 - **Protocolo de Consulta y Consenso Técnico**: Antes de aplicar modificaciones estructurales en la interfaz, el agente debe advertir los riesgos de la idea planteada, proponer la solución arquitectónica correcta y esperar la confirmación del usuario sin tocar el código prematuramente.
 
+### Regla 13: Aislamiento de Desarrollo Modular (Carpetas Dedicadas y Commits Independientes)
+- **Carpeta Exclusiva por Módulo**: Todo módulo o extensión del sistema debe desarrollarse, estructurarse y residir dentro de su propio directorio dedicado (`modules/<nombre-modulo>/`) con ciclo de vida, archivos de telemetría, manifiesto y scripts propios.
+- **Commits Atómicos e Independientes por Módulo**:
+  - Queda terminantemente prohibido mezclar en un mismo commit cambios del Core (carcasa, microkernel, UI global) con cambios o evoluciones de módulos individuales.
+  - Cada modificación, mejora o corrección en un módulo debe registrarse en commits aislados y atómicos, utilizando el prefijo semántico correspondiente: `feat(module-<id>): ...`, `fix(module-<id>): ...`, `refactor(module-<id>): ...`.
+  - Si un trabajo involucra cambios tanto en el Core como en un módulo, se deben realizar commits secuenciales y separados: primero la preparación del Core y seguidamente el commit exclusivo del módulo.
+- **Autonomía de Empaquetado y Pruebas**: Cada módulo debe ser capaz de compilar su paquete `.pcm`, verificar su integridad criptográfica y ejecutar sus validaciones de forma autónoma sin acoplarse ni depender de scripts compartidos fuera de su especificación.
+
 ---
 
 ## 2. Estructura de Customizaciones
@@ -144,6 +152,7 @@ Las reglas y habilidades de IA están organizadas en:
   - [`bug_and_error_tracking.md`](file:///c:/Proyectos/pc_manager/.agents/rules/bug_and_error_tracking.md): Registro continuo de errores y bug fixes por commit.
   - [`continuous_compilation_and_commits.md`](file:///c:/Proyectos/pc_manager/.agents/rules/continuous_compilation_and_commits.md): Compilación obligatoria del binario nativo y commits atómicos.
   - [`proactive_technical_advisory.md`](file:///c:/Proyectos/pc_manager/.agents/rules/proactive_technical_advisory.md): Asesoría técnica proactiva y vibe-coding crítico (multi-resolución y no aceptación ciega de ejemplos).
+  - [`module_development_isolation.md`](file:///c:/Proyectos/pc_manager/.agents/rules/module_development_isolation.md): Aislamiento de desarrollo modular, carpetas dedicadas y commits independientes.
 - Skills de IA: [`.agents/skills/`](file:///c:/Proyectos/pc_manager/.agents/skills/)
   - [`core-module-scaffolder`](file:///c:/Proyectos/pc_manager/.agents/skills/core-module-scaffolder/SKILL.md): Creación estandarizada de módulos.
   - [`white-label-auditor`](file:///c:/Proyectos/pc_manager/.agents/skills/white-label-auditor/SKILL.md): Auditoría de código limpio y neutral.
