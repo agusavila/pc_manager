@@ -1,6 +1,6 @@
 {
   "name": "pc_manager",
-  "version": "0.0.4-alpha",
+  "version": "0.0.4",
   "description": "PC Manager - Software de Escritorio Core-Modular para Windows (Rust + Tauri)",
   "type": "module",
   "scripts": {

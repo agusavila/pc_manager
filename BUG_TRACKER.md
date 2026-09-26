@@ -2103,6 +2103,44 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-059] Modularización de UI Monolítica, Archivo de Maquetas Tempranas en docs/mockups, Homogeneización de Versiones (v0.0.4) y Pruebas Criptográficas Integrales
+- **Fecha**: 2026-09-26
+- **Versión**: `v0.0.4`
+- **Severidad**: `MEDIA`
+- **Componente**: `Frontend / UI Architecture (`[`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)`, `[`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css)`, `[`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)`), Gestión de Proyecto (`[`package.json`](file:///c:/Proyectos/pc_manager/package.json)`), Pruebas de Seguridad Rust`
+- **Descripción del Fallo**: 
+  1. `ui/index.html` constituía un archivo monolítico de más de 7,600 líneas con estilos CSS y lógica JavaScript inline masiva, dificultando la mantenibilidad y violando las directivas de arquitectura modular.
+  2. Existían tres interfaces compitiendo en el repositorio (`core_shell.html`, `index.html` en raíz y `ui/index.html`), provocando ambigüedad sobre cuál era la interfaz canónica activa del sistema.
+  3. Desincronización en la declaración de versiones (`package.json` declaraba `0.0.4-alpha` mientras `Cargo.toml` y `tauri.conf.json` declaraban `0.0.4`).
+- **Causa Raíz**: 
+  Crecimiento acumulativo del frontend en un único archivo HTML durante iteraciones tempranas y permanencia de prototipos exploratorios en el directorio raíz.
+- **Solución Implementada**: 
+  1. **Modularización Limpia del Frontend**:
+     - Estilos CSS desacoplados en [`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css) (2,006 líneas con preservación 100% de reglas y variables semánticas).
+     - Lógica JavaScript externalizada en [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js) (4,720 líneas manteniendo alcance global requerido por los 111 controladores de eventos `onclick`).
+     - `ui/index.html` optimizado de 7,611 líneas a 884 líneas estructuradas y limpias.
+  2. **Preservación Canónica de Maquetas**:
+     - Archivados los mockups de diseño `core_shell.html` y `index.html` dentro de `docs/mockups/` para cumplir con la Regla 7 como referencias históricas sin contaminar el entorno de ejecución nativo.
+  3. **Homogeneización de Versiones**:
+     - Sincronizada la versión `0.0.4` universalmente en `package.json`, `Cargo.toml` y `tauri.conf.json`.
+  4. **Pruebas de Seguridad en Rust y Validación Extrema**:
+     - 3 nuevas pruebas unitarias en `module_security.rs` validando rechazo de paquetes con más de 250 archivos, intentos de Zip-Slip y nombres de dispositivo reservados de Windows (`CON.txt`).
+     - Total: 24 de 24 pruebas unitarias en Rust aprobadas (`cargo test --lib`).
+     - Pruebas del Core JS aprobadas (`npm test`).
+     - Compilación nativa de producción completa y verificada (`cargo build`).
+- **Archivos Afectados**: 
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css)
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`docs/mockups/core_shell.html`](file:///c:/Proyectos/pc_manager/docs/mockups/core_shell.html)
+  - [`docs/mockups/index.html`](file:///c:/Proyectos/pc_manager/docs/mockups/index.html)
+  - [`package.json`](file:///c:/Proyectos/pc_manager/package.json)
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
 
 
 

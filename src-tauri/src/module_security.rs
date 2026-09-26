@@ -631,6 +631,65 @@ mod tests {
         assert!(validate_zip_entry_path("con.txt").is_err());
         assert!(validate_zip_entry_path("sub/nul.json").is_err());
     }
+
+    #[test]
+    fn test_archive_exceeding_file_count_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            for i in 0..251 {
+                writer.start_file(format!("file_{}.txt", i), options).unwrap();
+                writer.write_all(b"test").unwrap();
+            }
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("excediendo el límite de seguridad de 250"));
+    }
+
+    #[test]
+    fn test_archive_with_zip_slip_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            writer.start_file("../../evil.bat", options).unwrap();
+            writer.write_all(b"echo pwned").unwrap();
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("Zip Slip / Path Traversal"));
+    }
+
+    #[test]
+    fn test_archive_with_reserved_device_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            writer.start_file("CON.txt", options).unwrap();
+            writer.write_all(b"reserved").unwrap();
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("nombre de archivo reservado"));
+    }
 }
 
 
