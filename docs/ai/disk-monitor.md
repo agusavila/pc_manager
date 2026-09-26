@@ -1,4 +1,4 @@
-# Especificación Técnica para IA: Módulo de Monitoreo de Almacenamiento (`disk-monitor`)
+# Especificación Técnica para IA: Módulo de Monitoreo de Almacenamiento (`disk-monitor` v2.0)
 
 Especificación formal del módulo `disk-monitor` para modelos de inteligencia artificial y agentes desarrolladores.
 
@@ -6,7 +6,7 @@ Especificación formal del módulo `disk-monitor` para modelos de inteligencia a
 
 ## 1. Resumen Contextual y Objetivo
 
-El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimiento, supervisión y auditoría de unidades físicas de almacenamiento en sistemas operativos Windows. No asume configuraciones predeterminadas de hardware ni precarga discos automáticamente; implementa un flujo de descubrimiento explícito donde el usuario inspecciona el bus de almacenamiento y selecciona qué dispositivos supervisar.
+El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimiento, supervisión en tiempo real y widgets operativos para unidades de almacenamiento en Windows. Implementa auto-descubrimiento inmediato sin estado vacío bloqueante, expone widgets canónicos (`card-disk-overview`, `card-disk-drive-c`) y opera con lectura directa y fidedigna de hardware (Regla 7: Cero Datos Inventados).
 
 ---
 
@@ -24,34 +24,37 @@ El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimien
         "FriendlyName": "STRING",
         "Model": "STRING",
         "SerialNumber": "STRING",
-        "DriveType": "NVMe | SSD | HDD | USB | STRING",
+        "DriveType": "NVMe | SSD | HDD | USB",
         "MediaType": "SSD | HDD | Removable | Fixed",
-        "BusType": "NVMe | SATA | SCSI | USB",
+        "BusType": "NVMe | SATA | USB",
         "Size": 1024209543168,
         "HealthStatus": "Healthy | Warning | Unhealthy",
         "OperationalStatus": "OK | Degraded",
-        "HealthPercent": 100, // null si la lectura SMART detallada no está disponible por falta de elevación UAC (Regla 7: Cero Datos Inventados)
+        "HealthPercent": 100,
+        "Temperature": 48,
+        "PowerOnHours": 13877,
+        "ReadErrorsTotal": 0,
+        "WriteErrorsTotal": 0,
+        "ReadErrorsUncorrected": 0,
+        "WriteErrorsUncorrected": 0,
         "IsRemovable": false,
-        "FileSystems": ["NTFS", "exFAT"],
+        "IsBoot": true,
+        "IsSystem": true,
+        "FileSystems": ["NTFS"],
+        "Partitions": [...],
         "Volumes": [
           {
             "DriveLetter": "C",
-            "FileSystemLabel": "Windows",
+            "FileSystemLabel": "",
             "FileSystem": "NTFS",
-            "SizeRemaining": 98111770624,
+            "HealthStatus": "Healthy",
+            "SizeRemaining": 80097705984,
             "Size": 248901529600
           }
         ]
       }
     ],
-    "events": [
-      {
-        "TimeCreated": "DATE_STRING",
-        "Id": 7,
-        "ProviderName": "disk",
-        "Message": "STRING"
-      }
-    ]
+    "events": []
   }
   ```
 
@@ -59,17 +62,7 @@ El módulo `disk-monitor` proporciona una interfaz estandarizada de descubrimien
 
 ## 3. Invariantes Arquitectónicos de Implementación
 
-1. **Neutralidad Total (Regla 2 - Marca Blanca)**:
-   - Queda estrictamente prohibido introducir condiciones de código o heurísticas que contengan nombres de marcas comerciales, líneas de productos o modelos de mercado.
-   - La clasificación de tecnologías se basa exclusivamente en enumeradores estándar: `BusType == 'USB' || IsRemovable` $\to$ Almacenamiento USB (Externo); `BusType == 'NVMe'` $\to$ NVMe; `MediaType == 'SSD'` o `SpindleSpeed == 0` $\to$ SSD; `MediaType == 'HDD'` o `SpindleSpeed > 0` $\to$ HDD.
-2. **Control de Usuario sobre Selección (Cero Asunciones)**:
-   - El módulo almacena en `localStorage` la clave `pcm_disk_monitor_drives`.
-   - Si la clave está ausente o vacía, la interfaz debe renderizar el **Empty State** invitando a buscar discos.
-3. **Limpieza Absoluta en Desinstalación**:
-   - Expone `__CLEANUP_disk_monitor__(opts)` y `__PURGE_disk_monitor__()` para eliminar todas las claves de persistencia local en desinstalación.
-4. **Disposición Matricial a 2 Columnas**:
-   - Las tarjetas de discos configurados se despliegan en `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;`.
-5. **Seguridad Operativa (Regla 5 - Modo Seguro)**:
-   - Toda rutina de auditoría es estrictamente de solo lectura (Dry-Run).
-6. **Cero Placebos (Regla 7)**:
-   - Todos los datos de números de serie, capacidades, salud porcentual, filesystem y sectores provienen de llamadas reales al subsistema de almacenamiento del sistema operativo.
+1. **Auto-descubrimiento Inmediato**: Al montar el módulo, se invoca de inmediato la telemetría y se renderizan todas las unidades físicas sin exigir clics manuales ni abrir modales innecesarios.
+2. **Widgets Canónicos de Dashboard**: Expone `card-disk-overview` y `card-disk-drive-c` en `manifest.widgets`, manteniendo sincronizado el estado del tablero principal.
+3. **Regla 13 de Aislamiento Modular**: Toda herramienta de empaquetado, pruebas, scripts y manifiesto reside dentro de `modules/disk-monitor/` y sus commits son 100% aislados y atómicos.
+4. **Regla 2 (Marca Blanca)**: Cero referencias a marcas comerciales específicas o rutas de usuario personalizadas.

@@ -1,20 +1,19 @@
-# Manual de Usuario: Monitoreo de Almacenamiento (Disk Monitor)
+# Manual de Usuario: Monitoreo de Almacenamiento (Disk Monitor v2.0)
 
-Bienvenido a la guía de operación del módulo de **Monitoreo de Almacenamiento** para **PC Manager**. Este módulo proporciona supervisión de salud, diagnóstico de medios físicos y auditoría de sectores en tiempo real.
+Bienvenido a la guía de operación del módulo de **Monitoreo de Almacenamiento** para **PC Manager**. Este módulo proporciona supervisión de salud, diagnóstico de medios físicos, desglose de particiones y widgets en vivo para el Dashboard en tiempo real.
 
 ---
 
 ## 1. Resumen Ejecutivo
 
-El módulo está diseñado con una arquitectura estándar que no asume configuraciones previas ni hardware predefinido:
-- **Estado Inicial de Fábrica**: El módulo inicia limpio, permitiendo al usuario decidir qué discos o unidades USB desea supervisar.
-- **Descubrimiento y Selección**: Mediante la función **"Buscar Discos"**, el sistema detecta todas las unidades conectadas al equipo (fijas y extraíbles USB) y permite seleccionar cuáles incorporar a la vista activa.
-- **Detección Neutral de Tecnologías y USB**: Clasifica de forma transparente entre **NVMe PCIe**, **SATA SSD**, **HDD Mecánico** y **Almacenamiento USB (Externo)** según los estándares del bus del sistema operativo.
-- **Porcentaje de Salud e Integridad Transparente**: Presenta el porcentaje numérico de salud (**% de Salud**) con barra de vida útil cuando el sistema operativo dispone de contadores SMART; si se ejecuta como usuario estándar sin elevación UAC, expone honestamente el estado operativo del controlador aclarando que el detalle de desgaste SMART numérico requiere elevación.
-- **Disposición en Cuadrícula de 2 Columnas**: Organiza los discos como cuadros limpios y proporcionados a 2 por fila.
-- **Sistemas de Archivos Visibles**: Identifica y exhibe la etiqueta y sistema de archivos de cada partición (**NTFS**, **exFAT**, **FAT32**, **ReFS**).
-- **Frecuencia de Muestreo Personalizada**: Permite configurar intervalos periódicos en segundos (o modo manual) desde Configuraciones.
-- **Diagnóstico Real de Bloques y Registro (Dry-Run)**: Comprueba la salud del hardware y consulta eventos reales de errores de I/O en el registro del sistema de Windows sin simulación.
+El módulo está diseñado para proporcionar visibilidad completa y sin fricción de todo el almacenamiento de la computadora:
+- **Descubrimiento Automático Inmediato**: Al abrir el módulo, se detectan e incorporan de inmediato todas las unidades físicas y volúmenes montados, sin pasos manuales ni pantallas vacías de bienvenida.
+- **Widgets en el Dashboard**: Dispone de dos widgets dedicados para anclar en el Dashboard:
+  - **Almacenamiento General (2x1)**: Resumen global de espacio usado, libre, capacidad total y estado de salud de todas las unidades.
+  - **Unidad del Sistema (C:) (2x1)**: Monitoreo en vivo de la unidad donde reside Windows, con espacio restante, porcentaje de ocupación y temperatura.
+- **Detección Neutral de Tecnologías**: Clasifica de forma transparente entre **NVMe PCIe**, **SATA SSD**, **HDD Mecánico** y **USB Extraíble** según los estándares del bus del sistema operativo.
+- **Desglose de Particiones y Volúmenes**: Identifica y exhibe la etiqueta, letra de unidad (`C:`, `D:`, `E:`) y sistema de archivos (`NTFS`, `exFAT`, `FAT32`, `ReFS`) de cada partición con su barra de progreso de capacidad.
+- **Telemetría SMART y Salud Física**: Lectura de porcentaje de vida útil en unidades flash (SSD/NVMe), temperatura operativa (°C), horas de encendido y contadores de errores de hardware.
 
 ---
 
@@ -24,36 +23,27 @@ El módulo está diseñado con una arquitectura estándar que no asume configura
 1. Abra **PC Manager**.
 2. Diríjase a la sección **Gestor de Módulos** desde el menú lateral.
 3. En la pestaña **Catálogo Local**, utilice la opción **Instalar Módulo (.pcm)** y seleccione el archivo `disk-monitor.pcm`.
-4. El módulo se registrará en el sistema bajo el grupo predeterminado **General**.
+4. El módulo se registrará en el sistema bajo el grupo predeterminado **General** y activará sus vistas y widgets.
 
-### Descubrimiento y Selección de Unidades
+### Navegación y Filtros
 1. Ingrese a la vista **Monitoreo de Almacenamiento** desde el menú lateral.
-2. Si no hay unidades agregadas, verá la pantalla de bienvenida. Haga clic en **"Buscar y Agregar Discos"** (o en el botón **"Buscar Discos"** de la barra superior).
-3. Se abrirá la ventana de **Descubrimiento de Unidades Físicas** mostrando todos los discos detectados en el equipo, incluyendo unidades USB conectadas con su estado y capacidad.
-4. Marque las casillas de los discos que desea vigilar y pulse **"Agregar al Monitoreo"**.
-5. El panel se actualizará de inmediato mostrando las tarjetas de las unidades en 2 columnas.
+2. La vista cargará de inmediato todas las unidades detectadas.
+3. Utilice los botones de filtro (**Todos**, **NVMe**, **SATA SSD**, **HDD**, **USB**) para visualizar únicamente el tipo de almacenamiento deseado.
+4. Presione **Actualizar** para forzar un re-escaneo del bus en caliente (por ejemplo, al conectar una memoria USB).
+5. Presione **Configuración** para ajustar el intervalo de sondeo periódico o desactivar la inclusión de memorias USB.
 
-### Gestión de Unidades en el Tablero
-- **Remover Unidad**: En la esquina superior derecha de cualquier tarjeta de disco, pulse el botón **"Remover"** si desea dejar de vigilar esa unidad en particular.
-- **Filtrar por Tecnología**: Utilice las píldoras superiores (**Todos**, **NVMe**, **SATA SSD**, **HDD**, **USB**, **Alertas**) para enfocar la vista en tipos específicos de medios.
-- **Agregar Nuevas Unidades**: En cualquier momento puede volver a pulsar **"Buscar Discos"** para incorporar discos que no hubiese agregado anteriormente.
-
----
-
-## 3. Diagnóstico de Bloques y Registro de Windows (Modo Seguro)
-
-Para verificar el estado físico de los bloques de almacenamiento:
-1. En la tarjeta del disco deseado, pulse **"Diagnóstico de Bloques y Registro"**.
-2. Se desplegará una ventana de evaluación técnica que consulta los contadores de errores de lectura/escritura y el registro de eventos de almacenamiento de Windows (proveedores `disk`, `Ntfs`, `stornvme`).
-3. **Garantía No Destructiva**: La operación opera estrictamente en modo de solo lectura (Dry-Run), sin formatear ni modificar particiones ni escribir datos en el disco.
-4. Si no se reportan inconsistencias, se confirmará que la unidad se encuentra libre de advertencias en el sistema operativo.
+### Añadir Widgets al Dashboard
+1. Vaya a la vista **Dashboard**.
+2. Presione el botón **Widgets** en la esquina superior derecha.
+3. En el catálogo desplegable, active los interruptores de **Almacenamiento General** o **Unidad del Sistema (C:)**.
+4. Los widgets se posicionarán en el dashboard y se mantendrán sincronizados en tiempo real.
 
 ---
 
-## 4. Preguntas Frecuentes (FAQ)
+## 3. Preguntas Frecuentes (FAQ)
 
-**¿Por qué el módulo no muestra discos al instalarse por primera vez?**  
-Porque sigue la filosofía de diseño modular estándar: no precarga unidades de forma arbitraria, otorgando al usuario el control de descubrir y elegir qué unidades supervisar.
+**¿Cómo detecta el módulo los dispositivos USB?**  
+El colector analiza el bus de conexión y el atributo de medio extraíble del sistema operativo. Al conectar o retirar un pendrive o disco externo, pulsar "Actualizar" sincronizará el estado al instante.
 
-**¿Cómo cambio el grupo del módulo?**  
-Vaya a **Gestor de Módulos -> Grupos**. Allí puede asignar el módulo a cualquier grupo personalizado existente o crear uno nuevo.
+**¿Se modifican o escriben datos en mis discos?**  
+No. Todas las lecturas de telemetría y eventos operan estrictamente en modo de solo lectura (Dry-Run), sin alterar particiones ni datos de usuario.

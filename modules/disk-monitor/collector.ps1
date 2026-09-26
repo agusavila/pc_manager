@@ -1,10 +1,10 @@
 # PC Manager - Módulo de Monitoreo de Almacenamiento
-# Script Colector de Telemetría Nativa (PowerShell)
-# White-Label, Cero Simulación, Lectura Real de Hardware
+# Script Colector de Telemetría Nativa de Hardware y Almacenamiento (PowerShell)
+# Marca Blanca, White-Label, Cero Simulación, Lectura Real del Sistema Windows
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-# 1. Verificar si el Servicio de Windows (SYSTEM) ha generado telemetría reciente
+# 1. Verificar si el Servicio de Windows (SYSTEM) ha generado telemetría previa
 $telemetryPath = "$env:ProgramData\PCManager\telemetry\system_telemetry.json"
 if (-not (Test-Path $telemetryPath)) {
     $telemetryPath = "$env:ProgramData\PCManager\telemetry\storage_smart.json"
@@ -14,7 +14,7 @@ if (Test-Path $telemetryPath) {
     if ($raw) {
         $cached = $raw | ConvertFrom-Json -ErrorAction SilentlyContinue
         if ($cached -and $cached.storage -and $cached.storage.disks) {
-            Write-Output ($cached.storage | ConvertTo-Json -Depth 5)
+            Write-Output ($cached.storage | ConvertTo-Json -Depth 6)
             exit 0
         } elseif ($cached -and $cached.disks) {
             Write-Output $raw
@@ -23,7 +23,7 @@ if (Test-Path $telemetryPath) {
     }
 }
 
-# 2. Colector de respaldo directo si el servicio no está en ejecución
+# 2. Recolección nativa directa de hardware
 $pdisks = @(Get-PhysicalDisk -ErrorAction SilentlyContinue)
 $counters = @(Get-PhysicalDisk -ErrorAction SilentlyContinue | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue)
 $parts = @(Get-Partition -ErrorAction SilentlyContinue | Select-Object DiskNumber, PartitionNumber, DriveLetter, Size)
@@ -34,7 +34,7 @@ $disks = @(Get-Disk -ErrorAction SilentlyContinue | ForEach-Object {
     $p = $pdisks | Where-Object { [string]$_.DeviceId -eq [string]$d.Number } | Select-Object -First 1
     $c = $counters | Where-Object { [string]$_.DeviceId -eq [string]$d.Number } | Select-Object -First 1
 
-    # Detección exhaustiva de tecnología
+    # Detección rigurosa de tecnología de almacenamiento
     $driveType = 'Almacenamiento'
     $isUsb = ($d.BusType -eq 'USB' -or $d.IsRemovable -or ($p -and $p.BusType -eq 'USB'))
     if ($isUsb) {
@@ -51,15 +51,15 @@ $disks = @(Get-Disk -ErrorAction SilentlyContinue | ForEach-Object {
 
     $isHdd = ($driveType -eq 'HDD' -or ($p -and $p.MediaType -eq 'HDD'))
 
-    # Desgaste SMART: Solo para medios flash (SSD / NVMe). Para HDDs NUNCA se calcula desgaste de celdas.
+    # Desgaste SMART: Solo para medios flash (SSD / NVMe)
     $healthPercent = $null
     if (-not $isHdd -and $c -and $c.Wear -ne $null) {
         $healthPercent = [Math]::Max(0, 100 - [int]$c.Wear)
     }
 
-    # Particiones y Volúmenes asignados al disco
-    $diskPartitions = @($parts | Where-Object { [string]$_.DiskNumber -eq [string]$d.Number })
-    $diskVols = @($diskPartitions | ForEach-Object {
+    # Particiones y Volúmenes asignados al disco físico
+    $targetPartitions = @($parts | Where-Object { [string]$_.DiskNumber -eq [string]$d.Number })
+    $diskVols = @($targetPartitions | ForEach-Object {
         $ltr = $_.DriveLetter
         if ($ltr) {
             $vols | Where-Object { [string]$_.DriveLetter -eq [string]$ltr }
@@ -99,7 +99,7 @@ $disks = @(Get-Disk -ErrorAction SilentlyContinue | ForEach-Object {
         IsSystem = [bool]$d.IsSystem
         IsConnected = $true
         FileSystems = $fileSystems
-        Partitions = $diskPartitions
+        Partitions = $targetPartitions
         Volumes = $diskVols
     }
 })
@@ -119,4 +119,4 @@ $events = @(Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName=@('di
     disks = $disks
     events = $events
     timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
-} | ConvertTo-Json -Depth 5
+} | ConvertTo-Json -Depth 6
