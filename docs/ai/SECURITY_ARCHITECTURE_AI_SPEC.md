@@ -91,7 +91,21 @@ interface ModuleManifest {
 
 ---
 
-## 3. Directivas de Comportamiento Estricto para Agentes IA
+## 3. Modelo de Confianza y Garantías Reales (Plugins Confiables)
+
+PC Manager implementa un modelo de **Plugins Confiables con Firma Criptográfica (Ed25519 + SHA-256)**.
+- **Claridad Arquitectónica**: En el frontend (WebView2), el código JavaScript de los módulos se ejecuta en el contexto del renderizador; **no constituye un sandbox a nivel de proceso del sistema operativo**.
+- **Garantías Reales Implementadas**:
+  1. **Autenticidad e Integridad de Autoría**: Firma asimétrica Ed25519 y comprobación SHA-256 archivo por archivo. Paquetes no firmados o manipulados (`TAMPERED`) son bloqueados.
+  2. **Endurecimiento de Paquetes (Anti Zip-Slip y Zip-Bomb)**: Cuotas estrictas (25 MB archivo, 60 MB descomprimido, 250 archivos máx., 20 MB archivo individual). Bloqueo total de rutas relativas `..`, barras invertidas y nombres reservados de Windows (`CON`, `PRN`, etc.).
+  3. **Identificadores de Módulo Estrictos**: Validación regex `^[a-z0-9][a-z0-9._-]{0,63}$` para evitar evasión de rutas en disco.
+  4. **Instalación Transaccional con Rollback**: Extracción en `.staging/`, verificación de entrypoint y respaldo previo en `.backup/` ante actualizaciones. Si algo falla, se restaura el estado previo intacto.
+  5. **Filtro Estático de Scripts en Host Nativo (Rust)**: `validate_script_safety` bloquea comandos destructivos (`Format-Volume`, `diskpart`) y acceso a directorios críticos del sistema (`System32`, `WinSxS`, registros `SAM`/`SECURITY`).
+  6. **Gobernanza del Servicio de Windows**: El servicio opera en modo desacoplado de solo lectura para telemetría; está prohibida la recepción o ejecución de comandos remotos arbitrarios en el servicio.
+
+---
+
+## 4. Directivas de Comportamiento Estricto para Agentes IA
 
 1. **Prohibición de Instalación No Auditada**: Los agentes de IA nunca deben saltear `inspect_module_package` al generar herramientas o scripts de prueba. Todo módulo de prueba debe compilarse con su firma respectiva utilizando `tools/module_signer.cjs`.
 2. **Prohibición de Comandos en la Lista Negra**: Cualquier script que un agente genere para un módulo (`collector.ps1` o llamadas nativas) debe respetar estrictamente:

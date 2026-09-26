@@ -59,5 +59,16 @@ Algunos módulos de diagnóstico profundo (como la lectura de desgaste de celdas
 ---
 
 ## 5. Integridad en Tiempo de Ejecución
-
+ 
 PC Manager no solo verifica el módulo al momento de la instalación: cada vez que un módulo intenta ejecutar un script o proveer un servicio, el Core recalcula los hashes de los archivos en disco. Si algún archivo fue modificado externamente de forma sospechosa, el módulo se suspende de inmediato para salvaguardar el sistema.
+
+---
+
+## 6. Instalación Transaccional y Reversión Automática (Rollback)
+
+Para evitar estados inconsistentes o módulos corruptos a medio instalar:
+- Todo paquete `.pcm` se descomprime primero en una zona temporal aislada (`.staging`).
+- Si se trata de una actualización, la versión previa se respalda automáticamente (`.backup`).
+- Se validan la existencia física del punto de entrada (`entrypoint`) y la integridad estructural.
+- Solo tras superar todas las validaciones se promueve atómicamente a la carpeta definitiva de módulos.
+- Ante cualquier error o interrupción, el instalador revierte los cambios automáticamente, restaurando la versión anterior sin dejar residuos.

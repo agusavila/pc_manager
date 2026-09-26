@@ -1,4 +1,4 @@
-# Guía de Desarrollador: Empaquetado, Firmado Criptográfico y Sandbox de Módulos
+# Guía de Desarrollador: Empaquetado, Firmado Criptográfico y Gobernanza de Módulos
 
 Esta guía técnica explica los estándares obligatorios para desarrollar, firmar y empaquetar extensiones `.pcm` para **PC Manager Core**.
 
@@ -111,7 +111,7 @@ zip.file('signature.sig', JSON.stringify(sigData, null, 2));
 
 ---
 
-## 5. Filtro de Seguridad de Scripts en Host Nativo (Sandbox Rust)
+## 5. Filtro de Seguridad de Scripts en Host Nativo (Filtro Estático en Rust)
 
 Cuando el módulo solicita ejecutar un script a través del IPC de Tauri (`execute_module_script`), el host nativo en Rust aplica las siguientes validaciones previas a la ejecución:
 

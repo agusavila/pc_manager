@@ -135,41 +135,55 @@ fn request_service_installation() -> Result<String, String> {
 
         let ps_code = format!(
             r#"$ErrorActionPreference = 'Stop'
-$svc = Get-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
-$targetBin = '{}'
-if (-not $svc) {{
-    New-Service -Name 'pc_manager_service' -DisplayName 'PC Manager Hardware Telemetry Service' -BinaryPathName ('"' + $targetBin + '"') -StartupType Automatic
-}} else {{
-    & sc.exe config pc_manager_service binPath= ('"' + $targetBin + '"') | Out-Null
+$dir = "$env:ProgramData\PCManager\telemetry"
+if (-not (Test-Path $dir)) {{
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
 }}
+icacls $dir /grant "*S-1-5-32-545:(OI)(CI)R" /t /q | Out-Null
+
+$binDir = "$env:ProgramData\PCManager\bin"
+if (-not (Test-Path $binDir)) {{
+    New-Item -ItemType Directory -Path $binDir -Force | Out-Null
+}}
+$installedBin = "$binDir\pc_manager_service.exe"
+Copy-Item -Path '{}' -Destination $installedBin -Force
+
 $svc = Get-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
-if ($svc -and $svc.Status -ne 'Running') {{
-    Start-Service -Name 'pc_manager_service'
-}}"#,
+if (-not $svc) {{
+    New-Service -Name 'pc_manager_service' -DisplayName 'PC Manager Core Host Service (Pre-logon & Telemetry)' -BinaryPathName ('"' + $installedBin + '"') -StartupType Automatic
+}} else {{
+    Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Services\pc_manager_service' -Name 'ImagePath' -Value ('"' + $installedBin + '"')
+    Set-Service -Name 'pc_manager_service' -StartupType Automatic
+}}
+try {{
+    Start-Service -Name 'pc_manager_service' -ErrorAction SilentlyContinue
+}} catch {{}}
+"#,
             service_exe_str.replace('\'', "''")
         );
 
-        let encoded_cmd = format!(
-            "Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{}\"'",
-            ps_code.replace('"', "\\\"")
+        let b64 = encode_powershell_script(&ps_code);
+        let launch_cmd = format!(
+            "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}'",
+            b64
         );
 
         let mut cmd = Command::new("powershell.exe");
-        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &encoded_cmd]);
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &launch_cmd]);
         cmd.creation_flags(CREATE_NO_WINDOW);
 
         let output = cmd.output().map_err(|e| format!("Error al solicitar elevación UAC: {}", e))?;
         if !output.status.success() {
-            return Err("La solicitud de instalación del servicio fue denegada o cancelada.".to_string());
+            return Err("La solicitud de instalación del servicio fue denegada o cancelada por el usuario.".to_string());
         }
 
-        std::thread::sleep(std::time::Duration::from_millis(600));
+        std::thread::sleep(std::time::Duration::from_millis(1000));
 
         let status = check_service_status();
         return if status.running {
-            Ok("Servicio de telemetría de Windows instalado y en ejecución.".to_string())
+            Ok("Servicio nativo del Core (Pre-logon y Service Host) instalado y en ejecución.".to_string())
         } else if status.installed {
-            Ok("Servicio de telemetría de Windows registrado correctamente.".to_string())
+            Ok("Servicio nativo del Core registrado correctamente en Windows.".to_string())
         } else {
             Err("No se pudo confirmar el registro del servicio en Windows Service Manager.".to_string())
         };
@@ -248,6 +262,14 @@ fn base64_encode_bytes(data: &[u8]) -> String {
         }
     }
     out
+}
+
+fn encode_powershell_script(script: &str) -> String {
+    let utf16: Vec<u8> = script
+        .encode_utf16()
+        .flat_map(|u| u.to_le_bytes())
+        .collect();
+    base64_encode_bytes(&utf16)
 }
 
 #[tauri::command]
@@ -349,17 +371,19 @@ fn toggle_service_state(start: bool) -> Result<String, String> {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
 
         let action = if start { "Start-Service" } else { "Stop-Service" };
-        let ps_code = format!(
-            "Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{} -Name pc_manager_service\"'",
-            action
+        let ps_code = format!("{} -Name 'pc_manager_service'", action);
+        let b64 = encode_powershell_script(&ps_code);
+        let launch_cmd = format!(
+            "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}'",
+            b64
         );
 
         let mut cmd = Command::new("powershell.exe");
-        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &ps_code]);
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &launch_cmd]);
         cmd.creation_flags(CREATE_NO_WINDOW);
 
         let _ = cmd.output().map_err(|e| format!("Error modificando estado del servicio: {}", e))?;
-        std::thread::sleep(std::time::Duration::from_millis(600));
+        std::thread::sleep(std::time::Duration::from_millis(800));
         let status = check_service_status();
         return Ok(status.status);
     }
@@ -375,14 +399,19 @@ fn uninstall_windows_service() -> Result<String, String> {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-        let ps_code = "Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Stop-Service -Name pc_manager_service -Force -ErrorAction SilentlyContinue; sc.exe delete pc_manager_service\"'";
+        let ps_code = "Stop-Service -Name 'pc_manager_service' -Force -ErrorAction SilentlyContinue; sc.exe delete pc_manager_service";
+        let b64 = encode_powershell_script(ps_code);
+        let launch_cmd = format!(
+            "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}'",
+            b64
+        );
 
         let mut cmd = Command::new("powershell.exe");
-        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps_code]);
+        cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &launch_cmd]);
         cmd.creation_flags(CREATE_NO_WINDOW);
 
         let _ = cmd.output().map_err(|e| format!("Error al desinstalar el servicio: {}", e))?;
-        std::thread::sleep(std::time::Duration::from_millis(600));
+        std::thread::sleep(std::time::Duration::from_millis(800));
         return Ok("Servicio eliminado del sistema.".to_string());
     }
     #[allow(unreachable_code)]

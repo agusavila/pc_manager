@@ -12,6 +12,13 @@
   ],
   "requires_service": false,
   "service_reason": "Consume telemetría física SMART y porcentaje de salud a través del servicio central de telemetría de Windows.",
+  "background_worker": {
+    "id": "disk_smart_collector",
+    "name": "Colector SMART y Salud de Discos",
+    "frequency": "Cada 6s",
+    "script": "collector.ps1",
+    "run_prelogon": true
+  },
   "dependencies": [],
   "provides_services": [
     "storage.telemetry"

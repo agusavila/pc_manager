@@ -52,6 +52,125 @@ pub struct SecurityVerificationResult {
     pub message: String,
 }
 
+/// Nombres reservados de dispositivos de Windows (incompatibles como carpetas o nombres de archivo)
+pub const WINDOWS_RESERVED_NAMES: &[&str] = &[
+    "con", "prn", "aux", "nul",
+    "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
+    "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+];
+
+/// Límites estrictos de seguridad para paquetes .pcm (Mitigación de Zip Bombs y DoS)
+pub const MAX_PACKAGE_SIZE_BYTES: usize = 25 * 1024 * 1024; // 25 MB
+pub const MAX_UNCOMPRESSED_TOTAL_BYTES: u64 = 60 * 1024 * 1024; // 60 MB
+pub const MAX_SINGLE_FILE_BYTES: u64 = 20 * 1024 * 1024; // 20 MB
+pub const MAX_FILE_COUNT: usize = 250;
+
+/// Valida rigurosamente el identificador de un módulo (Auditoría Técnica P0).
+/// Previene Path Traversal, nombres reservados de Windows y caracteres inseguros para el filesystem.
+pub fn validate_module_id(id: &str) -> Result<(), String> {
+    let trimmed = id.trim();
+    if trimmed.is_empty() {
+        return Err("El identificador del módulo no puede estar vacío.".to_string());
+    }
+
+    if trimmed.len() > 64 {
+        return Err(format!(
+            "El identificador del módulo excede el límite de 64 caracteres (longitud: {}).",
+            trimmed.len()
+        ));
+    }
+
+    // Prohibir navegación de directorios
+    if trimmed == "." || trimmed == ".." {
+        return Err(format!("Identificador de módulo inválido: '{}'.", trimmed));
+    }
+
+    // Debe comenzar con alfanumérico en minúscula o dígito
+    let first = trimmed.chars().next().unwrap();
+    if !first.is_ascii_lowercase() && !first.is_ascii_digit() {
+        return Err(format!(
+            "El ID del módulo debe comenzar con una letra minúscula o número (obtenido: '{}').",
+            first
+        ));
+    }
+
+    // Caracteres permitidos: a-z, 0-9, '.', '_', '-'
+    for c in trimmed.chars() {
+        if !c.is_ascii_lowercase() && !c.is_ascii_digit() && c != '.' && c != '_' && c != '-' {
+            return Err(format!(
+                "El ID del módulo contiene caracteres no permitidos: '{}'. Solo se permiten minúsculas, números, puntos, guiones y guiones bajos.",
+                c
+            ));
+        }
+    }
+
+    // Verificar si contiene secuencias relativas peligrosas como ".." o barras
+    if trimmed.contains("..") || trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains(':') {
+        return Err(format!(
+            "El ID del módulo no puede contener rutas relativas ni separadores de directorio: '{}'.",
+            trimmed
+        ));
+    }
+
+    // Comprobar nombres reservados de Windows (ej: "con", "prn.json", "nul")
+    let base_name = trimmed.split('.').next().unwrap_or(trimmed).to_ascii_lowercase();
+    if WINDOWS_RESERVED_NAMES.contains(&base_name.as_str()) {
+        return Err(format!(
+            "El ID del módulo utiliza un nombre reservado de Windows incompatible con el sistema de archivos: '{}'.",
+            base_name
+        ));
+    }
+
+    Ok(())
+}
+
+/// Valida que una ruta interna de archivo dentro de un ZIP no escape del directorio base (Anti Zip-Slip)
+pub fn validate_zip_entry_path(path_str: &str) -> Result<(), String> {
+    if path_str.trim().is_empty() {
+        return Err("Ruta de archivo en el paquete no puede estar vacía.".to_string());
+    }
+
+    // Rechazar rutas absolutas o con letra de unidad Windows (C:, /etc, \Windows)
+    if path_str.starts_with('/') || path_str.starts_with('\\') || (path_str.len() > 1 && path_str.chars().nth(1) == Some(':')) {
+        return Err(format!(
+            "Intento de Path Traversal bloqueado: La ruta '{}' es absoluta o contiene unidad de disco.",
+            path_str
+        ));
+    }
+
+    // Rechazar segmentos '..'
+    let path = std::path::Path::new(path_str);
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                return Err(format!(
+                    "Intento de Zip Slip / Path Traversal bloqueado: La ruta '{}' contiene '..'.",
+                    path_str
+                ));
+            }
+            std::path::Component::Prefix(_) | std::path::Component::RootDir => {
+                return Err(format!(
+                    "Intento de Path Traversal bloqueado: La ruta '{}' contiene prefijo o raíz.",
+                    path_str
+                ));
+            }
+            std::path::Component::Normal(c) => {
+                let s = c.to_string_lossy().to_ascii_lowercase();
+                let base = s.split('.').next().unwrap_or(&s);
+                if WINDOWS_RESERVED_NAMES.contains(&base) {
+                    return Err(format!(
+                        "La ruta contiene un nombre de archivo reservado de Windows: '{}'.",
+                        s
+                    ));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
 /// Calcula el hash SHA-256 en formato hexadecimal de un buffer de bytes
 pub fn compute_sha256_hex(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
@@ -61,11 +180,30 @@ pub fn compute_sha256_hex(bytes: &[u8]) -> String {
 
 /// Valida la seguridad, integridad y firma de un archivo .pcm en memoria
 pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificationResult, String> {
+    // 1. Control de tamaño del paquete comprimido
+    if archive_bytes.len() > MAX_PACKAGE_SIZE_BYTES {
+        return Err(format!(
+            "El archivo .pcm excede el tamaño máximo permitido de {} MB (tamaño: {} MB).",
+            MAX_PACKAGE_SIZE_BYTES / (1024 * 1024),
+            archive_bytes.len() / (1024 * 1024)
+        ));
+    }
+
     let mut archive = zip::ZipArchive::new(Cursor::new(archive_bytes))
         .map_err(|e| format!("El paquete no es un archivo .pcm (ZIP) válido: {}", e))?;
 
+    // 2. Control de cantidad de archivos
+    if archive.len() > MAX_FILE_COUNT {
+        return Err(format!(
+            "El paquete contiene {} archivos, excediendo el límite de seguridad de {}.",
+            archive.len(),
+            MAX_FILE_COUNT
+        ));
+    }
+
     let mut files_content: HashMap<String, Vec<u8>> = HashMap::new();
     let mut signature_raw: Option<Vec<u8>> = None;
+    let mut total_uncompressed_bytes: u64 = 0;
 
     for i in 0..archive.len() {
         let mut file = archive
@@ -77,6 +215,27 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
         }
 
         let name = file.name().to_string();
+
+        // 3. Validación estricta anti Zip-Slip
+        validate_zip_entry_path(&name)?;
+
+        // 4. Verificación de tamaño por archivo
+        if file.size() > MAX_SINGLE_FILE_BYTES {
+            return Err(format!(
+                "El archivo '{}' excede el tamaño máximo permitido de {} MB.",
+                name,
+                MAX_SINGLE_FILE_BYTES / (1024 * 1024)
+            ));
+        }
+
+        total_uncompressed_bytes = total_uncompressed_bytes.saturating_add(file.size());
+        if total_uncompressed_bytes > MAX_UNCOMPRESSED_TOTAL_BYTES {
+            return Err(format!(
+                "Cuota total de descompresión excedida (límite de seguridad: {} MB). Posible Zip Bomb detectada.",
+                MAX_UNCOMPRESSED_TOTAL_BYTES / (1024 * 1024)
+            ));
+        }
+
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)
             .map_err(|e| format!("Error leyendo archivo '{}': {}", name, e))?;
@@ -113,6 +272,9 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
 
     let sig_file: ModuleSignatureFile = serde_json::from_slice(&sig_bytes)
         .map_err(|e| format!("Archivo signature.sig corrupto o malformado: {}", e))?;
+
+    // Validar ID declarado en la firma
+    validate_module_id(&sig_file.signed_manifest.id)?;
 
     if sig_file.algorithm != "ed25519" {
         return Ok(SecurityVerificationResult {
@@ -402,6 +564,72 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_validate_module_id_valid() {
+        assert!(validate_module_id("disk-monitor").is_ok());
+        assert!(validate_module_id("system-clock").is_ok());
+        assert!(validate_module_id("dummy-widgets").is_ok());
+        assert!(validate_module_id("my_custom_module.123").is_ok());
+        assert!(validate_module_id("mod-01").is_ok());
+    }
+
+    #[test]
+    fn test_validate_module_id_invalid() {
+        // Vacío o espacios
+        assert!(validate_module_id("").is_err());
+        assert!(validate_module_id("   ").is_err());
+
+        // Directorios y Path Traversal
+        assert!(validate_module_id(".").is_err());
+        assert!(validate_module_id("..").is_err());
+        assert!(validate_module_id("../../evil").is_err());
+        assert!(validate_module_id("mod/sub").is_err());
+        assert!(validate_module_id("mod\\sub").is_err());
+        assert!(validate_module_id("C:\\Windows").is_err());
+        assert!(validate_module_id("/var/log").is_err());
+
+        // Nombres reservados de Windows
+        assert!(validate_module_id("con").is_err());
+        assert!(validate_module_id("CON").is_err());
+        assert!(validate_module_id("prn").is_err());
+        assert!(validate_module_id("aux").is_err());
+        assert!(validate_module_id("nul").is_err());
+        assert!(validate_module_id("com1").is_err());
+        assert!(validate_module_id("lpt1").is_err());
+        assert!(validate_module_id("con.txt").is_err());
+
+        // Caracteres inválidos
+        assert!(validate_module_id("MyModule").is_err()); // mayúsculas
+        assert!(validate_module_id("mod space").is_err());
+        assert!(validate_module_id("mod@name").is_err());
+        assert!(validate_module_id("-starts-with-hyphen").is_err());
+
+        // Longitud mayor a 64
+        let long_id = "a".repeat(65);
+        assert!(validate_module_id(&long_id).is_err());
+    }
+
+    #[test]
+    fn test_validate_zip_entry_path_security() {
+        // Válidos
+        assert!(validate_zip_entry_path("manifest.json").is_ok());
+        assert!(validate_zip_entry_path("module.js").is_ok());
+        assert!(validate_zip_entry_path("assets/icon.svg").is_ok());
+        assert!(validate_zip_entry_path("scripts/collector.ps1").is_ok());
+
+        // Inválidos: Path Traversal / Zip Slip
+        assert!(validate_zip_entry_path("../../evil.exe").is_err());
+        assert!(validate_zip_entry_path("dir/../../../evil.exe").is_err());
+        assert!(validate_zip_entry_path("/absolute/path").is_err());
+        assert!(validate_zip_entry_path("\\absolute\\path").is_err());
+        assert!(validate_zip_entry_path("C:\\Windows\\System32").is_err());
+        assert!(validate_zip_entry_path("C:/evil").is_err());
+
+        // Nombres reservados de Windows
+        assert!(validate_zip_entry_path("con.txt").is_err());
+        assert!(validate_zip_entry_path("sub/nul.json").is_err());
     }
 }
 

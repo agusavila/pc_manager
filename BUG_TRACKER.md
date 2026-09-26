@@ -1946,6 +1946,131 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`src-tauri/target/debug/pc_manager_service.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager_service.exe)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-032] Unificación arquitectónica del servicio de Windows como Service Host del Core (Pre-logon & Telemetría), eliminación de duplicidad de interfaz y panel de observabilidad en tiempo real de workers y consumo de memoria
+- **Fecha**: 2026-09-18
+- **Versión**: `v0.0.4`
+- **Severidad**: `MEDIA-ALTA`
+- **Componente**: `Core Settings UI / Service Host Architecture / Windows Native Service / Module Background Workers`
+- **Descripción del Fallo**: 
+  1. Coexistencia confusa de dos controles desacoplados en `Configuraciones > General`: el switch *"Modo Servicio de Windows (Pre-logon)"* en el bloque de ciclo de vida del Core y la tarjeta *"Servicio de Telemetría de Windows"* más abajo, sugiriendo erróneamente al usuario la existencia de dos servicios independientes.
+  2. Ausencia de visibilidad y control sobre los procesos o tareas en segundo plano (*workers*) que ejecutan los módulos instalados.
+  3. Falta de métricas en tiempo real sobre el peso en memoria RAM y el impacto de CPU que el servicio de Windows y sus workers generan en el sistema operativo.
+  4. Los módulos carecían de una estructura formal en el manifiesto (`manifest.json`) para declarar tareas en segundo plano supervisadas por el Core sin instalar servicios Win32 independientes.
+- **Causa Raíz**: 
+  El switch original de *Pre-logon* concebido para el ciclo de vida del Core quedó desfasado respecto a la implementación posterior del servicio de telemetría de hardware, generando duplicidad de controles y careciendo de un modelo formal de *Service Host* con reporte de consumo por worker.
+- **Solución Implementada**: 
+  1. **Evolución al Modelo Service Host (`src-tauri/src/service.rs`)**:
+     - Consolidación de un único servicio Win32 nativo (`pc_manager_service.exe`) ejecutado como `NT AUTHORITY\SYSTEM`.
+     - Supervisa concurrentemente las rutinas del Core previas al login y los workers de telemetría de módulos.
+     - Medición en vivo del consumo del proceso (`WorkingSetSize` / RAM física y CPU) y estructuración de `service_info` con lista de workers dentro del payload de `system_telemetry.json`.
+  2. **Contrato de Manifiesto para Workers (`src-tauri/src/module_manager.rs` y `modules/disk-monitor/manifest.json`)**:
+     - Añadida estructura `ModuleBackgroundWorker` a `ModuleManifest` en Rust.
+     - Declaración de `background_worker` en el manifiesto de `disk-monitor` (Colector SMART y Salud de Discos, Cada 6s, pre-logon habilitado).
+     - Reempaquetado y firmado criptográficamente de `disk-monitor.pcm` (`Ed25519`).
+  3. **Panel Unificado de Service Host en Configuraciones (`ui/index.html`)**:
+     - Eliminado el switch redundante de ciclo de vida para erradicar la confusión de "dos servicios".
+     - Tarjeta unificada: *"Servicio Nativo del Core (Modo Pre-logon y Service Host)"*.
+     - **Caja de Métricas en Vivo**: Memoria RAM total utilizada, impacto de CPU, estado del modo Pre-logon y contador de workers activos.
+     - **Tabla de Workers Supervisados**: Desglose dinámico por módulo con tarea, frecuencia, peso en RAM, CPU y estado operativo en tiempo real.
+     - Reactividad inmediata: al activar, desactivar o desinstalar un módulo, la lista de workers y el contador de memoria se actualizan al instante.
+  4. **Compilación Nativa Continua (Regla 10)**:
+     - 9 de 9 pruebas unitarias aprobadas (`cargo test --lib`).
+     - Compilación exitosa de binarios nativos de escritorio: `pc_manager.exe` y `pc_manager_service.exe`.
+- **Archivos Afectados**: 
+  - [`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`modules/disk-monitor/manifest.json`](file:///c:/Proyectos/pc_manager/modules/disk-monitor/manifest.json)
+  - [`disk-monitor.pcm`](file:///c:/Proyectos/pc_manager/disk-monitor.pcm)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+  - [`src-tauri/target/debug/pc_manager_service.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager_service.exe)
+- **Estado**: `RESUELTO`
+
+---
+
+### [BUG-033] Fallo en la instalación y control del servicio de Windows por colisión de comillas en elevación UAC y sintaxis de argumentos en PowerShell / SC.exe
+- **Fecha**: 2026-09-18
+- **Versión**: `v0.0.4`
+- **Severidad**: `ALTA`
+- **Componente**: `Core / Windows Service Installer / Native Elevation / lib.rs / tools/install_service.bat`
+- **Descripción del Fallo**: 
+  Al solicitar la instalación del servicio nativo desde el botón *"Instalar y Arrancar Servicio"* en la interfaz de Configuraciones o al ejecutar `tools/install_service.bat`, el servicio no se registraba en Windows Service Control Manager (`services.msc`), permaneciendo en estado *"No instalado"* o arrojando error de registro.
+- **Causa Raíz**: 
+  1. En [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs), las funciones `request_service_installation`, `toggle_service_state` y `uninstall_windows_service` invocaban la elevación de administrador mediante `Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile ... -Command "..."'`. El bloque de código de PowerShell contenía comillas simples internas (`$ErrorActionPreference = 'Stop'`, `'pc_manager_service'`), las cuales colisionaban directamente con las comillas delimitadoras del argumento, provocando un error sintáctico inmediato de terminador (`TerminatorExpectedAtEndOfString`) en el proceso elevado de PowerShell antes de poder interactuar con el Service Manager.
+  2. En [`tools/install_service.bat`](file:///c:/Proyectos/pc_manager/tools/install_service.bat), se intentaba ejecutar comandos anidados de PowerShell con secuencias de escape no reconocidas por `cmd.exe` (`\"`), y en caso de servicios preexistentes, `sc.exe config` en PowerShell desdoblaba `binPath=` y su ruta en argumentos separados, violando la regla sintáctica de `sc.exe` que requiere el espacio dentro del parámetro.
+- **Solución Implementada**: 
+  1. **Codificación Hermética Base64 UTF-16LE (`encode_powershell_script`)**:
+     - Se implementó en Rust [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs) la función `encode_powershell_script` que convierte cualquier script a UTF-16LE y lo codifica en Base64.
+     - Toda elevación UAC (`request_service_installation`, `toggle_service_state`, `uninstall_windows_service`) se despacha ahora exclusivamente a través de `-EncodedCommand <Base64>`. Al contener únicamente caracteres `[A-Za-z0-9+/=]`, se erradica al 100% cualquier colisión de comillas o secuencias de escape en Windows.
+  2. **Gestión Nativa de Servicio con Cmdlets y Registro**:
+     - En el script de instalación del servicio, la actualización de rutas binarias para servicios existentes se efectúa mediante `Set-ItemProperty` sobre `HKLM:\System\CurrentControlSet\Services\pc_manager_service` y `Set-Service`, garantizando robustez y prescindiendo de llamadas externas frágiles.
+  3. **Robustecimiento de `tools/install_service.bat`**:
+     - Se depuró el script por lotes eliminando capas innecesarias de PowerShell y empleando `sc.exe create` y `sc.exe config` nativos con el espaciado exacto requerido (`binPath= "\"%BIN_PATH%\""`).
+  4. **Compilación y Verificación Continua (Regla 10)**:
+     - 9 de 9 pruebas unitarias aprobadas (`cargo test --lib`).
+     - Compilación exitosa del binario nativo de escritorio (`src-tauri/target/debug/pc_manager.exe`) y del servicio (`src-tauri/target/debug/pc_manager_service.exe`).
+- **Archivos Afectados**: 
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`tools/install_service.bat`](file:///c:/Proyectos/pc_manager/tools/install_service.bat)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+  - [`src-tauri/target/debug/pc_manager.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager.exe)
+  - [`src-tauri/target/debug/pc_manager_service.exe`](file:///c:/Proyectos/pc_manager/src-tauri/target/debug/pc_manager_service.exe)
+- **Estado**: `RESUELTO`
+
+---
+
+### [BUG-057] Remediación de Seguridad P0: Endurecimiento Anti Zip-Slip/Zip-Bomb, Validación Estricta de Identificadores, Persistencia Atómica con Auto-Recuperación y Despliegue Desacoplado del Servicio
+- **Fecha**: 2026-09-26
+- **Versión**: `v0.0.4`
+- **Severidad**: `CRÍTICA`
+- **Componente**: `Seguridad Criptográfica / Gestor de Módulos (`[`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)`, `[`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`), Host del Servicio (`[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`, `[`tools/install_service.bat`](file:///c:/Proyectos/pc_manager/tools/install_service.bat)`), Documentación de Seguridad`
+- **Descripción del Fallo**: 
+  1. La extracción de paquetes `.pcm` no validaba trayectorias relativas de entradas internas del ZIP, permitiendo teóricamente ataques de Directory Traversal (Zip-Slip), ni imponía límites de cuota (vulnerable a descompresión infinita o Zip-Bomb).
+  2. Los IDs de módulo no eran saneados estrictamente, permitiendo nombres con `..`, barras o nombres reservados de dispositivos Windows (`CON`, `PRN`, `AUX`, `NUL`, etc.).
+  3. `registry.json` se escribía directamente sin sincronización forzada al medio físico (`sync_all`) ni mecanismos de recuperación ante cierres intempestivos, quedando inutilizable ante corrupción.
+  4. La desinstalación de módulos eliminaba el registro incluso si `fs::remove_dir_all` fallaba silenciosamente por archivos en uso o bloqueados en disco.
+  5. La instalación de módulos carecía de rollback transaccional: una falla a medio instalar dejaba carpetas corruptas.
+  6. El registro del servicio de Windows apuntaba directamente a la carpeta de compilación `target\debug\pc_manager_service.exe`, bloqueando la compilación con Cargo (`Acceso denegado. (os error 5)`) mientras el servicio estuviera activo.
+  7. La documentación y textos de interfaz utilizaban el término "sandbox" de manera equívoca para describir el entorno de renderizado de WebView2.
+- **Causa Raíz**: 
+  Falta de cuotas de extracción, ausencia de validación canónica de identificadores mediante regex y lista de nombres reservados de Windows, operaciones I/O de registro sin fase temporal y respaldo `.bak`, desvinculación entre borrado físico y borrado lógico de registro, y acoplamiento de la ruta del servicio a carpetas de compilación.
+- **Solución Implementada**: 
+  1. **Validación Canónica de Identificadores (`validate_module_id`)**:
+     - Implementado validador estricto con regex `^[a-z0-9][a-z0-9._-]{0,63}$`.
+     - Prohibición de nombres reservados de Windows (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`) y secuencias relativas.
+  2. **Defensas Anti Zip-Slip y Zip-Bomb (`validate_zip_entry_path`, cuotas estrictas)**:
+     - Límite de tamaño de paquete (25 MB), límite de tamaño descomprimido total (60 MB), límite por archivo individual (20 MB) y máximo 250 archivos.
+     - Bloqueo de rutas absolutas, prefijos de unidad, `..` y nombres reservados en cada entrada del archivo comprimido.
+  3. **Persistencia Atómica con Auto-Recuperación (`load_registry_from_dir`, `save_registry_to_dir`)**:
+     - Guardado en dos fases: escritura en `.tmp`, volcado forzado a disco (`sync_all`), copia de seguridad `.bak` y reemplazo atómico.
+     - Recuperación automática: si `registry.json` se corrompe, se restaura automáticamente desde `.bak`. Si ambos se corrompen, se preserva el archivo como `registry.json.corrupt_<timestamp>` sin colapsar el programa.
+  4. **Instalación Transaccional con Rollback y Desinstalación Comprobada**:
+     - Descompresión en `.staging/<id>_<timestamp>/`, verificación física del entrypoint, respaldo en `.backup/<id>/` ante actualizaciones y promoción atómica. Ante cualquier fallo, se revierte al estado previo intacto.
+     - `uninstall_package` valida y exige éxito de `fs::remove_dir_all` antes de remover el módulo del registro.
+  5. **Despliegue Desacoplado del Servicio de Windows**:
+     - `install_service.bat` y `request_service_installation` despliegan y ejecutan el servicio desde `%ProgramData%\PCManager\bin\pc_manager_service.exe`, liberando completamente la carpeta `target\debug` para compilaciones continuas sin interferencias.
+  6. **Sinceramiento del Modelo de Confianza**:
+     - Actualizados los manuales y especificaciones (`SECURITY_ARCHITECTURE_AI_SPEC.md`, `security_and_permissions.md`, `module_signing_guide.md`, `ui/index.html`) para describir con honestidad técnica el modelo de "Plugins Confiables con Firma Criptográfica Ed25519 y Validación Estática en Rust".
+  7. **Batería de Pruebas Unitarias y Compilación Continua**:
+     - 16 de 16 pruebas unitarias aprobadas (`cargo test --lib`).
+     - Compilación exitosa de binario principal y de servicio (`cargo build`).
+- **Archivos Afectados**: 
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`tools/install_service.bat`](file:///c:/Proyectos/pc_manager/tools/install_service.bat)
+  - [`docs/ai/SECURITY_ARCHITECTURE_AI_SPEC.md`](file:///c:/Proyectos/pc_manager/docs/ai/SECURITY_ARCHITECTURE_AI_SPEC.md)
+  - [`docs/user/security_and_permissions.md`](file:///c:/Proyectos/pc_manager/docs/user/security_and_permissions.md)
+  - [`docs/developer/module_signing_guide.md`](file:///c:/Proyectos/pc_manager/docs/developer/module_signing_guide.md)
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
