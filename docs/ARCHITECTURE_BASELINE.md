@@ -121,16 +121,20 @@ La versión del sistema ha sido centralizada canónicamente en `0.0.4` (`Cargo.t
 
 - **Pruebas de Backend Nativo (`cargo test --lib` en `src-tauri`)**:
   - Total: **22 tests aprobados** (0 fallos).
-  - Cobertura: Topología y dependencias de módulos (5), validación de Module ID y rutas reservadas (2), límites de archivos y mitigación de Zip-Bombs (3), detección de paquetes saboteados (1), verificación de firmas Ed25519 (2), persistencia atómica y recuperación de `.bak` en `registry.json` (4), y validación de seguridad de scripts PowerShell (5).
-- **Pruebas Unitarias de Frontend / Mock Core (`npm test` $\to$ `test/core_test.js`)**:
-  - Total: **5 pruebas aprobadas** (0 fallos).
-  - Cobertura: `EventBus` (mock), `ServiceRegistry` (mock), `ModuleManager` (mock), `ThemeEngine` (mock), `LifecycleManager` (mock).
+  - Cobertura: Topología y dependencias de módulos (5), validación robusta de Module ID y rutas reservadas de Windows (2), límites de archivos y mitigación de Zip-Bombs (3), detección de paquetes saboteados (1), verificación de firmas Ed25519 (2), persistencia atómica y recuperación de `.bak` en `registry.json` (4), y validación de seguridad de scripts PowerShell (5).
+- **Pruebas Unitarias de Frontend / Core JS (`npm test` $\to$ `test/core_test.js`)**:
+  - Total: **6 bloques de pruebas aprobados al 100%** (0 fallos).
+  - Cobertura: `EventBus`, `ServiceRegistry`, `ModuleManager` (grupos y visibilidad), `ThemeEngine`, `LifecycleManager`, y `validateModuleId` (Fase 3: exhaustivo con IDs válidos, límites, traversal, rutas absolutas, nombres reservados de Windows, mayúsculas y espacios).
 - **Compilación Nativa de Escritorio (`cargo build` en `src-tauri`)**:
-  - Compila exitosamente el ejecutable de desarrollo `src-tauri/target/debug/pc_manager.exe`.
+  - Compila exitosamente el ejecutable nativo de escritorio `src-tauri/target/debug/pc_manager.exe`.
 
 ---
 
-## 8. Conclusiones y Próximos Pasos para Fase 2
+## 8. Conclusiones y Próximos Pasos (Fase 4)
 
-1. **Fotografía Factual Concluida**: El sistema cuenta con una base sólida de seguridad en Rust para módulos y registro atómico, pero la UI (`ui/js/app.js`) retiene responsabilidades de lógica de negocio, descompresión y persistencia local (`localStorage`) que deben migrar progresivamente a Rust.
-2. **Siguiente Acción Inmediata (Fase 2)**: Centralizar la versión en una única fuente de verdad y sincronizar `ui/index.html`, `src/core/index.js` y `test/core_test.js` para eliminar referencias anacrónicas a `0.0.1-alpha`.
+1. **Fase 2 (Versionado Único) y Fase 3 (Validación Robusta de Module ID) Culminadas**:
+   - Versión canónica unificada a `0.0.4`.
+   - `validate_module_id()` validado rigurosamente en Rust (`src-tauri/src/module_security.rs`) y en Core JS (`src/core/module_manager.js`).
+   - Todos los entrypoints (`install`, `uninstall`, `toggle_active`, `save_setting`, `get_saved_settings`, `execute_script`) validan `module_id` antes de cualquier interacción con el filesystem.
+2. **Siguiente Acción Inmediata (Fase 4 - Hardening del .pcm)**:
+   - Robustecer la extracción y validación de paquetes `.pcm`: verificación de integridad ZIP antes de extraer, límites de archivos, mitigación de Zip-Slip y validación estructural del manifiesto.

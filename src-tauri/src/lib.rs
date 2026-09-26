@@ -234,6 +234,9 @@ fn save_module_setting(
 
 #[tauri::command]
 fn get_saved_settings(app: AppHandle, module_id: String) -> HashMap<String, Value> {
+    if module_security::validate_module_id(&module_id).is_err() {
+        return HashMap::new();
+    }
     let registry = module_manager::load_registry(&app);
     registry.settings.get(&module_id).cloned().unwrap_or_default()
 }

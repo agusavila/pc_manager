@@ -8,7 +8,7 @@
 
 import { EventBus } from './event_bus.js';
 import { ServiceRegistry } from './service_registry.js';
-import { ModuleManager } from './module_manager.js';
+import { ModuleManager, validateModuleId, WINDOWS_RESERVED_NAMES } from './module_manager.js';
 import { ThemeEngine } from './theme_engine.js';
 import { LifecycleManager } from './lifecycle_manager.js';
 
@@ -46,5 +46,7 @@ export {
   ServiceRegistry,
   ModuleManager,
   ThemeEngine,
-  LifecycleManager
+  LifecycleManager,
+  validateModuleId,
+  WINDOWS_RESERVED_NAMES
 };

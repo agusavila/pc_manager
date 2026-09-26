@@ -98,6 +98,78 @@ async function runTests() {
   assert.equal(cleanedUp, true, 'Gancho de limpieza ejecutado');
   assert.equal(core.serviceRegistry.services.size, 0, 'Servicios limpiados por completo');
 
+  // 6. Prueba de Validación Robusta de Module ID (Fase 3)
+  console.log('6. Verificando validación robusta de Module ID (Fase 3)...');
+  const { validateModuleId } = await import('../src/core/index.js');
+
+  // Válidos
+  assert.equal(validateModuleId('storage-monitor'), true);
+  assert.equal(validateModuleId('system-clock'), true);
+  assert.equal(validateModuleId('dummy-widgets'), true);
+  assert.equal(validateModuleId('mod-01'), true);
+  assert.equal(validateModuleId('m'), true);
+  assert.equal(validateModuleId('0mod'), true);
+  assert.equal(validateModuleId('a'.repeat(64)), true);
+
+  // Vacío y tipos incorrectos
+  assert.throws(() => validateModuleId(''), /vacío/);
+  assert.throws(() => validateModuleId(null), /vacío/);
+  assert.throws(() => validateModuleId(undefined), /vacío/);
+
+  // Espacios
+  assert.throws(() => validateModuleId('   '), /espacios/);
+  assert.throws(() => validateModuleId(' mod'), /espacios/);
+  assert.throws(() => validateModuleId('mod '), /espacios/);
+  assert.throws(() => validateModuleId('mod space'), /espacios/);
+  assert.throws(() => validateModuleId('mod\tname'), /espacios/);
+  assert.throws(() => validateModuleId('mod\nname'), /espacios/);
+
+  // Traversal
+  assert.throws(() => validateModuleId('.'), /inválido/);
+  assert.throws(() => validateModuleId('..'), /inválido/);
+  assert.throws(() => validateModuleId('../../evil'), /rutas relativas/);
+  assert.throws(() => validateModuleId('../mod'), /rutas relativas/);
+  assert.throws(() => validateModuleId('mod/sub'), /rutas relativas/);
+  assert.throws(() => validateModuleId('mod\\sub'), /rutas relativas/);
+
+  // Rutas absolutas
+  assert.throws(() => validateModuleId('C:\\Windows'), /rutas relativas/);
+  assert.throws(() => validateModuleId('c:\\system32'), /rutas relativas/);
+  assert.throws(() => validateModuleId('C:'), /rutas relativas/);
+  assert.throws(() => validateModuleId('/var/log'), /rutas relativas/);
+
+  // Nombres reservados de Windows
+  assert.throws(() => validateModuleId('con'), /reservado/);
+  assert.throws(() => validateModuleId('CON'), /reservado/);
+  assert.throws(() => validateModuleId('prn'), /reservado/);
+  assert.throws(() => validateModuleId('aux'), /reservado/);
+  assert.throws(() => validateModuleId('nul'), /reservado/);
+  assert.throws(() => validateModuleId('com0'), /reservado/);
+  assert.throws(() => validateModuleId('com1'), /reservado/);
+  assert.throws(() => validateModuleId('lpt1'), /reservado/);
+  assert.throws(() => validateModuleId('con.txt'), /reservado/);
+  assert.throws(() => validateModuleId('nul.json'), /reservado/);
+
+  // Caracteres inválidos
+  assert.throws(() => validateModuleId('mod@name'), /caracteres no permitidos/);
+  assert.throws(() => validateModuleId('mod$name'), /caracteres no permitidos/);
+  assert.throws(() => validateModuleId('-starts-with-hyphen'), /letra minúscula o número/);
+  assert.throws(() => validateModuleId('_starts-with-underscore'), /letra minúscula o número/);
+  assert.throws(() => validateModuleId('.starts-with-dot'), /letra minúscula o número/);
+
+  // Mayúsculas
+  assert.throws(() => validateModuleId('MyModule'), /letra minúscula o número/);
+  assert.throws(() => validateModuleId('moduleA'), /caracteres no permitidos/);
+  assert.throws(() => validateModuleId('MOD'), /letra minúscula o número/);
+
+  // Demasiado largos (> 64)
+  assert.throws(() => validateModuleId('a'.repeat(65)), /excede el límite de 64/);
+
+  // Bloqueo en registro de ModuleManager
+  await assert.rejects(async () => {
+    await core.moduleManager.registerModule({ id: '../evil-mod', name: 'Evil' });
+  }, /rutas relativas/);
+
   console.log('--- Todas las pruebas del Core pasaron con éxito ---');
 }
 

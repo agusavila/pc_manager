@@ -55,8 +55,8 @@ pub struct SecurityVerificationResult {
 /// Nombres reservados de dispositivos de Windows (incompatibles como carpetas o nombres de archivo)
 pub const WINDOWS_RESERVED_NAMES: &[&str] = &[
     "con", "prn", "aux", "nul",
-    "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
-    "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+    "com0", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
+    "lpt0", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
 ];
 
 /// Límites estrictos de seguridad para paquetes .pcm (Mitigación de Zip Bombs y DoS)
@@ -65,28 +65,50 @@ pub const MAX_UNCOMPRESSED_TOTAL_BYTES: u64 = 60 * 1024 * 1024; // 60 MB
 pub const MAX_SINGLE_FILE_BYTES: u64 = 20 * 1024 * 1024; // 20 MB
 pub const MAX_FILE_COUNT: usize = 250;
 
-/// Valida rigurosamente el identificador de un módulo (Auditoría Técnica P0).
+/// Valida rigurosamente el identificador de un módulo (Auditoría Técnica P0 / Fase 3).
+/// Acepta estrictamente el formato regex: ^[a-z0-9][a-z0-9._-]{0,63}$
 /// Previene Path Traversal, nombres reservados de Windows y caracteres inseguros para el filesystem.
 pub fn validate_module_id(id: &str) -> Result<(), String> {
-    let trimmed = id.trim();
-    if trimmed.is_empty() {
+    if id.is_empty() {
         return Err("El identificador del módulo no puede estar vacío.".to_string());
     }
 
-    if trimmed.len() > 64 {
+    if id.contains(char::is_whitespace) {
+        return Err("El identificador del módulo no puede contener espacios en blanco.".to_string());
+    }
+
+    if id.len() > 64 {
         return Err(format!(
             "El identificador del módulo excede el límite de 64 caracteres (longitud: {}).",
-            trimmed.len()
+            id.len()
         ));
     }
 
     // Prohibir navegación de directorios
-    if trimmed == "." || trimmed == ".." {
-        return Err(format!("Identificador de módulo inválido: '{}'.", trimmed));
+    if id == "." || id == ".." {
+        return Err(format!("Identificador de módulo inválido: '{}'.", id));
     }
 
-    // Debe comenzar con alfanumérico en minúscula o dígito
-    let first = trimmed.chars().next().unwrap();
+    // Prohibir secuencias relativas peligrosas, separadores o unidades de disco
+    if id.contains("..") || id.contains('/') || id.contains('\\') || id.contains(':') {
+        return Err(format!(
+            "El ID del módulo no puede contener rutas relativas ni separadores de directorio: '{}'.",
+            id
+        ));
+    }
+
+    // Comprobar nombres reservados de Windows (ej: "con", "CON", "prn.json", "nul")
+    let base_name = id.split('.').next().unwrap_or(id).to_ascii_lowercase();
+    let full_lower = id.to_ascii_lowercase();
+    if WINDOWS_RESERVED_NAMES.contains(&base_name.as_str()) || WINDOWS_RESERVED_NAMES.contains(&full_lower.as_str()) {
+        return Err(format!(
+            "El ID del módulo utiliza un nombre reservado de Windows incompatible con el sistema de archivos: '{}'.",
+            base_name
+        ));
+    }
+
+    // Debe comenzar con alfanumérico en minúscula o dígito: ^[a-z0-9]
+    let first = id.chars().next().unwrap();
     if !first.is_ascii_lowercase() && !first.is_ascii_digit() {
         return Err(format!(
             "El ID del módulo debe comenzar con una letra minúscula o número (obtenido: '{}').",
@@ -94,31 +116,14 @@ pub fn validate_module_id(id: &str) -> Result<(), String> {
         ));
     }
 
-    // Caracteres permitidos: a-z, 0-9, '.', '_', '-'
-    for c in trimmed.chars() {
+    // Caracteres permitidos: a-z, 0-9, '.', '_', '-' (^[a-z0-9][a-z0-9._-]{0,63}$)
+    for c in id.chars() {
         if !c.is_ascii_lowercase() && !c.is_ascii_digit() && c != '.' && c != '_' && c != '-' {
             return Err(format!(
                 "El ID del módulo contiene caracteres no permitidos: '{}'. Solo se permiten minúsculas, números, puntos, guiones y guiones bajos.",
                 c
             ));
         }
-    }
-
-    // Verificar si contiene secuencias relativas peligrosas como ".." o barras
-    if trimmed.contains("..") || trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains(':') {
-        return Err(format!(
-            "El ID del módulo no puede contener rutas relativas ni separadores de directorio: '{}'.",
-            trimmed
-        ));
-    }
-
-    // Comprobar nombres reservados de Windows (ej: "con", "prn.json", "nul")
-    let base_name = trimmed.split('.').next().unwrap_or(trimmed).to_ascii_lowercase();
-    if WINDOWS_RESERVED_NAMES.contains(&base_name.as_str()) {
-        return Err(format!(
-            "El ID del módulo utiliza un nombre reservado de Windows incompatible con el sistema de archivos: '{}'.",
-            base_name
-        ));
     }
 
     Ok(())
@@ -552,42 +557,78 @@ mod tests {
         assert!(validate_module_id("dummy-widgets").is_ok());
         assert!(validate_module_id("my_custom_module.123").is_ok());
         assert!(validate_module_id("mod-01").is_ok());
+        assert!(validate_module_id("m").is_ok()); // Longitud mínima (1 carácter)
+        assert!(validate_module_id("0mod").is_ok()); // Comienza con dígito
+        let exact_64 = "a".repeat(64);
+        assert!(validate_module_id(&exact_64).is_ok()); // Límite exacto de 64 caracteres
     }
 
     #[test]
     fn test_validate_module_id_invalid() {
-        // Vacío o espacios
+        // Vacío
         assert!(validate_module_id("").is_err());
-        assert!(validate_module_id("   ").is_err());
 
-        // Directorios y Path Traversal
+        // Espacios (iniciales, finales, internos, tabs, newlines)
+        assert!(validate_module_id("   ").is_err());
+        assert!(validate_module_id(" mod").is_err());
+        assert!(validate_module_id("mod ").is_err());
+        assert!(validate_module_id("mod space").is_err());
+        assert!(validate_module_id("mod\tname").is_err());
+        assert!(validate_module_id("mod\nname").is_err());
+
+        // Path Traversal
         assert!(validate_module_id(".").is_err());
         assert!(validate_module_id("..").is_err());
         assert!(validate_module_id("../../evil").is_err());
+        assert!(validate_module_id("../mod").is_err());
         assert!(validate_module_id("mod/sub").is_err());
         assert!(validate_module_id("mod\\sub").is_err());
-        assert!(validate_module_id("C:\\Windows").is_err());
-        assert!(validate_module_id("/var/log").is_err());
+        assert!(validate_module_id("mod/../evil").is_err());
 
-        // Nombres reservados de Windows
+        // Rutas absolutas
+        assert!(validate_module_id("C:\\Windows").is_err());
+        assert!(validate_module_id("c:\\system32").is_err());
+        assert!(validate_module_id("C:").is_err());
+        assert!(validate_module_id("/var/log").is_err());
+        assert!(validate_module_id("\\\\server\\share").is_err());
+
+        // Nombres reservados de Windows (case-insensitive y con extensiones)
         assert!(validate_module_id("con").is_err());
         assert!(validate_module_id("CON").is_err());
         assert!(validate_module_id("prn").is_err());
+        assert!(validate_module_id("PRN").is_err());
         assert!(validate_module_id("aux").is_err());
         assert!(validate_module_id("nul").is_err());
+        assert!(validate_module_id("com0").is_err());
         assert!(validate_module_id("com1").is_err());
+        assert!(validate_module_id("com9").is_err());
+        assert!(validate_module_id("lpt0").is_err());
         assert!(validate_module_id("lpt1").is_err());
+        assert!(validate_module_id("lpt9").is_err());
         assert!(validate_module_id("con.txt").is_err());
+        assert!(validate_module_id("nul.json").is_err());
+        assert!(validate_module_id("aux.pcm").is_err());
 
-        // Caracteres inválidos
-        assert!(validate_module_id("MyModule").is_err()); // mayúsculas
-        assert!(validate_module_id("mod space").is_err());
+        // Caracteres inválidos y prefijos no permitidos
         assert!(validate_module_id("mod@name").is_err());
+        assert!(validate_module_id("mod$name").is_err());
+        assert!(validate_module_id("mod#1").is_err());
+        assert!(validate_module_id("mod%20").is_err());
+        assert!(validate_module_id("mod!dir").is_err());
         assert!(validate_module_id("-starts-with-hyphen").is_err());
+        assert!(validate_module_id("_starts-with-underscore").is_err());
+        assert!(validate_module_id(".starts-with-dot").is_err());
 
-        // Longitud mayor a 64
-        let long_id = "a".repeat(65);
-        assert!(validate_module_id(&long_id).is_err());
+        // Mayúsculas
+        assert!(validate_module_id("MyModule").is_err());
+        assert!(validate_module_id("moduleA").is_err());
+        assert!(validate_module_id("MOD").is_err());
+
+        // Demasiado largos (> 64)
+        let long_65 = "a".repeat(65);
+        assert!(validate_module_id(&long_65).is_err());
+        let long_128 = "a".repeat(128);
+        assert!(validate_module_id(&long_128).is_err());
     }
 
     #[test]

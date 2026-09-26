@@ -6,6 +6,49 @@
  * y agrupación dinámica con grupo 'General' canónico predeterminado e inborrable.
  */
 
+export const WINDOWS_RESERVED_NAMES = [
+  'con', 'prn', 'aux', 'nul',
+  'com0', 'com1', 'com2', 'com3', 'com4', 'com5', 'com6', 'com7', 'com8', 'com9',
+  'lpt0', 'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9'
+];
+
+/**
+ * Valida rigurosamente el identificador de un módulo (Fase 3).
+ * Formato regex estricto: ^[a-z0-9][a-z0-9._-]{0,63}$
+ * @param {string} id
+ * @returns {boolean}
+ */
+export function validateModuleId(id) {
+  if (!id || typeof id !== 'string') {
+    throw new Error('El identificador del módulo no puede estar vacío.');
+  }
+  if (/\s/.test(id)) {
+    throw new Error('El identificador del módulo no puede contener espacios en blanco.');
+  }
+  if (id.length > 64) {
+    throw new Error(`El identificador del módulo excede el límite de 64 caracteres (longitud: ${id.length}).`);
+  }
+  if (id === '.' || id === '..') {
+    throw new Error(`Identificador de módulo inválido: '${id}'.`);
+  }
+  if (id.includes('..') || id.includes('/') || id.includes('\\') || id.includes(':')) {
+    throw new Error(`El ID del módulo no puede contener rutas relativas ni separadores de directorio: '${id}'.`);
+  }
+  const baseName = id.split('.')[0].toLowerCase();
+  const fullLower = id.toLowerCase();
+  if (WINDOWS_RESERVED_NAMES.includes(baseName) || WINDOWS_RESERVED_NAMES.includes(fullLower)) {
+    throw new Error(`El ID del módulo utiliza un nombre reservado de Windows incompatible con el sistema de archivos: '${baseName}'.`);
+  }
+  const first = id[0];
+  if (!/^[a-z0-9]$/.test(first)) {
+    throw new Error(`El ID del módulo debe comenzar con una letra minúscula o número (obtenido: '${first}').`);
+  }
+  if (!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(id)) {
+    throw new Error(`El ID del módulo contiene caracteres no permitidos: '${id}'. Solo se permiten minúsculas, números, puntos, guiones y guiones bajos.`);
+  }
+  return true;
+}
+
 export class ModuleManager {
   /**
    * @param {import('./event_bus.js').EventBus} eventBus
@@ -31,6 +74,7 @@ export class ModuleManager {
     if (!moduleDef || !moduleDef.id || typeof moduleDef.id !== 'string') {
       throw new Error('[ModuleManager] El módulo carece de un identificador válido.');
     }
+    validateModuleId(moduleDef.id);
     if (this.modules.has(moduleDef.id)) {
       throw new Error(`[ModuleManager] El módulo '${moduleDef.id}' ya se encuentra registrado.`);
     }
