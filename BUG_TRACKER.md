@@ -2162,6 +2162,27 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### BUG-061: Estandarización del Perfil Principal de Dashboard (Sufijo Extendido Eliminado e Icono Distintivo SVG)
+
+- **Fecha**: 2026-09-26
+- **Severidad**: `BAJA` (Ergonomía, Calidad Visual y Nomenclatura Canónica)
+- **Componente**: Dashboard Profiles (`ui/js/app.js`, `ui/index.html`)
+- **Síntoma**: En el selector de perfiles de la barra superior y del panel lateral, el perfil por defecto mostraba el texto `"Principal (Predeterminado)"` o `"Predeterminado"`, alargando innecesariamente el nombre en dos líneas y careciendo de un identificador visual rápido.
+- **Causa Raíz**: La plantilla de renderizado concatenaba `${p.id === 'default' ? ' (Predeterminado)' : ''}` provocando saltos de línea y desbordamiento en el dropdown, y el nombre original del perfil era `"Predeterminado"`.
+- **Solución Implementada**:
+  1. Se unificó y fijó el nombre del perfil canónico como `"Principal"` de forma permanente e inmutable.
+  2. Se eliminó el texto entre paréntesis `(Predeterminado)`.
+  3. Se incorporó un icono vectorial SVG de estrella dorada (`#f59e0b`) junto al texto tanto en el combobox de la barra superior (`val-topbar-profile`) como en el panel lateral y en los dropdowns desplegables.
+  4. Se reforzó la protección para que el perfil `"Principal"` no pueda ser renombrado ni eliminado, ocultando los botones correspondientes en el drawer.
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

@@ -115,7 +115,7 @@
             <div class="combobox-trigger" onclick="toggleCombobox('combo-topbar-profile')">
               <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
                 <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
-                <span class="combobox-val" id="val-topbar-profile" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Predeterminado</span>
+                <span class="combobox-val" id="val-topbar-profile" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; display: inline-flex; align-items: center; gap: 5px;"><span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
               </div>
               <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
@@ -229,13 +229,13 @@
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 <span>Nuevo</span>
               </button>
-              <button class="btn-icon btn-icon-xs" id="btn-rename-profile" onclick="showRenameProfilePrompt()" data-tooltip="Renombrar Perfil" title="Renombrar Perfil">
+              <button class="btn-icon btn-icon-xs" id="btn-rename-profile" onclick="showRenameProfilePrompt()" data-tooltip="Renombrar Perfil" title="Renombrar Perfil" style="${dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID ? 'display: none;' : 'display: inline-flex;'}">
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
               </button>
               <button class="btn-icon btn-icon-xs" onclick="duplicateCurrentDashboardProfile()" data-tooltip="Duplicar Perfil" title="Duplicar Perfil">
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               </button>
-              <button class="btn-icon btn-icon-xs" id="btn-delete-profile" onclick="deleteCurrentDashboardProfile()" data-tooltip="Eliminar Perfil" title="Eliminar Perfil" style="color: var(--accent-danger); ${dashboardProfilesState.activeProfileId === 'default' ? 'display: none;' : 'display: inline-flex;'}">
+              <button class="btn-icon btn-icon-xs" id="btn-delete-profile" onclick="deleteCurrentDashboardProfile()" data-tooltip="Eliminar Perfil" title="Eliminar Perfil" style="color: var(--accent-danger); ${dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID ? 'display: none;' : 'display: inline-flex;'}">
                 <svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               </button>
             </div>
@@ -243,13 +243,19 @@
           <div>
             <div class="custom-combobox" id="combo-drawer-profile" style="width: 100%;">
               <div class="combobox-trigger" onclick="toggleCombobox('combo-drawer-profile')" style="padding: 7px 12px; font-size: 12.5px; border-radius: var(--radius-md);">
-                <span class="combobox-val" id="val-drawer-profile">${currentProfile.name}</span>
+                <span class="combobox-val" id="val-drawer-profile" style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span>${currentProfile.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : currentProfile.name}</span>
+                  ${currentProfile.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+                </span>
                 <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
               <div class="combobox-dropdown" id="dropdown-drawer-profile">
                 ${getOrderedDashboardProfiles().map(p => `
                   <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-                    <span>${p.name}${p.id === 'default' ? ' (Predeterminado)' : ''}</span>
+                    <span style="display: inline-flex; align-items: center; gap: 6px;">
+                      ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+                      <span>${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : p.name}</span>
+                    </span>
                     <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                 `).join('')}
@@ -1356,7 +1362,7 @@
       profiles: {
         [DEFAULT_DASHBOARD_PROFILE_ID]: {
           id: DEFAULT_DASHBOARD_PROFILE_ID,
-          name: 'Predeterminado',
+          name: 'Principal',
           layout: {},
           hiddenWidgets: []
         }
@@ -1420,10 +1426,12 @@
       if (!dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID]) {
         dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID] = {
           id: DEFAULT_DASHBOARD_PROFILE_ID,
-          name: 'Predeterminado',
+          name: 'Principal',
           layout: {},
           hiddenWidgets: []
         };
+      } else {
+        dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID].name = 'Principal';
       }
       return dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId];
     }
@@ -1434,12 +1442,21 @@
 
       // 1. Actualizar Topbar Combobox
       const valTopbar = document.getElementById('val-topbar-profile');
-      if (valTopbar) valTopbar.textContent = activeProf.name;
+      if (valTopbar) {
+        if (activeProf.id === DEFAULT_DASHBOARD_PROFILE_ID) {
+          valTopbar.innerHTML = `<span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+        } else {
+          valTopbar.textContent = activeProf.name;
+        }
+      }
       const dropTopbar = document.getElementById('dropdown-topbar-profile');
       if (dropTopbar) {
         dropTopbar.innerHTML = ordered.map(p => `
           <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-            <span>${p.name}${p.id === 'default' ? ' (Predeterminado)' : ''}</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+              <span>${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : p.name}</span>
+            </span>
             <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
         `).join('');
@@ -1447,12 +1464,21 @@
 
       // 2. Actualizar Drawer Combobox
       const valDrawer = document.getElementById('val-drawer-profile');
-      if (valDrawer) valDrawer.textContent = activeProf.name;
+      if (valDrawer) {
+        if (activeProf.id === DEFAULT_DASHBOARD_PROFILE_ID) {
+          valDrawer.innerHTML = `<span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+        } else {
+          valDrawer.textContent = activeProf.name;
+        }
+      }
       const dropDrawer = document.getElementById('dropdown-drawer-profile');
       if (dropDrawer) {
         dropDrawer.innerHTML = ordered.map(p => `
           <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-            <span>${p.name}${p.id === 'default' ? ' (Predeterminado)' : ''}</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+              <span>${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : p.name}</span>
+            </span>
             <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
         `).join('');
@@ -1462,6 +1488,10 @@
       const btnDelete = document.getElementById('btn-delete-profile');
       if (btnDelete) {
         btnDelete.style.display = dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID ? 'none' : 'inline-flex';
+      }
+      const btnRename = document.getElementById('btn-rename-profile');
+      if (btnRename) {
+        btnRename.style.display = dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID ? 'none' : 'inline-flex';
       }
     }
 
@@ -1522,10 +1552,12 @@
         if (!dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID]) {
           dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID] = {
             id: DEFAULT_DASHBOARD_PROFILE_ID,
-            name: 'Predeterminado',
+            name: 'Principal',
             layout: {},
             hiddenWidgets: []
           };
+        } else {
+          dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID].name = 'Principal';
         }
         if (!dashboardProfilesState.activeProfileId || !dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId]) {
           dashboardProfilesState.activeProfileId = DEFAULT_DASHBOARD_PROFILE_ID;
@@ -1872,6 +1904,10 @@
     }
 
     function showRenameProfilePrompt() {
+      if (dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID) {
+        addSystemNotification('Acción No Permitida', 'El perfil "Principal" es canónico y no puede ser renombrado.', 'warning', 'profiles');
+        return;
+      }
       cancelNewProfilePrompt();
       const panel = document.getElementById('panel-rename-profile');
       if (panel) {
@@ -1891,6 +1927,11 @@
     }
 
     function submitRenameProfile() {
+      if (dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID) {
+        addSystemNotification('Acción No Permitida', 'El perfil "Principal" es canónico y no puede ser renombrado.', 'warning', 'profiles');
+        cancelRenameProfilePrompt();
+        return;
+      }
       const input = document.getElementById('input-rename-profile-name');
       if (!input) return;
       const newName = input.value.trim();
@@ -1941,7 +1982,7 @@
 
     function deleteCurrentDashboardProfile() {
       if (dashboardProfilesState.activeProfileId === DEFAULT_DASHBOARD_PROFILE_ID) {
-        addSystemNotification('Acción No Permitida', 'El perfil "Predeterminado" es canónico y no puede eliminarse.', 'warning', 'profiles');
+        addSystemNotification('Acción No Permitida', 'El perfil "Principal" es canónico y no puede eliminarse.', 'warning', 'profiles');
         return;
       }
 
@@ -1966,7 +2007,7 @@
       restoreDashboardLayout();
       persistDashboardProfilesState();
       renderDashboardCustomizationCatalog();
-      addSystemNotification('Perfil Eliminado', `El perfil "${deletedName}" fue eliminado. Se restauró el perfil Predeterminado.`, 'info', 'profiles');
+      addSystemNotification('Perfil Eliminado', `El perfil "${deletedName}" fue eliminado. Se restauró el perfil Principal.`, 'info', 'profiles');
     }
 
     function autoOrganizeDashboard() {
