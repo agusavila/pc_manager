@@ -2070,6 +2070,39 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-058] Parada Determinista Coordinada (`coordinated_shutdown`), Resolución Topológica de Dependencias (Kahn) y Detección de Ciclos en Módulos
+- **Fecha**: 2026-09-26
+- **Versión**: `v0.0.4`
+- **Severidad**: `ALTA`
+- **Componente**: `Core / Lifecycle / Dependency Management (`[`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`, `[`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`)`
+- **Descripción del Fallo**: 
+  1. El comando `quit_app` y el menú contextual del System Tray invocaban inmediatamente `app.exit(0)` sin destruir ni cerrar ordenadamente las ventanas abiertas de WebView2, arriesgando recursos bloqueados y violando el principio de parada determinista de la Regla 0 y Regla 8.
+  2. No existía ordenamiento topológico ni validación formal de dependencias de módulos: si el módulo B dependía del módulo A, el orden de inicialización dependía del orden aleatorio de iteración de claves en HashMap.
+  3. No existía detección de dependencias circulares (ej. A depende de B y B de A) ni validación al desactivar o desinstalar módulos base que estuvieran siendo requeridos por otros módulos activos.
+- **Causa Raíz**: 
+  Cierre prematuro con `app.exit(0)` sin etapa de coordinación, y ausencia de un grafo acíclico dirigido (DAG) con algoritmo topológico para la gestión del ciclo de vida de los módulos.
+- **Solución Implementada**: 
+  1. **Parada Determinista Coordinada (`coordinated_shutdown`)**:
+     - Implementada función centralizada de parada en Rust que itera sobre todas las ventanas activas (`webview_windows()`), las destruye ordenadamente y realiza un cierre limpio y determinista sin procesos huérfanos.
+     - Vinculada tanto al comando IPC `quit_app` como al evento de menú de System Tray (`"quit"`).
+  2. **Resolución Topológica Determinista (`resolve_module_activation_order`)**:
+     - Implementado el algoritmo de Kahn sobre el grafo de dependencias de módulos activos.
+     - Desempate alfabético determinista en cada nivel para asegurar que el orden de arranque de módulos sea 100% reproducible.
+     - Detección precisa de ciclos (A -> B -> A, etc.) y dependencias faltantes o inactivas con mensajes descriptivos.
+     - Nuevo comando IPC `get_modules_initialization_order`.
+  3. **Protección de Desinstalación y Desactivación en Cascada**:
+     - `uninstall_package` y `set_module_active(..., false)` verifican si otros módulos activos dependen del módulo objetivo, impidiendo la rotura de dependencias en caliente.
+  4. **Pruebas y Compilación Continua (Reglas 9 y 10)**:
+     - 5 nuevas pruebas unitarias cubriendo ordenamiento lineal, ordenamiento en diamante, dependencias faltantes, dependencias inactivas y detección de ciclos circulares (21 de 21 pruebas aprobadas).
+     - Compilación nativa exitosa de los binarios de PC Manager.
+- **Archivos Afectados**: 
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
 
 
 

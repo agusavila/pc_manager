@@ -45,10 +45,28 @@ fn minimize_to_tray(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+pub fn coordinated_shutdown(app: &AppHandle) {
+    log::info!("Iniciando parada determinista y coordinada del sistema (Regla 0 y Regla 8)...");
+
+    // 1. Cerrar ventanas activas de forma ordenada
+    for (label, window) in app.webview_windows() {
+        log::info!("Cerrando ventana: {}", label);
+        let _ = window.destroy();
+    }
+
+    log::info!("Parada determinista completada. Saliendo del proceso.");
+    app.exit(0);
+}
+
 #[tauri::command]
 fn quit_app(app: AppHandle) {
-    log::info!("Cierre definitivo ordenado desde el Core. Deteniendo subprocesos...");
-    app.exit(0);
+    coordinated_shutdown(&app);
+}
+
+#[tauri::command]
+fn get_modules_initialization_order(app: AppHandle) -> Result<Vec<String>, String> {
+    let registry = module_manager::load_registry(&app);
+    module_manager::resolve_module_activation_order(&registry.modules)
 }
 
 #[tauri::command]
@@ -447,7 +465,8 @@ pub fn run() {
             toggle_service_state,
             uninstall_windows_service,
             get_storage_telemetry,
-            get_system_telemetry
+            get_system_telemetry,
+            get_modules_initialization_order
         ])
         .setup(|app| {
             // 1. Configuración del menú contextual nativo del Tray
@@ -480,7 +499,7 @@ pub fn run() {
                     }
                     "quit" => {
                         log::info!("Deteniendo aplicación y servicios desde menú de bandeja...");
-                        app.exit(0);
+                        coordinated_shutdown(app);
                     }
                     _ => {}
                 })

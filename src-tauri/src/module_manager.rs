@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
@@ -485,6 +485,20 @@ pub fn install_package_bytes(
 pub fn uninstall_package(app: &AppHandle, module_id: &str) -> Result<(), String> {
     crate::module_security::validate_module_id(module_id)?;
 
+    // 0. Validar que ningún otro módulo instalado dependa de este
+    {
+        let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let registry = load_registry_unlocked(app);
+        for (other_id, other_rec) in &registry.modules {
+            if other_id != module_id && other_rec.manifest.dependencies.iter().any(|d| d == module_id) {
+                return Err(format!(
+                    "No se puede desinstalar el módulo '{}' porque el módulo '{}' depende de él. Desinstale o desactive '{}' primero.",
+                    module_id, other_id, other_id
+                ));
+            }
+        }
+    }
+
     let storage_dir = get_storage_dir(app)?;
     let module_dir = storage_dir.join("modules").join(module_id);
 
@@ -511,11 +525,45 @@ pub fn uninstall_package(app: &AppHandle, module_id: &str) -> Result<(), String>
     Ok(())
 }
 
-/// Modifica el estado activo/inactivo de un módulo en disco
+/// Modifica el estado activo/inactivo de un módulo en disco validando dependencias
 pub fn set_module_active(app: &AppHandle, module_id: &str, active: bool) -> Result<(), String> {
     crate::module_security::validate_module_id(module_id)?;
     let _guard = REGISTRY_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     let mut registry = load_registry_unlocked(app);
+
+    if active {
+        // Validar que todas las dependencias del módulo existan y estén activas
+        if let Some(record) = registry.modules.get(module_id) {
+            for dep in &record.manifest.dependencies {
+                match registry.modules.get(dep) {
+                    None => {
+                        return Err(format!(
+                            "No se puede activar el módulo '{}': falta la dependencia requerida '{}'.",
+                            module_id, dep
+                        ));
+                    }
+                    Some(dep_rec) if !dep_rec.active => {
+                        return Err(format!(
+                            "No se puede activar el módulo '{}': la dependencia requerida '{}' está desactivada.",
+                            module_id, dep
+                        ));
+                    }
+                    _ => {}
+                }
+            }
+        }
+    } else {
+        // Validar que ningún otro módulo activo dependa de este
+        for (other_id, other_rec) in &registry.modules {
+            if other_id != module_id && other_rec.active && other_rec.manifest.dependencies.iter().any(|d| d == module_id) {
+                return Err(format!(
+                    "No se puede desactivar el módulo '{}' porque el módulo activo '{}' depende de él. Desactive '{}' primero.",
+                    module_id, other_id, other_id
+                ));
+            }
+        }
+    }
+
     if let Some(record) = registry.modules.get_mut(module_id) {
         record.active = active;
         save_registry_unlocked(app, &registry)?;
@@ -524,6 +572,94 @@ pub fn set_module_active(app: &AppHandle, module_id: &str, active: bool) -> Resu
     } else {
         Err(format!("Módulo '{}' no encontrado en el registro", module_id))
     }
+}
+
+/// Resuelve el orden topológico determinista de inicialización de módulos activos según sus dependencias.
+/// Detecta dependencias faltantes y dependencias circulares (ciclos A -> B -> A).
+pub fn resolve_module_activation_order(modules: &HashMap<String, InstalledModuleRecord>) -> Result<Vec<String>, String> {
+    // 1. Filtrar módulos activos
+    let active_modules: HashMap<&String, &InstalledModuleRecord> = modules
+        .iter()
+        .filter(|(_, r)| r.active)
+        .collect();
+
+    if active_modules.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // 2. Comprobar que todas las dependencias requeridas existan y estén activas
+    for (id, record) in &active_modules {
+        for dep in &record.manifest.dependencies {
+            if !active_modules.contains_key(dep) {
+                return Err(format!(
+                    "El módulo '{}' requiere la dependencia '{}', pero no está instalada o está desactivada.",
+                    id, dep
+                ));
+            }
+        }
+    }
+
+    // 3. Algoritmo de Kahn con orden determinista
+    let mut in_degree: HashMap<&String, usize> = HashMap::new();
+    let mut adj: HashMap<&String, Vec<&String>> = HashMap::new();
+
+    for &id in active_modules.keys() {
+        in_degree.insert(id, 0);
+        adj.insert(id, Vec::new());
+    }
+
+    for (id, record) in &active_modules {
+        *in_degree.get_mut(id).unwrap() = record.manifest.dependencies.len();
+        for dep in &record.manifest.dependencies {
+            if let Some(list) = adj.get_mut(dep) {
+                list.push(id);
+            }
+        }
+    }
+
+    // Nodos con in_degree 0 ordenados alfabéticamente
+    let mut ready_nodes: Vec<&String> = in_degree
+        .iter()
+        .filter(|(_, &deg)| deg == 0)
+        .map(|(&id, _)| id)
+        .collect();
+    ready_nodes.sort();
+
+    let mut queue = VecDeque::from(ready_nodes);
+    let mut resolved_order = Vec::with_capacity(active_modules.len());
+
+    while let Some(node) = queue.pop_front() {
+        resolved_order.push(node.clone());
+
+        if let Some(dependents) = adj.get(node) {
+            let mut newly_ready = Vec::new();
+            for &dependent in dependents {
+                let deg = in_degree.get_mut(dependent).unwrap();
+                *deg -= 1;
+                if *deg == 0 {
+                    newly_ready.push(dependent);
+                }
+            }
+            newly_ready.sort();
+            for dep in newly_ready {
+                queue.push_back(dep);
+            }
+        }
+    }
+
+    if resolved_order.len() != active_modules.len() {
+        let cyclic_modules: Vec<String> = in_degree
+            .into_iter()
+            .filter(|(_, deg)| *deg > 0)
+            .map(|(id, _)| id.clone())
+            .collect();
+        return Err(format!(
+            "Dependencia circular detectada entre los siguientes módulos: {:?}",
+            cyclic_modules
+        ));
+    }
+
+    Ok(resolved_order)
 }
 
 /// Guarda un ajuste de meta-opción en disco
@@ -686,5 +822,90 @@ mod tests {
         assert!(loaded.card_order.is_empty());
 
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    fn make_test_record(id: &str, active: bool, deps: Vec<&str>) -> InstalledModuleRecord {
+        InstalledModuleRecord {
+            manifest: ModuleManifest {
+                id: id.to_string(),
+                name: id.to_string(),
+                version: "1.0.0".to_string(),
+                description: None,
+                author: None,
+                group: None,
+                entrypoint: Some("module.js".to_string()),
+                permissions: vec![],
+                dependencies: deps.into_iter().map(String::from).collect(),
+                provides_services: vec![],
+                meta_options: vec![],
+                widgets: vec![],
+                views: vec![],
+                requires_service: None,
+                service_reason: None,
+                background_worker: None,
+            },
+            script_code: String::new(),
+            active,
+            install_date: "2026-09-26T12:00:00Z".to_string(),
+            signature_status: "VERIFIED".to_string(),
+            author_fingerprint: None,
+            file_hashes: HashMap::new(),
+            granted_permissions: vec![],
+        }
+    }
+
+    #[test]
+    fn test_topological_sort_linear() {
+        let mut modules = HashMap::new();
+        modules.insert("mod_c".to_string(), make_test_record("mod_c", true, vec!["mod_b"]));
+        modules.insert("mod_a".to_string(), make_test_record("mod_a", true, vec![]));
+        modules.insert("mod_b".to_string(), make_test_record("mod_b", true, vec!["mod_a"]));
+
+        let order = resolve_module_activation_order(&modules).expect("Should resolve cleanly");
+        assert_eq!(order, vec!["mod_a", "mod_b", "mod_c"]);
+    }
+
+    #[test]
+    fn test_topological_sort_diamond() {
+        let mut modules = HashMap::new();
+        modules.insert("mod_a".to_string(), make_test_record("mod_a", true, vec![]));
+        modules.insert("mod_b".to_string(), make_test_record("mod_b", true, vec!["mod_a"]));
+        modules.insert("mod_c".to_string(), make_test_record("mod_c", true, vec!["mod_a"]));
+        modules.insert("mod_d".to_string(), make_test_record("mod_d", true, vec!["mod_b", "mod_c"]));
+
+        let order = resolve_module_activation_order(&modules).expect("Should resolve cleanly");
+        assert_eq!(order, vec!["mod_a", "mod_b", "mod_c", "mod_d"]);
+    }
+
+    #[test]
+    fn test_topological_sort_missing_dependency() {
+        let mut modules = HashMap::new();
+        modules.insert("mod_a".to_string(), make_test_record("mod_a", true, vec!["mod_ghost"]));
+
+        let result = resolve_module_activation_order(&modules);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("requiere la dependencia 'mod_ghost'"));
+    }
+
+    #[test]
+    fn test_topological_sort_cycle_detected() {
+        let mut modules = HashMap::new();
+        modules.insert("mod_a".to_string(), make_test_record("mod_a", true, vec!["mod_b"]));
+        modules.insert("mod_b".to_string(), make_test_record("mod_b", true, vec!["mod_a"]));
+
+        let result = resolve_module_activation_order(&modules);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Dependencia circular detectada"));
+    }
+
+    #[test]
+    fn test_topological_sort_inactive_dependency_fails() {
+        let mut modules = HashMap::new();
+        modules.insert("mod_a".to_string(), make_test_record("mod_a", false, vec![]));
+        modules.insert("mod_b".to_string(), make_test_record("mod_b", true, vec!["mod_a"]));
+
+        let result = resolve_module_activation_order(&modules);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("desactivada"));
     }
 }
