@@ -115,7 +115,7 @@
             <div class="combobox-trigger" onclick="toggleCombobox('combo-topbar-profile')">
               <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
                 <svg class="svg-icon svg-icon-xs" style="color: var(--accent-primary); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
-                <span class="combobox-val" id="val-topbar-profile" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; display: inline-flex; align-items: center; gap: 5px;"><span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
+                <span class="combobox-val" id="val-topbar-profile" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; display: inline-flex; align-items: center; gap: 5px;"><span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
               </div>
               <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
@@ -245,16 +245,16 @@
               <div class="combobox-trigger" onclick="toggleCombobox('combo-drawer-profile')" style="padding: 7px 12px; font-size: 12.5px; border-radius: var(--radius-md);">
                 <span class="combobox-val" id="val-drawer-profile" style="display: inline-flex; align-items: center; gap: 5px;">
                   <span>${currentProfile.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : currentProfile.name}</span>
-                  ${currentProfile.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+                  ${currentProfile.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
                 </span>
                 <svg class="svg-icon svg-icon-xs combobox-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
               <div class="combobox-dropdown" id="dropdown-drawer-profile">
                 ${getOrderedDashboardProfiles().map(p => `
                   <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-                    <span style="display: inline-flex; align-items: center; gap: 6px;">
-                      ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+                    <span style="display: inline-flex; align-items: center; gap: 5px;">
                       <span>${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : p.name}</span>
+                      ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
                     </span>
                     <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
@@ -1444,7 +1444,7 @@
       const valTopbar = document.getElementById('val-topbar-profile');
       if (valTopbar) {
         if (activeProf.id === DEFAULT_DASHBOARD_PROFILE_ID) {
-          valTopbar.innerHTML = `<span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+          valTopbar.innerHTML = `<span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
         } else {
           valTopbar.textContent = activeProf.name;
         }
@@ -1453,9 +1453,9 @@
       if (dropTopbar) {
         dropTopbar.innerHTML = ordered.map(p => `
           <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-            <span style="display: inline-flex; align-items: center; gap: 6px;">
-              ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
               <span>${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : p.name}</span>
+              ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
             </span>
             <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
@@ -1466,7 +1466,7 @@
       const valDrawer = document.getElementById('val-drawer-profile');
       if (valDrawer) {
         if (activeProf.id === DEFAULT_DASHBOARD_PROFILE_ID) {
-          valDrawer.innerHTML = `<span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+          valDrawer.innerHTML = `<span>Principal</span><svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
         } else {
           valDrawer.textContent = activeProf.name;
         }
@@ -1475,9 +1475,9 @@
       if (dropDrawer) {
         dropDrawer.innerHTML = ordered.map(p => `
           <div class="combobox-option ${p.id === dashboardProfilesState.activeProfileId ? 'selected' : ''}" onclick="selectDashboardProfileFromCombo('${p.id}')">
-            <span style="display: inline-flex; align-items: center; gap: 6px;">
-              ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="color: #f59e0b; fill: #f59e0b; width: 12px; height: 12px; flex-shrink: 0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
               <span>${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? 'Principal' : p.name}</span>
+              ${p.id === DEFAULT_DASHBOARD_PROFILE_ID ? '<svg class="svg-icon svg-icon-xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; flex-shrink: 0; opacity: 0.85;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' : ''}
             </span>
             <svg class="svg-icon svg-icon-xs option-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>

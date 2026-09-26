@@ -2182,6 +2182,25 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### BUG-062: Homogeneización de Icono de Estrella de Perfil Principal (Outline Reactivo y Posición Trailing Consistente)
+
+- **Fecha**: 2026-09-26
+- **Severidad**: `BAJA` (Inconsistencia Visual y Paleta de Color)
+- **Componente**: Dashboard Profiles UI (`ui/js/app.js`, `ui/index.html`)
+- **Síntoma**: En el combobox de perfiles de Dashboard, la estrella aparecía invertida a la izquierda en las opciones desplegadas (`[★ Principal]`) y a la derecha en el disparador (`[Principal ★]`). Además, el color dorado sólido `#f59e0b` desentonaba con la estética del tema activo y no reaccionaba a los colores de acento.
+- **Causa Raíz**: En la plantilla del desplegable, el SVG se inyectaba antes del texto del nombre en lugar de después. Asimismo, se había forzado un `fill` y `color` fijo en línea en vez de aprovechar las propiedades semánticas de `.svg-icon` (`stroke: currentColor; fill: none;`).
+- **Solución Implementada**:
+  1. Se unificó la posición para que la estrella se ubique siempre a la derecha del texto (`Principal ★`) de manera idéntica y simétrica en el disparador y en el dropdown.
+  2. Se removió el relleno dorado sólido y se configuró como outline sin relleno (`stroke: currentColor; fill: none;`), adaptándose en tiempo real al color de acento y tema visual activo en el sistema.
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 
