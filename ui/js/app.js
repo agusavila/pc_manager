@@ -396,10 +396,13 @@
                       </div>
                     </div>
                   </div>
-                  <label class="switch" style="flex-shrink: 0;" title="Mostrar/Ocultar widget en el Dashboard">
-                    <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleWidgetVisibility('${cardId}', this.checked)">
-                    <span class="slider"></span>
-                  </label>
+                  <div class="widget-switch-wrapper" id="switch-wrap-${cardId}" style="position: relative; display: flex; align-items: center; gap: 6px;">
+                    <span class="switch-error-hint hidden" id="err-hint-${cardId}">Sin espacio</span>
+                    <label class="switch" id="switch-lbl-${cardId}" style="flex-shrink: 0;" title="Mostrar/Ocultar widget en el Dashboard">
+                      <input type="checkbox" id="chk-widget-${cardId}" ${isVisible ? 'checked' : ''} onchange="toggleWidgetVisibility('${cardId}', this.checked)">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
                 </div>
               `;
             }).join('');
@@ -469,39 +472,84 @@
           delete layout[cardId];
           setActiveProfileLayout(current, layout);
         }
+        persistDashboardProfilesState();
       } else {
-        // VERIFICACIÓN ESTRICTA DE CAPACIDAD: Impedir caos y desbordes si no cabe en el lienzo fijo
+        // VERIFICACIÓN ESTRICTA DE CAPACIDAD: Impedir caos y no mover jamás las tarjetas preexistentes
         if (card) {
           const { spanCol, spanRow } = getCardSpan(card);
-          const fits = canWidgetFitOnDashboard(spanCol, spanRow, cardId);
-          if (!fits) {
-            renderDashboardCustomizationCatalog();
-            const orientLabel = isPortraitOrientation() ? 'Vertical (6×12)' : 'Horizontal (12×6)';
-            addSystemNotification(
-              'Espacio Insuficiente',
-              `El widget requiere ${spanCol}×${spanRow} celdas libres continuas. No cabe en el espacio disponible del Dashboard ${orientLabel}.`,
-              'warning',
-              'dashboard'
-            );
+          const gridCols = getGridCols();
+          const effSpanCol = Math.min(spanCol, gridCols);
+
+          // Construir mapa de ocupación EXACTO de las tarjetas visibles actualmente
+          const grid = document.getElementById('grid-board');
+          const occupied = {};
+          if (grid) {
+            const cards = Array.from(grid.querySelectorAll('.card')).filter(c => c.style.display !== 'none' && c.id !== cardId);
+            cards.forEach(c => {
+              let col = null;
+              let row = null;
+              if (c.dataset.col && c.dataset.row) {
+                col = parseInt(c.dataset.col, 10);
+                row = parseInt(c.dataset.row, 10);
+              } else if (layout[c.id] && layout[c.id].col && layout[c.id].row) {
+                col = parseInt(layout[c.id].col, 10);
+                row = parseInt(layout[c.id].row, 10);
+              }
+              if (!col || !row || col < 1 || row < 1) return;
+
+              const { spanCol: sC, spanRow: sR } = getCardSpan(c);
+              const eC = Math.min(sC, gridCols);
+              for (let r = row; r < row + sR; r++) {
+                if (!occupied[r]) occupied[r] = {};
+                for (let cl = col; cl < col + eC; cl++) {
+                  occupied[r][cl] = c.id;
+                }
+              }
+            });
+          }
+
+          const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
+          if (!slot) {
+            // Revertir switch inmediatamente y emitir feedback visual en el propio interruptor (Cero notificaciones en panel)
+            const chk = document.getElementById(`chk-widget-${cardId}`);
+            if (chk) chk.checked = false;
+            const wrap = document.getElementById(`switch-wrap-${cardId}`);
+            if (wrap) {
+              const lbl = wrap.querySelector('.switch');
+              if (lbl) {
+                lbl.classList.remove('switch-shake-error');
+                void lbl.offsetWidth;
+                lbl.classList.add('switch-shake-error');
+                setTimeout(() => lbl.classList.remove('switch-shake-error'), 500);
+              }
+              const hint = document.getElementById(`err-hint-${cardId}`);
+              if (hint) {
+                hint.classList.remove('hidden');
+                clearTimeout(hint._timer);
+                hint._timer = setTimeout(() => hint.classList.add('hidden'), 2500);
+              }
+            }
             return;
           }
-        }
 
-        hiddenIds = hiddenIds.filter(id => id !== cardId);
-        setActiveProfileHidden(current, hiddenIds);
-        if (card) {
+          // Si cabe: Ubicarla ÚNICAMENTE en el slot libre sin alterar ninguna otra tarjeta
+          hiddenIds = hiddenIds.filter(id => id !== cardId);
+          setActiveProfileHidden(current, hiddenIds);
           card.style.display = 'flex';
-          delete card.dataset.col;
-          delete card.dataset.row;
+          card.style.gridColumn = `${slot.col} / span ${effSpanCol}`;
+          card.style.gridRow = `${slot.row} / span ${spanRow}`;
+          card.dataset.col = slot.col;
+          card.dataset.row = slot.row;
+          layout[cardId] = { col: slot.col, row: slot.row };
+          setActiveProfileLayout(current, layout);
+          persistDashboardProfilesState();
+
           card.classList.remove('card-drop');
           void card.offsetWidth;
           card.classList.add('card-drop');
           setTimeout(() => card.classList.remove('card-drop'), 300);
         }
       }
-
-      // Reorganizar y asignar posiciones libres garantizando 0 colisiones
-      restoreDashboardLayout();
 
       // Comprobar si todas las tarjetas están ocultas
       const allCards = Array.from(document.querySelectorAll('#grid-board .card'));
@@ -896,9 +944,11 @@
     function getActiveProfileLayout(profile) {
       if (!profile) return {};
       if (isPortraitOrientation()) {
-        return profile.layout_portrait || profile.layout || {};
+        if (!profile.layout_portrait) profile.layout_portrait = {};
+        return profile.layout_portrait;
       } else {
-        return profile.layout_landscape || profile.layout || {};
+        if (!profile.layout_landscape) profile.layout_landscape = {};
+        return profile.layout_landscape;
       }
     }
 
@@ -909,15 +959,16 @@
       } else {
         profile.layout_landscape = layout;
       }
-      profile.layout = layout; // Compatibilidad retroactiva
     }
 
     function getActiveProfileHidden(profile) {
       if (!profile) return [];
       if (isPortraitOrientation()) {
-        return profile.hidden_portrait || profile.hiddenWidgets || [];
+        if (!Array.isArray(profile.hidden_portrait)) profile.hidden_portrait = [];
+        return profile.hidden_portrait;
       } else {
-        return profile.hidden_landscape || profile.hiddenWidgets || [];
+        if (!Array.isArray(profile.hidden_landscape)) profile.hidden_landscape = [];
+        return profile.hidden_landscape;
       }
     }
 
@@ -928,7 +979,6 @@
       } else {
         profile.hidden_landscape = hiddenList;
       }
-      profile.hiddenWidgets = hiddenList; // Compatibilidad retroactiva
     }
 
     function getGridCols() {
@@ -1254,83 +1304,19 @@
               }
             }
 
-            // 3. Procesar las tarjetas restantes ordenadas para garantizar cero huecos y cero superposiciones
-            const remainingCards = otherCards.filter(c => !swappedCleanly || c !== collidingCards[0]);
-            remainingCards.sort((a, b) => {
-              const rA = parseInt(a.dataset.row || '1', 10);
-              const rB = parseInt(b.dataset.row || '1', 10);
-              if (rA !== rB) return rA - rB;
-              const cA = parseInt(a.dataset.col || '1', 10);
-              const cB = parseInt(b.dataset.col || '1', 10);
-              return cA - cB;
-            });
-
-            const current = getCurrentDashboardProfile();
-            remainingCards.forEach(other => {
-              const { spanCol: oSpanCol, spanRow: oSpanRow } = getCardSpan(other);
-              const oEffSpanCol = Math.min(oSpanCol, gridCols);
-              let curCol = parseInt(other.dataset.col || '1', 10);
-              curCol = Math.max(1, Math.min(gridCols - oEffSpanCol + 1, curCol));
-              let curRow = parseInt(other.dataset.row || '1', 10);
-
-              let collides = false;
-              for (let r = curRow; r < curRow + oSpanRow; r++) {
-                for (let c = curCol; c < curCol + oEffSpanCol; c++) {
-                  if (occupied[r] && occupied[r][c]) {
-                    collides = true;
-                    break;
-                  }
-                }
-                if (collides) break;
-              }
-
-              let hasPlacedPosition = false;
-              if (collides) {
-                // Encontrar el primer slot libre hacia abajo sin colisiones
-                const slot = findNextFreeSlot(gridCols, oEffSpanCol, oSpanRow, occupied);
-                if (slot) {
-                  other.style.gridColumn = `${slot.col} / span ${oEffSpanCol}`;
-                  other.style.gridRow = `${slot.row} / span ${oSpanRow}`;
-                  other.dataset.col = slot.col;
-                  other.dataset.row = slot.row;
-                  curCol = slot.col;
-                  curRow = slot.row;
-                  hasPlacedPosition = true;
-
-                  other.classList.remove('card-drop');
-                  void other.offsetWidth;
-                  other.classList.add('card-drop');
-                  setTimeout(() => other.classList.remove('card-drop'), 300);
-                } else {
-                  // Protocolo anti-superposición: Si no hay celda libre donde reubicar la tarjeta desplazada, ocultar de forma segura
-                  other.style.display = 'none';
-                  delete other.dataset.col;
-                  delete other.dataset.row;
-                  other.style.gridColumn = '';
-                  other.style.gridRow = '';
-                  if (current) {
-                    if (!current.hiddenWidgets.includes(other.id)) {
-                      current.hiddenWidgets.push(other.id);
-                    }
-                    if (current.layout && current.layout[other.id]) {
-                      delete current.layout[other.id];
-                    }
-                  }
-                }
-              } else {
-                hasPlacedPosition = true;
-              }
-
-              // Registrar celdas ocupadas únicamente si la tarjeta sigue visible y posicionada
-              if (hasPlacedPosition) {
-                for (let r = curRow; r < curRow + oSpanRow; r++) {
-                  if (!occupied[r]) occupied[r] = {};
-                  for (let c = curCol; c < curCol + oEffSpanCol; c++) {
-                    occupied[r][c] = other.id;
-                  }
-                }
-              }
-            });
+            // Si hay colisiones y no se pudo hacer un intercambio 1 a 1 limpio:
+            // REVERTIR el movimiento sin alterar ni desplazar ninguna otra tarjeta
+            if (collidingCards.length > 0 && !swappedCleanly) {
+              card.style.gridColumn = `${origCol} / span ${effSpanCol}`;
+              card.style.gridRow = `${origRow} / span ${spanRow}`;
+              card.dataset.col = origCol;
+              card.dataset.row = origRow;
+              card.classList.remove('card-drop');
+              void card.offsetWidth;
+              card.classList.add('card-drop');
+              setTimeout(() => card.classList.remove('card-drop'), 300);
+              return;
+            }
 
             // Si la cuadrícula se contrajo al mover elementos hacia arriba, ajustar el scroll residual
             if (viewContent) {
@@ -1554,11 +1540,32 @@
             id: DEFAULT_DASHBOARD_PROFILE_ID,
             name: 'Principal',
             layout: {},
-            hiddenWidgets: []
+            hiddenWidgets: [],
+            layout_portrait: {},
+            layout_landscape: {},
+            hidden_portrait: [],
+            hidden_landscape: []
           };
         } else {
           dashboardProfilesState.profiles[DEFAULT_DASHBOARD_PROFILE_ID].name = 'Principal';
         }
+
+        // Garantizar campos aislados independientes en todos los perfiles existentes
+        Object.values(dashboardProfilesState.profiles).forEach(p => {
+          if (!p.layout_portrait) {
+            p.layout_portrait = p.layout ? JSON.parse(JSON.stringify(p.layout)) : {};
+          }
+          if (!p.layout_landscape) {
+            p.layout_landscape = p.layout ? JSON.parse(JSON.stringify(p.layout)) : {};
+          }
+          if (!Array.isArray(p.hidden_portrait)) {
+            p.hidden_portrait = Array.isArray(p.hiddenWidgets) ? [...p.hiddenWidgets] : [];
+          }
+          if (!Array.isArray(p.hidden_landscape)) {
+            p.hidden_landscape = Array.isArray(p.hiddenWidgets) ? [...p.hiddenWidgets] : [];
+          }
+        });
+
         if (!dashboardProfilesState.activeProfileId || !dashboardProfilesState.profiles[dashboardProfilesState.activeProfileId]) {
           dashboardProfilesState.activeProfileId = DEFAULT_DASHBOARD_PROFILE_ID;
         }
@@ -1622,14 +1629,6 @@
 
       const current = getCurrentDashboardProfile();
       let layout = getActiveProfileLayout(current);
-
-      // Fallback retroactivo SOLO si es el perfil predeterminado y está completamente vacío al inicio
-      if (current.id === DEFAULT_DASHBOARD_PROFILE_ID && Object.keys(layout).length === 0) {
-        try {
-          const local = localStorage.getItem('pcm_dashboard_layout');
-          if (local) layout = JSON.parse(local);
-        } catch(e) {}
-      }
 
       const grid = document.getElementById('grid-board');
       if (!grid) return;
@@ -2081,88 +2080,21 @@
     }
 
     function adjustCardsForCurrentGridCols() {
-      const dashboardView = document.getElementById('view-dashboard');
-      if (dashboardView && dashboardView.classList.contains('hidden')) return;
-
-      const grid = document.getElementById('grid-board');
-      if (!grid) return;
-      const gridCols = getGridCols();
-      const current = getCurrentDashboardProfile();
-      const hiddenIds = getActiveProfileHidden(current);
-      const layout = getActiveProfileLayout(current);
-      const cards = Array.from(grid.querySelectorAll('.card')).filter(c => !hiddenIds.includes(c.id));
-
-      cards.forEach(c => {
-        c.style.display = 'flex';
-      });
-
-      cards.sort((a, b) => {
-        const rA = parseInt(a.dataset.row || (layout && layout[a.id] ? layout[a.id].row : '1'), 10);
-        const rB = parseInt(b.dataset.row || (layout && layout[b.id] ? layout[b.id].row : '1'), 10);
-        if (rA !== rB) return rA - rB;
-        const cA = parseInt(a.dataset.col || (layout && layout[a.id] ? layout[a.id].col : '1'), 10);
-        const cB = parseInt(b.dataset.col || (layout && layout[b.id] ? layout[b.id].col : '1'), 10);
-        return cA - cB;
-      });
-
-      const occupied = {};
-      cards.forEach(card => {
-        const baseCol = parseInt(card.dataset.col || (layout && layout[card.id] ? layout[card.id].col : '0'), 10);
-        const baseRow = parseInt(card.dataset.row || (layout && layout[card.id] ? layout[card.id].row : '0'), 10);
-        if (baseCol > 0 && baseRow > 0) {
-          const { spanCol, spanRow } = getCardSpan(card);
-          const effSpanCol = Math.min(spanCol, gridCols);
-          const maxVisibleRows = getMaxVisibleRows();
-          const maxAllowedRow = Math.max(1, maxVisibleRows - spanRow + 1);
-          
-          let displayCol = Math.max(1, Math.min(gridCols - effSpanCol + 1, baseCol));
-          let displayRow = Math.max(1, Math.min(maxAllowedRow, baseRow));
-
-          let collides = false;
-          for (let r = displayRow; r < displayRow + spanRow; r++) {
-            for (let c = displayCol; c < displayCol + effSpanCol; c++) {
-              if (occupied[r] && occupied[r][c]) {
-                collides = true;
-                break;
-              }
-            }
-            if (collides) break;
-          }
-
-          if (collides) {
-            const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
-            if (slot) {
-              displayCol = slot.col;
-              displayRow = slot.row;
-            } else {
-              displayCol = null;
-              displayRow = null;
-            }
-          }
-
-          if (displayCol && displayRow) {
-            card.style.gridColumn = `${displayCol} / span ${effSpanCol}`;
-            card.style.gridRow = `${displayRow} / span ${spanRow}`;
-
-            for (let r = displayRow; r < displayRow + spanRow; r++) {
-              if (!occupied[r]) occupied[r] = {};
-              for (let c = displayCol; c < displayCol + effSpanCol; c++) {
-                occupied[r][c] = card.id;
-              }
-            }
-          } else {
-            card.style.display = 'none';
-          }
-        }
-      });
+      // Las tarjetas en CSS Grid mantienen sus coordenadas fijas col/row sin auto-desplazamiento
+      return;
     }
 
     let lastKnownOrientation = isPortraitOrientation();
     window.addEventListener('resize', () => {
       const currentOrientation = isPortraitOrientation();
       if (currentOrientation !== lastKnownOrientation) {
+        // 1. Guardar el estado de la orientación saliente ANTES de conmutar
+        persistDashboardLayout();
+
+        // 2. Conmutar orientación
         lastKnownOrientation = currentOrientation;
-        // Cambio de orientación física (Horizontal <-> Vertical): Conmutar limpiamente al layout guardado respectivo
+
+        // 3. Limpiar coordenadas DOM y restaurar limpiamente la orientación entrante
         const grid = document.getElementById('grid-board');
         if (grid) {
           grid.querySelectorAll('.card').forEach(c => {
@@ -2172,8 +2104,6 @@
         }
         restoreDashboardLayout();
         renderDashboardCustomizationCatalog();
-      } else {
-        adjustCardsForCurrentGridCols();
       }
     });
 

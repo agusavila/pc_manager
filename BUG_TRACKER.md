@@ -2200,6 +2200,40 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### BUG-063: Estabilización Integral del Sistema de Widgets y Dashboard (Cero Desplazamiento Destructivo, Aviso en Interruptor, Persistencia de Orientación y Notificaciones Nativas)
+
+- **Fecha**: 2026-09-26
+- **Severidad**: `ALTA` (Integridad del Dashboard, Ergonomía de Usuario y Cumplimiento de Políticas de UI)
+- **Componente**: Dashboard & Customization Catalog (`ui/js/app.js`, `ui/index.html`, `ui/css/style.css`, `src-tauri/src/commands/mod.rs`)
+- **Síntomas**:
+  1. Al acomodar manualmente las tarjetas del dashboard y activar un nuevo widget que no cabe en el espacio restante, el sistema disparaba una reorganización forzada que desplazaba y desordenaba todas las tarjetas existentes.
+  2. Cada vez que no había espacio libre suficiente, se emitía una notificación al panel lateral de notificaciones, saturando la campana de notificaciones (oculta detrás del catálogo abierto) e infringiendo la política anti-ruido (Regla 6).
+  3. Al cambiar entre pantalla horizontal (landscape) y pantalla vertical (portrait), los widgets acomodados a mano en la vista vertical se desordenaban al regresar debido a la sobreescritura cruzada de layouts y al auto-empaquetado ejecutado durante el redimensionamiento.
+  4. Necesidad de garantizar que las notificaciones de escritorio de Windows se ejecuten de manera 100% nativa vía API del sistema y no mediante scripts de PowerShell.
+- **Causa Raíz**:
+  1. `toggleWidgetVisibility` invocaba `restoreDashboardLayout()`, el cual ejecutaba resolución de colisiones y reubicación automática de tarjetas existentes cuando no había espacio.
+  2. Invocación de `addSystemNotification('Espacio Insuficiente', ...)` dentro de la lógica del catálogo en lugar de retroalimentación directa sobre el interruptor.
+  3. `adjustCardsForCurrentGridCols` reordenaba y desplazaba tarjetas en cualquier evento `resize`. Además, `getActiveProfileLayout` tenía fallbacks compartidos con `layout` legacy que contaminaban las coordenadas entre vertical y horizontal, y la orientación saliente no se persistía antes de conmutar.
+  4. En `onPointerUp`, al soltar una tarjeta en un espacio sin capacidad suficiente, un bucle de cascada desplazaba todas las tarjetas restantes.
+- **Solución Implementada**:
+  1. **Cero Desplazamiento Destructivo al Activar Widgets**: En `toggleWidgetVisibility`, se calcula la matriz de ocupación exacta de las tarjetas visibles. Si el widget no cabe, la acción se cancela de inmediato, revirtiendo el interruptor sin alterar ninguna tarjeta preexistente. Si cabe, se ubica exclusivamente en el slot libre sin tocar las demás.
+  2. **Feedback Visual en el Propio Interruptor (Anti-Ruido)**: Se eliminó la llamada a `addSystemNotification`. Se implementó animación de error (`switch-shake-error`) y un badge flotante `Sin espacio` junto al interruptor en el cajón de widgets.
+  3. **Reversión Limpia en Drag and Drop**: En `onPointerUp`, si una tarjeta soltada colisiona y no puede realizar un intercambio limpio 1-a-1, se revierte suavemente a sus coordenadas de origen (`origCol`, `origRow`) con cero desplazamiento en las demás tarjetas.
+  4. **Persistencia Estricta y Aislamiento por Orientación (Horizontal 12x6 vs. Vertical 6x12)**:
+     - Se aislaron estrictamente `layout_portrait` y `layout_landscape`, y sus respectivas listas `hidden_portrait` y `hidden_landscape`.
+     - En `window.addEventListener('resize')`, se persiste el estado de la orientación saliente antes de actualizar `lastKnownOrientation`.
+     - Se desactivó el algoritmo de auto-empaquetado destructivo en `adjustCardsForCurrentGridCols`, permitiendo que CSS Grid mantenga fijas las coordenadas asignadas por el usuario.
+  5. **Notificaciones Nativas de Windows**: Verificado y respaldado que las notificaciones de escritorio operan exclusivamente a través de la API nativa de Tauri (`tauri::api::notification::Notification`), sin ningún proceso de PowerShell.
+- **Archivos Afectados**:
+  - [`ui/index.html`](file:///c:/Proyectos/pc_manager/ui/index.html)
+  - [`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css)
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

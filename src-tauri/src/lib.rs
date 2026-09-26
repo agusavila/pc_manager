@@ -11,7 +11,9 @@ use tauri::{
     AppHandle, Manager, WindowEvent,
 };
 use module_manager::InstalledModuleRecord;
+#[cfg(not(windows))]
 use tauri_plugin_notification::NotificationExt;
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SystemInfoPayload {
@@ -247,15 +249,99 @@ fn get_dashboard_order(app: AppHandle) -> Vec<String> {
     registry.card_order
 }
 
+#[cfg(windows)]
+fn register_app_user_model_id() {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::System::Registry::{
+        RegCloseKey, RegCreateKeyExW, RegSetValueExW, HKEY, HKEY_CURRENT_USER, KEY_WRITE,
+        REG_DWORD, REG_OPTION_NON_VOLATILE, REG_SZ,
+    };
+
+    fn to_wide(s: &str) -> Vec<u16> {
+        OsStr::new(s).encode_wide().chain(std::iter::once(0)).collect()
+    }
+
+    unsafe {
+        let subkey = to_wide("Software\\Classes\\AppUserModelId\\com.pcmanager.desktop");
+        let mut hkey: HKEY = std::ptr::null_mut();
+        let status = RegCreateKeyExW(
+            HKEY_CURRENT_USER,
+            subkey.as_ptr(),
+            0,
+            std::ptr::null(),
+            REG_OPTION_NON_VOLATILE,
+            KEY_WRITE,
+            std::ptr::null(),
+            &mut hkey,
+            std::ptr::null_mut(),
+        );
+
+        if status == 0 && !hkey.is_null() {
+            let display_name_name = to_wide("DisplayName");
+            let display_name_val = to_wide("PC Manager");
+            let _ = RegSetValueExW(
+                hkey,
+                display_name_name.as_ptr(),
+                0,
+                REG_SZ,
+                display_name_val.as_ptr() as *const u8,
+                (display_name_val.len() * 2) as u32,
+            );
+
+            let show_in_settings_name = to_wide("ShowInSettings");
+            let val_dword: u32 = 1;
+            let _ = RegSetValueExW(
+                hkey,
+                show_in_settings_name.as_ptr(),
+                0,
+                REG_DWORD,
+                &val_dword as *const u32 as *const u8,
+                std::mem::size_of::<u32>() as u32,
+            );
+
+            if let Ok(exe_path) = std::env::current_exe() {
+                if let Some(exe_str) = exe_path.to_str() {
+                    let icon_name = to_wide("IconUri");
+                    let icon_val = to_wide(exe_str);
+                    let _ = RegSetValueExW(
+                        hkey,
+                        icon_name.as_ptr(),
+                        0,
+                        REG_SZ,
+                        icon_val.as_ptr() as *const u8,
+                        (icon_val.len() * 2) as u32,
+                    );
+                }
+            }
+
+            RegCloseKey(hkey);
+        }
+    }
+}
+
 #[tauri::command]
-fn show_windows_notification(app: AppHandle, title: String, body: String) -> Result<(), String> {
-    app.notification()
-        .builder()
-        .title(&title)
-        .body(&body)
-        .show()
-        .map_err(|e| format!("Error al emitir notificación en Windows: {}", e))?;
-    Ok(())
+fn show_windows_notification(_app: AppHandle, title: String, body: String) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        register_app_user_model_id();
+        tauri_winrt_notification::Toast::new("com.pcmanager.desktop")
+            .title(&title)
+            .text1(&body)
+            .show()
+            .map_err(|e| format!("Error al emitir notificación nativa de Windows: {:?}", e))?;
+        Ok(())
+    }
+    #[cfg(not(windows))]
+    {
+        _app.notification()
+            .builder()
+            .title(&title)
+            .body(&body)
+            .show()
+            .map_err(|e| format!("Error al emitir notificación: {}", e))?;
+        Ok(())
+    }
 }
 
 fn base64_encode_bytes(data: &[u8]) -> String {

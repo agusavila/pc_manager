@@ -2605,6 +2605,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-log",
  "tauri-plugin-notification",
+ "tauri-winrt-notification",
  "windows-sys 0.60.2",
  "zip",
 ]

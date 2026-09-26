@@ -1486,6 +1486,39 @@
       background-color: #ffffff;
     }
 
+    /* FEEDBACK DE ERROR EN INTERRUPTOR DE WIDGET */
+    .switch-error-hint {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent-danger, #f43f5e);
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: var(--radius-sm, 4px);
+      padding: 2px 6px;
+      white-space: nowrap;
+      animation: fadeIn 0.2s ease;
+      pointer-events: none;
+      display: inline-block;
+    }
+    .switch-error-hint.hidden {
+      display: none !important;
+    }
+
+    @keyframes shakeSwitch {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+
+    .switch-shake-error {
+      animation: shakeSwitch 0.4s ease-in-out !important;
+    }
+
+    .switch-shake-error .slider {
+      border-color: var(--accent-danger, #f43f5e) !important;
+      box-shadow: 0 0 8px rgba(244, 63, 94, 0.4) !important;
+    }
+
     /* CUSTOM CHECKBOX (MATERIAL EXPRESSIVE) */
     .custom-checkbox {
       display: inline-flex;
