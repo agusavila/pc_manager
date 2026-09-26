@@ -482,16 +482,6 @@ mod tests {
     }
 
     #[test]
-    fn test_collector_ps1_passes_validation() {
-        let path = std::path::Path::new("../modules/disk-monitor/collector.ps1");
-        if path.exists() {
-            let script = fs::read_to_string(path).expect("No se pudo leer collector.ps1");
-            let res = validate_script_safety(&script);
-            assert!(res.is_ok(), "Fallo validando collector.ps1: {:?}", res.err());
-        }
-    }
-
-    #[test]
     fn test_script_safety_blocked_diskpart_command() {
         let bad_script = "diskpart /s script.txt";
         let res = validate_script_safety(bad_script);
@@ -513,17 +503,6 @@ mod tests {
         let res = validate_script_safety(bad_script);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("format"));
-    }
-
-    #[test]
-    fn test_verify_disk_monitor_pcm() {
-        let path = std::path::Path::new("../disk-monitor.pcm");
-        if path.exists() {
-            let bytes = fs::read(path).expect("No se pudo leer disk-monitor.pcm");
-            let res = verify_archive_security(&bytes).expect("Fallo durante verificación");
-            assert_eq!(res.status, SecurityStatus::Verified);
-            assert_eq!(res.author, "PC Manager Core Oficial (Verificado)");
-        }
     }
 
     #[test]
@@ -549,9 +528,9 @@ mod tests {
 
     #[test]
     fn test_tampered_package_detected() {
-        let path = std::path::Path::new("../disk-monitor.pcm");
+        let path = std::path::Path::new("../dummy-widgets.pcm");
         if path.exists() {
-            let mut bytes = fs::read(path).expect("No se pudo leer disk-monitor.pcm");
+            let mut bytes = fs::read(path).expect("No se pudo leer dummy-widgets.pcm");
             // Alterar deliberadamente bytes internos del archivo ZIP para simular sabotaje
             if bytes.len() > 100 {
                 bytes[50] ^= 0xFF;
@@ -568,7 +547,7 @@ mod tests {
 
     #[test]
     fn test_validate_module_id_valid() {
-        assert!(validate_module_id("disk-monitor").is_ok());
+        assert!(validate_module_id("storage-monitor").is_ok());
         assert!(validate_module_id("system-clock").is_ok());
         assert!(validate_module_id("dummy-widgets").is_ok());
         assert!(validate_module_id("my_custom_module.123").is_ok());

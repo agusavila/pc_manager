@@ -232,20 +232,9 @@ pub mod win_service {
                 mode = 'Pre-logon & Service Host'
                 prelogon_enabled = $true
                 total_memory_mb = $totalMemoryMb
-                total_cpu_percent = 0.1
-                active_workers_count = 2
+                total_cpu_percent = 0.05
+                active_workers_count = 1
                 workers = @(
-                    [PSCustomObject]@{
-                        module_id = 'disk-monitor'
-                        worker_id = 'disk_smart_collector'
-                        name = 'Colector SMART y Salud de Discos'
-                        task = 'Supervisión física de bus NVMe/SATA y sectores'
-                        frequency = 'Cada 6s'
-                        memory_mb = [Math]::Round($totalMemoryMb * 0.55, 1)
-                        cpu_percent = 0.08
-                        status = 'active'
-                        last_run = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
-                    },
                     [PSCustomObject]@{
                         module_id = 'core'
                         worker_id = 'core_prelogon_supervisor'

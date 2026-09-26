@@ -4,58 +4,50 @@ const JSZip = require('jszip');
 
 async function syncToAppData() {
   const appData = process.env.APPDATA;
-  if (!appData) {
-    console.error('APPDATA no definido');
-    return;
-  }
+  if (!appData) return;
   const targetDir = path.join(appData, 'com.pcmanager.core');
   const registryPath = path.join(targetDir, 'registry.json');
-  if (!fs.existsSync(registryPath)) {
-    console.log('No existe registry.json en AppData, nada que actualizar.');
-    return;
-  }
+  if (!fs.existsSync(registryPath)) return;
 
-  const pcmPath = path.join(__dirname, '..', 'disk-monitor.pcm');
-  if (!fs.existsSync(pcmPath)) {
-    console.error('disk-monitor.pcm no encontrado');
-    return;
-  }
+  const rootDir = path.join(__dirname, '..');
+  const pcmFiles = fs.readdirSync(rootDir).filter(f => f.endsWith('.pcm'));
 
-  const pcmBuffer = fs.readFileSync(pcmPath);
-  const zip = await JSZip.loadAsync(pcmBuffer);
+  for (const pcmFile of pcmFiles) {
+    const pcmPath = path.join(rootDir, pcmFile);
+    try {
+      const pcmBuffer = fs.readFileSync(pcmPath);
+      const zip = await JSZip.loadAsync(pcmBuffer);
+      const manifestFile = zip.file('manifest.json');
+      if (!manifestFile) continue;
+      const manifest = JSON.parse(await manifestFile.async('string'));
+      const moduleJsFile = zip.file('module.js');
+      const moduleJsStr = moduleJsFile ? await moduleJsFile.async('string') : '';
+      const sigFile = zip.file('signature.sig');
+      const sigData = sigFile ? JSON.parse(await sigFile.async('string')) : null;
 
-  const manifestStr = await zip.file('manifest.json').async('string');
-  const manifest = JSON.parse(manifestStr);
+      const moduleDir = path.join(targetDir, 'modules', manifest.id);
+      if (!fs.existsSync(moduleDir)) {
+        fs.mkdirSync(moduleDir, { recursive: true });
+      }
 
-  const moduleJsStr = await zip.file('module.js').async('string');
-  const sigStr = await zip.file('signature.sig').async('string');
-  const sigData = JSON.parse(sigStr);
+      for (const [filename, fileObj] of Object.entries(zip.files)) {
+        if (!fileObj.dir) {
+          const buf = await fileObj.async('nodebuffer');
+          fs.writeFileSync(path.join(moduleDir, filename), buf);
+        }
+      }
 
-  // Extraer archivos al directorio del módulo
-  const moduleDir = path.join(targetDir, 'modules', manifest.id);
-  if (!fs.existsSync(moduleDir)) {
-    fs.mkdirSync(moduleDir, { recursive: true });
-  }
-
-  for (const [filename, fileObj] of Object.entries(zip.files)) {
-    if (!fileObj.dir) {
-      const buf = await fileObj.async('nodebuffer');
-      fs.writeFileSync(path.join(moduleDir, filename), buf);
-    }
-  }
-
-  // Actualizar registry.json
-  const regContent = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-  if (regContent.modules && regContent.modules[manifest.id]) {
-    regContent.modules[manifest.id].manifest = manifest;
-    regContent.modules[manifest.id].script_code = moduleJsStr;
-    regContent.modules[manifest.id].signature_status = 'VERIFIED';
-    regContent.modules[manifest.id].author_fingerprint = sigData.public_key;
-    regContent.modules[manifest.id].file_hashes = sigData.signed_manifest.files;
-    regContent.modules[manifest.id].granted_permissions = ['system:storage', 'system:execute'];
-    fs.writeFileSync(registryPath, JSON.stringify(regContent, null, 2), 'utf8');
-    console.log(`Módulo '${manifest.id}' sincronizado exitosamente en AppData (${registryPath}).`);
+      const regContent = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+      if (regContent.modules && regContent.modules[manifest.id] && sigData) {
+        regContent.modules[manifest.id].manifest = manifest;
+        regContent.modules[manifest.id].script_code = moduleJsStr;
+        regContent.modules[manifest.id].signature_status = 'VERIFIED';
+        regContent.modules[manifest.id].author_fingerprint = sigData.public_key;
+        regContent.modules[manifest.id].file_hashes = sigData.signed_manifest.files;
+        fs.writeFileSync(registryPath, JSON.stringify(regContent, null, 2), 'utf8');
+      }
+    } catch (e) {}
   }
 }
 
-syncToAppData().catch(console.error);
+syncToAppData();

@@ -2620,8 +2620,7 @@
               lowK.startsWith(`pcm_${origMod}`) ||
               lowK.startsWith(`pcm_${lowMod}`) ||
               lowK.startsWith(`pcm_mod_${origMod}`) ||
-              lowK.startsWith(`pcm_mod_${lowMod}`) ||
-              (moduleId === 'disk-monitor' && (lowK.includes('monitored_drives') || lowK.includes('disk_monitor')))
+              lowK.startsWith(`pcm_mod_${lowMod}`)
             ) {
               keysToRemove.push(k);
             }
@@ -3913,10 +3912,7 @@
       if (installedModules && installedModules.size > 0) {
         installedModules.forEach((mod, modId) => {
           if (mod.active) {
-            const bgWorker = (mod.manifest && mod.manifest.background_worker) || (modId === 'disk-monitor' ? {
-              name: 'Colector SMART y Salud de Discos',
-              frequency: 'Cada 6s'
-            } : null);
+            const bgWorker = mod.manifest && mod.manifest.background_worker;
 
             if (bgWorker) {
               const modRamMb = Math.round(baseRam * 0.55 * 10) / 10;

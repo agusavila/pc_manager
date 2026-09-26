@@ -2233,6 +2233,48 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### BUG-064: Purga Total, Eliminación de Archivos y Desinstalación Definitiva del Módulo `disk-monitor`
+
+- **Fecha**: 2026-09-26
+- **Severidad**: `ALTA` (Módulo Declarado No Funcional y Solicitud Explícita de Purga Total del Sistema)
+- **Componente**: Módulo `disk-monitor` (`modules/disk-monitor/`, `disk-monitor.pcm`, AppData PCM Registry, documentación y tests)
+- **Síntoma / Requerimiento**: El módulo de almacenamiento presentaba comportamientos inadecuados y fue descartado por el usuario con la instrucción explícita de eliminar absolutamente todos sus archivos, desinstalarlo del gestor PCM en AppData y erradicar cualquier referencia residual en el Core.
+- **Causa Raíz**: El módulo no satisfacía los estándares de operación del usuario y requería una desinstalación total tanto a nivel de entorno de desarrollo como en la persistencia local de la aplicación.
+- **Solución Implementada**:
+  1. **Desinstalación en PCM y AppData**:
+     - Se eliminó el directorio físico `%APPDATA%\com.pcmanager.core\modules\disk-monitor`.
+     - Se removió el registro de `disk-monitor` de `%APPDATA%\com.pcmanager.core\registry.json` y de su respaldo `registry.json.bak`.
+  2. **Eliminación Total de Archivos del Repositorio**:
+     - Se eliminó completamente el directorio `modules/disk-monitor/` (manifiesto, código JS, colector PowerShell, empaquetador, pruebas y README).
+     - Se eliminó el paquete `disk-monitor.pcm` y el script raíz `build_disk_monitor_pcm.cjs`.
+     - Se eliminó la tríada de documentación: `docs/user/disk-monitor.md`, `docs/developer/disk-monitor.md` y `docs/ai/disk-monitor.md`.
+  3. **Desacoplamiento Estricto del Core y Tests**:
+     - Se eliminaron las referencias hardcodeadas en `ui/js/app.js` (en la purga de `localStorage` y en la lista de workers de fondo).
+     - Se eliminó la referencia residual en `docs/mockups/core_shell.html`.
+     - Se limpió `src-tauri/src/service.rs` removiendo el worker de ejemplo de `disk-monitor`.
+     - En `src-tauri/src/module_security.rs`, se eliminaron los tests asociados a `disk-monitor.pcm` y `collector.ps1`, adaptando las pruebas de sabotaje para utilizar `dummy-widgets.pcm`.
+     - Se hizo genérico `tools/update_appdata_modules.cjs` para no depender de ningún ID de módulo específico.
+  4. **Validación Integral**:
+     - Pruebas del Core exitosas (`npm test` 5/5).
+     - Pruebas nativas de Rust aprobadas (`cargo test --lib` 22/22).
+     - Compilación limpia del binario de escritorio (`cargo build`).
+- **Archivos Afectados**:
+  - `modules/disk-monitor/` (eliminado)
+  - `disk-monitor.pcm` (eliminado)
+  - `build_disk_monitor_pcm.cjs` (eliminado)
+  - `docs/user/disk-monitor.md` (eliminado)
+  - `docs/developer/disk-monitor.md` (eliminado)
+  - `docs/ai/disk-monitor.md` (eliminado)
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`src-tauri/src/service.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/service.rs)
+  - [`tools/update_appdata_modules.cjs`](file:///c:/Proyectos/pc_manager/tools/update_appdata_modules.cjs)
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`docs/mockups/core_shell.html`](file:///c:/Proyectos/pc_manager/docs/mockups/core_shell.html)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
 
 
 

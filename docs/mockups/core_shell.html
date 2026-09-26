@@ -4697,8 +4697,7 @@
               lowK.startsWith(`pcm_${origMod}`) ||
               lowK.startsWith(`pcm_${lowMod}`) ||
               lowK.startsWith(`pcm_mod_${origMod}`) ||
-              lowK.startsWith(`pcm_mod_${lowMod}`) ||
-              (moduleId === 'disk-monitor' && (lowK.includes('monitored_drives') || lowK.includes('disk_monitor')))
+              lowK.startsWith(`pcm_mod_${lowMod}`)
             ) {
               keysToRemove.push(k);
             }
