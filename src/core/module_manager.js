@@ -49,6 +49,53 @@ export function validateModuleId(id) {
   return true;
 }
 
+/**
+ * Valida rigurosamente que una versión cumpla con la especificación SemVer estándar (Fase 4).
+ * @param {string} version
+ * @returns {boolean}
+ */
+export function validateSemVer(version) {
+  if (!version || typeof version !== 'string') {
+    throw new Error('La versión no puede estar vacía.');
+  }
+  const v = version.trim();
+  if (!v) {
+    throw new Error('La versión no puede estar vacía.');
+  }
+  if (/\s/.test(v)) {
+    throw new Error(`La versión no puede contener espacios en blanco: '${v}'.`);
+  }
+  if (v.length > 64) {
+    throw new Error(`La versión excede los 64 caracteres: '${v}'.`);
+  }
+  const cleanV = v.startsWith('v') || v.startsWith('V') ? v.slice(1) : v;
+  const withoutBuild = cleanV.split('+')[0];
+  const parts = withoutBuild.split('-');
+  const coreVersion = parts[0];
+  const prerelease = parts[1];
+
+  const coreParts = coreVersion.split('.');
+  if (coreParts.length !== 3) {
+    throw new Error(`La versión '${v}' no cumple con el formato SemVer estándar (X.Y.Z).`);
+  }
+  for (const part of coreParts) {
+    if (!part || !/^\d+$/.test(part)) {
+      throw new Error(`El componente de versión '${part}' en '${v}' contiene caracteres no numéricos o está vacío.`);
+    }
+    if (part.length > 1 && part.startsWith('0')) {
+      throw new Error(`El componente de versión '${part}' en '${v}' contiene ceros a la izquierda no permitidos por SemVer.`);
+    }
+  }
+  if (prerelease) {
+    for (const sub of prerelease.split('.')) {
+      if (!sub || !/^[a-zA-Z0-9-]+$/.test(sub)) {
+        throw new Error(`El identificador de pre-release '${sub}' en '${v}' contiene caracteres no permitidos.`);
+      }
+    }
+  }
+  return true;
+}
+
 export class ModuleManager {
   /**
    * @param {import('./event_bus.js').EventBus} eventBus
@@ -75,6 +122,13 @@ export class ModuleManager {
       throw new Error('[ModuleManager] El módulo carece de un identificador válido.');
     }
     validateModuleId(moduleDef.id);
+    if (!moduleDef.name || typeof moduleDef.name !== 'string' || !moduleDef.name.trim()) {
+      throw new Error('[ModuleManager] El módulo carece de un nombre válido.');
+    }
+    if (!moduleDef.version) {
+      throw new Error('[ModuleManager] El módulo carece de una versión.');
+    }
+    validateSemVer(moduleDef.version);
     if (this.modules.has(moduleDef.id)) {
       throw new Error(`[ModuleManager] El módulo '${moduleDef.id}' ya se encuentra registrado.`);
     }

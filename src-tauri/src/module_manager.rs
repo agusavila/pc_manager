@@ -257,44 +257,12 @@ pub fn inspect_package_bytes(bytes: &[u8]) -> Result<PackageInspectionPayload, S
     // 1. Verificación criptográfica y cálculo de hashes SHA-256
     let sec_result = crate::module_security::verify_archive_security(bytes)?;
 
-    // 2. Extraer y parsear manifest.json
-    let mut archive = zip::ZipArchive::new(Cursor::new(bytes))
-        .map_err(|e| format!("El archivo no es un paquete .pcm (ZIP) válido: {}", e))?;
-
-    let mut manifest_str = String::new();
-    {
-        let mut manifest_file = archive
-            .by_name("manifest.json")
-            .map_err(|_| "El paquete .pcm no contiene un manifest.json en su raíz".to_string())?;
-        manifest_file
-            .read_to_string(&mut manifest_str)
-            .map_err(|e| format!("Error al leer manifest.json: {}", e))?;
-    }
-
-    let manifest: ModuleManifest = serde_json::from_str(&manifest_str)
-        .map_err(|e| format!("Error al parsear manifest.json: {}", e))?;
-
-    // 3. Validación estricta del identificador del módulo
-    crate::module_security::validate_module_id(&manifest.id)?;
-
-    if manifest.name.trim().is_empty() {
-        return Err("El manifest.json debe contener un nombre (name) válido".to_string());
-    }
-
-    // 4. Verificar que el entrypoint declarado existe dentro del paquete
-    let entrypoint_name = manifest.entrypoint.clone().unwrap_or_else(|| "module.js".to_string());
-    if archive.by_name(&entrypoint_name).is_err() {
-        return Err(format!(
-            "El archivo de entrada '{}' declarado en manifest.json no existe en el paquete.",
-            entrypoint_name
-        ));
-    }
-
-    let requires_service = manifest.requires_service.unwrap_or(false);
-    let service_reason = manifest.service_reason.clone();
+    // 2. Extraer y construir respuesta pre-validada por el subsistema de seguridad (Fase 4 Hardening)
+    let requires_service = sec_result.manifest.requires_service.unwrap_or(false);
+    let service_reason = sec_result.manifest.service_reason.clone();
 
     Ok(PackageInspectionPayload {
-        manifest,
+        manifest: sec_result.manifest,
         security_status: sec_result.status_code,
         author: sec_result.author,
         fingerprint: sec_result.fingerprint,
@@ -311,7 +279,7 @@ pub fn install_package_bytes(
     bytes: Vec<u8>,
     granted_permissions: Option<Vec<String>>,
 ) -> Result<InstalledModuleRecord, String> {
-    // 1. Verificación obligatoria de integridad criptográfica y límites de paquete
+    // 1. Verificación obligatoria de integridad criptográfica y límites de paquete (Fase 4 Hardening)
     let sec_result = crate::module_security::verify_archive_security(&bytes)?;
     if sec_result.status == crate::module_security::SecurityStatus::Tampered {
         return Err(format!(
@@ -320,39 +288,11 @@ pub fn install_package_bytes(
         ));
     }
 
+    let manifest = sec_result.manifest;
     let mut archive = zip::ZipArchive::new(Cursor::new(&bytes))
         .map_err(|e| format!("El archivo no es un paquete .pcm (ZIP) válido: {}", e))?;
 
-    // 2. Leer y validar manifest.json
-    let mut manifest_str = String::new();
-    {
-        let mut manifest_file = archive
-            .by_name("manifest.json")
-            .map_err(|_| "El paquete .pcm no contiene un manifest.json en su raíz".to_string())?;
-        manifest_file
-            .read_to_string(&mut manifest_str)
-            .map_err(|e| format!("Error al leer manifest.json: {}", e))?;
-    }
-
-    let manifest: ModuleManifest = serde_json::from_str(&manifest_str)
-        .map_err(|e| format!("Error al parsear manifest.json: {}", e))?;
-
-    // Validación estricta del identificador
-    crate::module_security::validate_module_id(&manifest.id)?;
-
-    if manifest.name.trim().is_empty() {
-        return Err("El manifest.json debe contener un nombre (name) válido".to_string());
-    }
-
-    let entrypoint_name = manifest.entrypoint.clone().unwrap_or_else(|| "module.js".to_string());
-    if archive.by_name(&entrypoint_name).is_err() {
-        return Err(format!(
-            "El archivo de entrada '{}' declarado en manifest.json no existe en el paquete.",
-            entrypoint_name
-        ));
-    }
-
-    // 3. Preparación de Staging Transaccional (Auditoría Técnica P0)
+    // 2. Preparación de Staging Transaccional (Auditoría Técnica P0)
     let storage_dir = get_storage_dir(app)?;
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -368,6 +308,7 @@ pub fn install_package_bytes(
         .map_err(|e| format!("Error al crear directorio de preparación para el módulo: {}", e))?;
 
     // 4. Extracción segura hacia el directorio de staging con control anti-Zip-Slip
+    let entrypoint_name = manifest.entrypoint.clone().unwrap_or_else(|| "module.js".to_string());
     let mut script_code = String::new();
 
     let extract_result: Result<(), String> = (|| {

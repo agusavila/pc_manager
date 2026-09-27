@@ -50,6 +50,7 @@ pub struct SecurityVerificationResult {
     pub fingerprint: Option<String>,
     pub file_hashes: HashMap<String, String>,
     pub message: String,
+    pub manifest: crate::module_manager::ModuleManifest,
 }
 
 /// Nombres reservados de dispositivos de Windows (incompatibles como carpetas o nombres de archivo)
@@ -59,11 +60,20 @@ pub const WINDOWS_RESERVED_NAMES: &[&str] = &[
     "lpt0", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
 ];
 
-/// Límites estrictos de seguridad para paquetes .pcm (Mitigación de Zip Bombs y DoS)
-pub const MAX_PACKAGE_SIZE_BYTES: usize = 25 * 1024 * 1024; // 25 MB
-pub const MAX_UNCOMPRESSED_TOTAL_BYTES: u64 = 60 * 1024 * 1024; // 60 MB
-pub const MAX_SINGLE_FILE_BYTES: u64 = 20 * 1024 * 1024; // 20 MB
-pub const MAX_FILE_COUNT: usize = 250;
+/// Constantes canónicas de seguridad para paquetes .pcm (Fase 4 - Hardening del .PCM)
+pub const MAX_PACKAGE_SIZE_BYTES: usize = 25 * 1024 * 1024; // 25 MB máximo del archivo comprimido
+pub const MAX_FILES: usize = 250;                          // Máximo 250 archivos en el paquete
+pub const MAX_TOTAL_UNCOMPRESSED_SIZE: u64 = 60 * 1024 * 1024; // 60 MB cuota total descomprimida
+pub const MAX_FILE_SIZE: u64 = 20 * 1024 * 1024;           // 20 MB tamaño máximo por archivo individual
+pub const MAX_PATH_DEPTH: usize = 8;                       // Máximo 8 niveles de profundidad en rutas
+
+// Alias para retrocompatibilidad
+#[allow(dead_code)]
+pub const MAX_FILE_COUNT: usize = MAX_FILES;
+#[allow(dead_code)]
+pub const MAX_UNCOMPRESSED_TOTAL_BYTES: u64 = MAX_TOTAL_UNCOMPRESSED_SIZE;
+#[allow(dead_code)]
+pub const MAX_SINGLE_FILE_BYTES: u64 = MAX_FILE_SIZE;
 
 /// Valida rigurosamente el identificador de un módulo (Auditoría Técnica P0 / Fase 3).
 /// Acepta estrictamente el formato regex: ^[a-z0-9][a-z0-9._-]{0,63}$
@@ -129,7 +139,90 @@ pub fn validate_module_id(id: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Valida rigurosamente que una versión cumpla con la especificación SemVer estándar (Fase 4).
+pub fn validate_semver(version: &str) -> Result<(), String> {
+    let v = version.trim();
+    if v.is_empty() {
+        return Err("La versión no puede estar vacía.".to_string());
+    }
+    if v.len() > 64 {
+        return Err(format!("La versión excede los 64 caracteres: '{}'.", v));
+    }
+    if v.contains(char::is_whitespace) {
+        return Err(format!("La versión no puede contener espacios en blanco: '{}'.", v));
+    }
+
+    // Opcionalmente tolerar prefijo 'v' o 'V'
+    let clean_v = if let Some(stripped) = v.strip_prefix('v').or_else(|| v.strip_prefix('V')) {
+        stripped
+    } else {
+        v
+    };
+
+    // Separar build metadata (+)
+    let without_build = clean_v.split('+').next().unwrap();
+    // Separar prerelease (-)
+    let mut parts = without_build.split('-');
+    let core_version = parts.next().unwrap();
+    let prerelease = parts.next();
+
+    // El core_version debe ser exactamente 3 números: MAJOR.MINOR.PATCH
+    let core_parts: Vec<&str> = core_version.split('.').collect();
+    if core_parts.len() != 3 {
+        return Err(format!(
+            "La versión '{}' no cumple con el formato SemVer estándar (X.Y.Z).",
+            v
+        ));
+    }
+
+    for part in &core_parts {
+        if part.is_empty() {
+            return Err(format!("Componente de versión vacío en '{}'.", v));
+        }
+        if !part.chars().all(|c| c.is_ascii_digit()) {
+            return Err(format!(
+                "El componente de versión '{}' en '{}' contiene caracteres no numéricos.",
+                part, v
+            ));
+        }
+        // Sin ceros a la izquierda (salvo "0" exacto)
+        if part.len() > 1 && part.starts_with('0') {
+            return Err(format!(
+                "El componente de versión '{}' en '{}' contiene ceros a la izquierda no permitidos por SemVer.",
+                part, v
+            ));
+        }
+        if part.parse::<u32>().is_err() {
+            return Err(format!(
+                "El componente de versión '{}' en '{}' excede el límite numérico.",
+                part, v
+            ));
+        }
+    }
+
+    // Validar identificador de pre-release si existe
+    if let Some(pre) = prerelease {
+        if pre.is_empty() {
+            return Err(format!("Identificador de pre-release vacío en '{}'.", v));
+        }
+        for sub in pre.split('.') {
+            if sub.is_empty() {
+                return Err(format!("Identificador de pre-release vacío en '{}'.", v));
+            }
+            if !sub.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+                return Err(format!(
+                    "El identificador de pre-release '{}' en '{}' contiene caracteres no permitidos.",
+                    sub, v
+                ));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// Valida que una ruta interna de archivo dentro de un ZIP no escape del directorio base (Anti Zip-Slip)
+/// y no exceda la profundidad máxima permitida de carpetas (Fase 4).
 pub fn validate_zip_entry_path(path_str: &str) -> Result<(), String> {
     if path_str.trim().is_empty() {
         return Err("Ruta de archivo en el paquete no puede estar vacía.".to_string());
@@ -143,8 +236,10 @@ pub fn validate_zip_entry_path(path_str: &str) -> Result<(), String> {
         ));
     }
 
-    // Rechazar segmentos '..'
+    // Rechazar segmentos '..' y verificar profundidad máxima
     let path = std::path::Path::new(path_str);
+    let mut normal_depth = 0;
+
     for component in path.components() {
         match component {
             std::path::Component::ParentDir => {
@@ -160,9 +255,17 @@ pub fn validate_zip_entry_path(path_str: &str) -> Result<(), String> {
                 ));
             }
             std::path::Component::Normal(c) => {
+                normal_depth += 1;
+                if normal_depth > MAX_PATH_DEPTH {
+                    return Err(format!(
+                        "La ruta '{}' excede la profundidad máxima permitida de {} niveles.",
+                        path_str, MAX_PATH_DEPTH
+                    ));
+                }
+
                 let s = c.to_string_lossy().to_ascii_lowercase();
                 let base = s.split('.').next().unwrap_or(&s);
-                if WINDOWS_RESERVED_NAMES.contains(&base) {
+                if WINDOWS_RESERVED_NAMES.contains(&base) || WINDOWS_RESERVED_NAMES.contains(&s.as_str()) {
                     return Err(format!(
                         "La ruta contiene un nombre de archivo reservado de Windows: '{}'.",
                         s
@@ -197,12 +300,12 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
     let mut archive = zip::ZipArchive::new(Cursor::new(archive_bytes))
         .map_err(|e| format!("El paquete no es un archivo .pcm (ZIP) válido: {}", e))?;
 
-    // 2. Control de cantidad de archivos
-    if archive.len() > MAX_FILE_COUNT {
+    // 2. Control de cantidad de archivos (Fase 4: MAX_FILES)
+    if archive.len() > MAX_FILES {
         return Err(format!(
             "El paquete contiene {} archivos, excediendo el límite de seguridad de {}.",
             archive.len(),
-            MAX_FILE_COUNT
+            MAX_FILES
         ));
     }
 
@@ -219,25 +322,35 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
             continue;
         }
 
+        // 10. enclosed_name() válido (control anti Zip-Slip a nivel de biblioteca)
+        if file.enclosed_name().is_none() {
+            return Err(format!(
+                "Intento de Zip Slip / Path Traversal bloqueado: La entrada '{}' no tiene un nombre encerrado seguro.",
+                file.name()
+            ));
+        }
+
         let name = file.name().to_string();
 
-        // 3. Validación estricta anti Zip-Slip
+        // 7, 8, 9, 14. Validación estricta anti Zip-Slip, rutas absolutas, '..' y profundidad máxima
         validate_zip_entry_path(&name)?;
 
-        // 4. Verificación de tamaño por archivo
-        if file.size() > MAX_SINGLE_FILE_BYTES {
+        // 13. Verificación de tamaño por archivo (Fase 4: MAX_FILE_SIZE)
+        if file.size() > MAX_FILE_SIZE {
             return Err(format!(
-                "El archivo '{}' excede el tamaño máximo permitido de {} MB.",
+                "El archivo '{}' excede el tamaño máximo permitido de {} MB (tamaño: {} MB).",
                 name,
-                MAX_SINGLE_FILE_BYTES / (1024 * 1024)
+                MAX_FILE_SIZE / (1024 * 1024),
+                file.size() / (1024 * 1024)
             ));
         }
 
         total_uncompressed_bytes = total_uncompressed_bytes.saturating_add(file.size());
-        if total_uncompressed_bytes > MAX_UNCOMPRESSED_TOTAL_BYTES {
+        // 12. Límite de tamaño total descomprimido (Fase 4: MAX_TOTAL_UNCOMPRESSED_SIZE)
+        if total_uncompressed_bytes > MAX_TOTAL_UNCOMPRESSED_SIZE {
             return Err(format!(
                 "Cuota total de descompresión excedida (límite de seguridad: {} MB). Posible Zip Bomb detectada.",
-                MAX_UNCOMPRESSED_TOTAL_BYTES / (1024 * 1024)
+                MAX_TOTAL_UNCOMPRESSED_SIZE / (1024 * 1024)
             ));
         }
 
@@ -252,8 +365,33 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
         }
     }
 
-    if !files_content.contains_key("manifest.json") {
-        return Err("El paquete no contiene un archivo 'manifest.json' en la raíz.".to_string());
+    // 2. manifest.json presente en la raíz
+    let manifest_bytes = files_content.get("manifest.json").ok_or_else(|| {
+        "El paquete no contiene un archivo 'manifest.json' en la raíz.".to_string()
+    })?;
+
+    // 3, 4. JSON válido y Manifest estructurado válido
+    let manifest: crate::module_manager::ModuleManifest = serde_json::from_slice(manifest_bytes)
+        .map_err(|e| format!("El archivo 'manifest.json' está malformado o no es un JSON válido: {}", e))?;
+
+    // 5. ID válido
+    validate_module_id(&manifest.id)?;
+
+    // 6. Versión válida (SemVer)
+    validate_semver(&manifest.version)?;
+
+    // 4. Manifest válido: nombre obligatorio
+    if manifest.name.trim().is_empty() {
+        return Err("El manifest.json debe contener un nombre (name) válido y no vacío.".to_string());
+    }
+
+    // Verificar que el entrypoint declarado existe en el paquete
+    let entrypoint = manifest.entrypoint.clone().unwrap_or_else(|| "module.js".to_string());
+    if !files_content.contains_key(&entrypoint) {
+        return Err(format!(
+            "El archivo de entrada '{}' declarado en manifest.json no existe en el paquete.",
+            entrypoint
+        ));
     }
 
     let mut calculated_hashes = HashMap::new();
@@ -271,6 +409,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
                 fingerprint: None,
                 file_hashes: calculated_hashes,
                 message: "El módulo no contiene una firma criptográfica de autenticidad. Proceda con precaución.".to_string(),
+                manifest,
             });
         }
     };
@@ -278,8 +417,40 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
     let sig_file: ModuleSignatureFile = serde_json::from_slice(&sig_bytes)
         .map_err(|e| format!("Archivo signature.sig corrupto o malformado: {}", e))?;
 
-    // Validar ID declarado en la firma
+    // Validar ID y versión declarados en la firma
     validate_module_id(&sig_file.signed_manifest.id)?;
+    validate_semver(&sig_file.signed_manifest.version)?;
+
+    // Discrepancia entre manifest.json y signature.sig
+    if manifest.id != sig_file.signed_manifest.id {
+        return Ok(SecurityVerificationResult {
+            status: SecurityStatus::Tampered,
+            status_code: SecurityStatus::Tampered.as_str().to_string(),
+            author: "Sabotaje Detectado".to_string(),
+            fingerprint: Some(sig_file.public_key.clone()),
+            file_hashes: calculated_hashes,
+            message: format!(
+                "Discrepancia de seguridad: El ID en manifest.json ('{}') no coincide con el ID firmado ('{}').",
+                manifest.id, sig_file.signed_manifest.id
+            ),
+            manifest,
+        });
+    }
+
+    if manifest.version != sig_file.signed_manifest.version {
+        return Ok(SecurityVerificationResult {
+            status: SecurityStatus::Tampered,
+            status_code: SecurityStatus::Tampered.as_str().to_string(),
+            author: "Sabotaje Detectado".to_string(),
+            fingerprint: Some(sig_file.public_key.clone()),
+            file_hashes: calculated_hashes,
+            message: format!(
+                "Discrepancia de seguridad: La versión en manifest.json ('{}') no coincide con la versión firmada ('{}').",
+                manifest.version, sig_file.signed_manifest.version
+            ),
+            manifest,
+        });
+    }
 
     if sig_file.algorithm != "ed25519" {
         return Ok(SecurityVerificationResult {
@@ -289,6 +460,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
             fingerprint: None,
             file_hashes: calculated_hashes,
             message: format!("Algoritmo de firma no soportado: '{}'. Se requiere ed25519.", sig_file.algorithm),
+            manifest,
         });
     }
 
@@ -304,6 +476,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
                         fingerprint: Some(sig_file.public_key.clone()),
                         file_hashes: calculated_hashes,
                         message: format!("El archivo '{}' ha sido modificado o está corrupto tras su firma.", filename),
+                        manifest,
                     });
                 }
             }
@@ -315,6 +488,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
                     fingerprint: Some(sig_file.public_key.clone()),
                     file_hashes: calculated_hashes,
                     message: format!("Falta el archivo requerido '{}' declarado en la firma.", filename),
+                    manifest,
                 });
             }
         }
@@ -331,6 +505,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
                 fingerprint: Some(sig_file.public_key.clone()),
                 file_hashes: calculated_hashes,
                 message: format!("El paquete contiene un archivo no declarado en la firma: '{}'.", filename),
+                manifest,
             });
         }
     }
@@ -369,6 +544,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
             fingerprint: Some(sig_file.public_key.clone()),
             file_hashes: calculated_hashes,
             message: format!("La firma criptográfica no es válida para este paquete: {}", e),
+            manifest,
         });
     }
 
@@ -383,6 +559,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
             fingerprint: Some(sig_file.public_key),
             file_hashes: calculated_hashes,
             message: "Firma criptográfica válida y emitida por la autoridad de desarrollo oficial de PC Manager.".to_string(),
+            manifest,
         })
     } else {
         Ok(SecurityVerificationResult {
@@ -392,6 +569,7 @@ pub fn verify_archive_security(archive_bytes: &[u8]) -> Result<SecurityVerificat
             fingerprint: Some(sig_file.public_key),
             file_hashes: calculated_hashes,
             message: "Firma criptográfica válida pero emitida por un desarrollador externo no registrado en las llaves maestras del Core.".to_string(),
+            manifest,
         })
     }
 }
@@ -709,6 +887,118 @@ mod tests {
         let res = verify_archive_security(&buf);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("nombre de archivo reservado"));
+    }
+
+    #[test]
+    fn test_validate_semver_valid() {
+        assert!(validate_semver("0.0.1").is_ok());
+        assert!(validate_semver("0.0.4").is_ok());
+        assert!(validate_semver("1.0.0").is_ok());
+        assert!(validate_semver("2.10.3").is_ok());
+        assert!(validate_semver("1.0.0-alpha").is_ok());
+        assert!(validate_semver("1.0.0-beta.1").is_ok());
+        assert!(validate_semver("1.0.0+20130313144700").is_ok());
+        assert!(validate_semver("1.2.3-rc.1+build.1").is_ok());
+        assert!(validate_semver("v1.0.0").is_ok());
+    }
+
+    #[test]
+    fn test_validate_semver_invalid() {
+        assert!(validate_semver("").is_err());
+        assert!(validate_semver("   ").is_err());
+        assert!(validate_semver("1").is_err());
+        assert!(validate_semver("1.0").is_err());
+        assert!(validate_semver("1.0.0.0").is_err());
+        assert!(validate_semver("01.0.0").is_err());
+        assert!(validate_semver("1.0.0-alpha@").is_err());
+        assert!(validate_semver("1.0.0 extra").is_err());
+    }
+
+    #[test]
+    fn test_validate_zip_entry_path_depth_rejected() {
+        // Profundidad permitida (<= 8 niveles)
+        assert!(validate_zip_entry_path("a/b/c/d/e/f/g/file.txt").is_ok());
+        // Profundidad excedida (> 8 niveles)
+        assert!(validate_zip_entry_path("1/2/3/4/5/6/7/8/9/file.txt").is_err());
+    }
+
+    #[test]
+    fn test_archive_missing_manifest_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            writer.start_file("module.js", options).unwrap();
+            writer.write_all(b"export default {}").unwrap();
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("manifest.json"));
+    }
+
+    #[test]
+    fn test_archive_malformed_json_manifest_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            writer.start_file("manifest.json", options).unwrap();
+            writer.write_all(b"{ not a valid json").unwrap();
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("malformado o no es un JSON válido"));
+    }
+
+    #[test]
+    fn test_archive_invalid_semver_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            writer.start_file("manifest.json", options).unwrap();
+            writer.write_all(br#"{"id":"test-mod","name":"Test","version":"invalid-version","entrypoint":"module.js"}"#).unwrap();
+            writer.start_file("module.js", options).unwrap();
+            writer.write_all(b"console.log('hi')").unwrap();
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("SemVer"));
+    }
+
+    #[test]
+    fn test_archive_missing_entrypoint_rejected() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let options = SimpleFileOptions::default();
+            writer.start_file("manifest.json", options).unwrap();
+            writer.write_all(br#"{"id":"test-mod","name":"Test","version":"1.0.0","entrypoint":"module.js"}"#).unwrap();
+            // Falta module.js
+            writer.finish().unwrap();
+        }
+
+        let res = verify_archive_security(&buf);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("archivo de entrada 'module.js'"));
     }
 }
 

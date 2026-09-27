@@ -2275,6 +2275,51 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+---
+
+### [BUG-064] Hardening Exhaustivo de Paquetes .PCM, Validación SemVer y Sanitización Pre-Extracción (Fase 4)
+- **Fecha**: 2026-09-26
+- **Severidad**: `Alta` (P1)
+- **Componente**: `Seguridad de Módulos / Validación de Paquetes / Core (`[`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)`, [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)`, [`src/core/module_manager.js`](file:///c:/Proyectos/pc_manager/src/core/module_manager.js)`, [`src/core/index.js`](file:///c:/Proyectos/pc_manager/src/core/index.js)`, [`test/core_test.js`](file:///c:/Proyectos/pc_manager/test/core_test.js)`)`
+- **Descripción del Fallo**: 
+  1. Los paquetes `.pcm` podían contener estructuras de carpetas arbitrariamente profundas sin un límite explícito de anidamiento, lo que permitía ataques de agotamiento de pila en sistemas de archivos.
+  2. La versión de los módulos en `manifest.json` no era validada rigurosamente contra la especificación SemVer estándar (`MAJOR.MINOR.PATCH`), permitiendo strings malformados o con caracteres de inyección.
+  3. No se validaba la discrepancia entre el `manifest.json` físico y el manifiesto firmado en `signature.sig` respecto a la versión del módulo.
+  4. La inspección e instalación de paquetes realizaba re-lecturas y re-deserializaciones redundantes del manifiesto después de la verificación de seguridad, generando código duplicado.
+  5. En JavaScript (`src/core/module_manager.js`), `registerModule` no validaba formalmente la versión ni el formato SemVer de los módulos registrados.
+- **Causa Raíz**: 
+  Falta de un protocolo centralizado y exhaustivo de 14 verificaciones de seguridad atómicas antes de la extracción y ausencia de una función canónica `validate_semver` / `validateSemVer` compartida y testeada.
+- **Solución Implementada**: 
+  1. **Protocolo Inmutable de 14 Verificaciones en `verify_archive_security`**:
+     - Estructura ZIP válida y presencia de `manifest.json` en raíz.
+     - JSON válido y deserialización estricta en estructura tipada `ModuleManifest`.
+     - ID del módulo validado (`validate_module_id`).
+     - Versión del módulo validada bajo SemVer (`validate_semver`).
+     - Nombre obligatorio no vacío y comprobación de existencia del `entrypoint` en el paquete.
+     - Comprobación de integridad anti-discrepancias entre `manifest.json` y `signature.sig` (ID y versión coincidentes).
+     - Validación individual de rutas internas (`validate_zip_entry_path`): sin rutas absolutas, sin `..`, sin nombres reservados de Windows.
+     - Límite de profundidad de carpetas: máximo 8 niveles (`MAX_PATH_DEPTH = 8`).
+     - Control anti Zip-Slip con `file.enclosed_name()`.
+     - Cuotas de seguridad estrictas: `MAX_FILES = 250`, `MAX_TOTAL_UNCOMPRESSED_SIZE = 60 MB`, `MAX_FILE_SIZE = 20 MB`.
+  2. **Retorno de Manifiesto Verificado**:
+     - `verify_archive_security` retorna `manifest: ModuleManifest`, optimizando `inspect_package_bytes` e `install_package_bytes` para operar sin deserializaciones redundantes.
+  3. **Implementación de SemVer en Rust y JavaScript**:
+     - Creada `validate_semver(&str)` en Rust con soporte para prefijo `v`, build metadata (`+`) y prerelease (`-`).
+     - Creada `validateSemVer(version)` en JavaScript (`src/core/module_manager.js`, exportada en `src/core/index.js`), con validación obligatoria en `registerModule`.
+  4. **Batería de Pruebas Unitarias**:
+     - 5 nuevas pruebas unitarias añadidas en `src-tauri/src/module_security.rs` (`cargo test --lib`: 29 de 29 pasando).
+     - Nuevas pruebas de SemVer y validación en `test/core_test.js` (`npm test`: 100% pasando).
+     - Compilación nativa completada limpiamente (`cargo build`).
+- **Archivos Afectados**:
+  - [`src-tauri/src/module_security.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_security.rs)
+  - [`src-tauri/src/module_manager.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/module_manager.rs)
+  - [`src/core/module_manager.js`](file:///c:/Proyectos/pc_manager/src/core/module_manager.js)
+  - [`src/core/index.js`](file:///c:/Proyectos/pc_manager/src/core/index.js)
+  - [`test/core_test.js`](file:///c:/Proyectos/pc_manager/test/core_test.js)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

@@ -170,6 +170,40 @@ async function runTests() {
     await core.moduleManager.registerModule({ id: '../evil-mod', name: 'Evil' });
   }, /rutas relativas/);
 
+  // 7. Prueba de Validación Robusta de SemVer (Fase 4 Hardening)
+  console.log('7. Verificando validación robusta de SemVer (Fase 4)...');
+  const { validateSemVer } = await import('../src/core/index.js');
+
+  // Válidos
+  assert.equal(validateSemVer('0.0.1'), true);
+  assert.equal(validateSemVer('0.0.4'), true);
+  assert.equal(validateSemVer('1.0.0'), true);
+  assert.equal(validateSemVer('2.10.3'), true);
+  assert.equal(validateSemVer('1.0.0-alpha'), true);
+  assert.equal(validateSemVer('1.0.0-beta.1'), true);
+  assert.equal(validateSemVer('1.0.0+20130313144700'), true);
+  assert.equal(validateSemVer('v1.0.0'), true);
+
+  // Inválidos
+  assert.throws(() => validateSemVer(''), /vacía/);
+  assert.throws(() => validateSemVer('   '), /vacía/);
+  assert.throws(() => validateSemVer('1'), /formato SemVer estándar/);
+  assert.throws(() => validateSemVer('1.0'), /formato SemVer estándar/);
+  assert.throws(() => validateSemVer('1.0.0.0'), /formato SemVer estándar/);
+  assert.throws(() => validateSemVer('01.0.0'), /ceros a la izquierda/);
+  assert.throws(() => validateSemVer('1.0.0-alpha@'), /caracteres no permitidos/);
+  assert.throws(() => validateSemVer('1.0.0 extra'), /espacios en blanco/);
+
+  // Bloqueo en registro de ModuleManager por versión inválida
+  await assert.rejects(async () => {
+    await core.moduleManager.registerModule({ id: 'mod-bad-ver', name: 'Bad Ver', version: 'invalid' });
+  }, /formato SemVer estándar/);
+
+  // Bloqueo en registro de ModuleManager por nombre vacío
+  await assert.rejects(async () => {
+    await core.moduleManager.registerModule({ id: 'mod-no-name', name: '', version: '1.0.0' });
+  }, /nombre válido/);
+
   console.log('--- Todas las pruebas del Core pasaron con éxito ---');
 }
 
