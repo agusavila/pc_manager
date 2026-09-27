@@ -2319,6 +2319,36 @@ Este documento registra de forma histórica, detallada y auditable todos los err
   - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
 - **Estado**: `RESUELTO`
 
+### [BUG-065] Estabilización de Widgets: Capacidad Estricta, Aviso In-Switch, Memoria Multi-Orientación y Notificaciones Nativas
+- **Fecha**: 2026-09-26
+- **Severidad**: `Media` (P2)
+- **Componente**: `Dashboard / Sistema de Widgets / Layout / Core UI (`[`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)`, [`ui/css/style.css`](file:///c:/Proyectos/pc_manager/ui/css/style.css)`, [`src-tauri/src/lib.rs`](file:///c:/Proyectos/pc_manager/src-tauri/src/lib.rs)`)`
+- **Descripción del Fallo**: 
+  1. Al intentar activar un widget en el Dashboard cuando no hay espacio disponible suficiente, el sistema ejecutaba `restoreDashboardLayout()`, lo cual provocaba una reorganización automática que desplazaba las tarjetas preexistentes ubicadas manualmente por el usuario.
+  2. Al no caber un widget, el sistema emitía una notificación redundante en el panel general de notificaciones (`modal-notifications`), violando la política anti-ruido de la Regla 6. Dicho panel quedaba tapado por el propio cajón lateral de widgets, impidiendo que el usuario viera la causa del fallo.
+  3. Al alternar entre pantallas vertical (portrait) y horizontal (landscape), el cambio de orientación ejecutaba `persistDashboardLayout()` sobreescribiendo el layout de la nueva orientación con las coordenadas de la orientación saliente, desordenando los widgets manualmente posicionados al regresar al modo vertical.
+  4. Necesidad de verificar y respaldar que las notificaciones de Windows operan mediante la API nativa de WinRT Toast en Rust (`tauri_winrt_notification::Toast`), sin requerir ningún subproceso o atajo con PowerShell.
+- **Causa Raíz**: 
+  1. En `toggleWidgetVisibility`: Al no encontrar espacio libre, se llamaba a `addSystemNotification` y no se garantizaba la inmutabilidad de las coordenadas de las tarjetas ya posicionadas.
+  2. En `checkOrientationChange`: La detección de cambio de orientación llamaba a `persistDashboardLayout()` después de que el viewport ya había cambiado, provocando que `getActiveProfileLayout` / `setActiveProfileLayout` guardaran las coordenadas en el perfil opuesto.
+- **Solución Implementada**: 
+  1. **Capacidad Estricta e Inmutabilidad de Coordenadas Manuales**:
+     - En `toggleWidgetVisibility`, si un widget no cabe en el espacio restante (`!slot`), se cancela la adición sin invocar `restoreDashboardLayout()` ni mover ninguna tarjeta existente.
+     - Se preserva el slot previamente guardado si sigue libre al reactivar un widget.
+  2. **Feedback Contextual In-Switch (Cero Ruido en Campana)**:
+     - Se eliminó la llamada a `addSystemNotification` al rechazar por capacidad.
+     - El aviso se despliega directamente sobre el interruptor en el cajón de widgets con retroalimentación visual (`switch-shake-error` y etiqueta `.switch-error-hint`: *"Sin espacio disponible en cuadrícula"*).
+  3. **Preservación Robusta Multi-Orientación**:
+     - `persistDashboardLayout(targetOrientation)` ahora guarda el estado de la orientación saliente (`lastKnownOrientation`) ANTES de conmutar y restaura el estado de la orientación entrante (`currentOrientation`) limpiamente.
+     - Funciones auxiliares (`getActiveProfileLayout`, `setActiveProfileLayout`, `getActiveProfileHidden`, `setActiveProfileHidden`, `getGridCols`, `getMaxVisibleRows`, `getCardSpan`) parametrizadas para soportar orientación objetivo sin ambigüedades.
+  4. **Notificaciones Nativas de Windows**:
+     - Respaldada y confirmada la emisión de notificaciones de Windows a través de WinRT Toast (`tauri_winrt_notification`) y registro de AppUserModelId directo en el registro de Windows, sin dependencias de PowerShell.
+- **Archivos Afectados**:
+  - [`ui/js/app.js`](file:///c:/Proyectos/pc_manager/ui/js/app.js)
+  - [`BUG_TRACKER.md`](file:///c:/Proyectos/pc_manager/BUG_TRACKER.md)
+- **Estado**: `RESUELTO`
+
+
 
 
 

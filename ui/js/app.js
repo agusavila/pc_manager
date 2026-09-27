@@ -468,10 +468,7 @@
           card.style.gridColumn = '';
           card.style.gridRow = '';
         }
-        if (layout && layout[cardId]) {
-          delete layout[cardId];
-          setActiveProfileLayout(current, layout);
-        }
+        // Conservar layout[cardId] en el perfil para que al reactivar recuerde su posición previa si sigue libre
         persistDashboardProfilesState();
       } else {
         // VERIFICACIÓN ESTRICTA DE CAPACIDAD: Impedir caos y no mover jamás las tarjetas preexistentes
@@ -508,7 +505,34 @@
             });
           }
 
-          const slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
+          // Si tenía una posición previa guardada en este perfil, comprobar si sigue libre
+          let slot = null;
+          const maxVisibleRows = getMaxVisibleRows();
+          if (layout && layout[cardId] && layout[cardId].col && layout[cardId].row) {
+            const prevCol = parseInt(layout[cardId].col, 10);
+            const prevRow = parseInt(layout[cardId].row, 10);
+            if (prevCol >= 1 && (prevCol + effSpanCol - 1) <= gridCols &&
+                prevRow >= 1 && (prevRow + spanRow - 1) <= maxVisibleRows) {
+              let canReuse = true;
+              for (let r = prevRow; r < prevRow + spanRow; r++) {
+                for (let cl = prevCol; cl < prevCol + effSpanCol; cl++) {
+                  if (occupied[r] && occupied[r][cl]) {
+                    canReuse = false;
+                    break;
+                  }
+                }
+                if (!canReuse) break;
+              }
+              if (canReuse) {
+                slot = { col: prevCol, row: prevRow };
+              }
+            }
+          }
+
+          if (!slot) {
+            slot = findNextFreeSlot(gridCols, effSpanCol, spanRow, occupied);
+          }
+
           if (!slot) {
             // Revertir switch inmediatamente y emitir feedback visual en el propio interruptor (Cero notificaciones en panel)
             const chk = document.getElementById(`chk-widget-${cardId}`);
@@ -941,9 +965,10 @@
       return window.innerHeight > window.innerWidth;
     }
 
-    function getActiveProfileLayout(profile) {
+    function getActiveProfileLayout(profile, targetOrientation = null) {
       if (!profile) return {};
-      if (isPortraitOrientation()) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
+      if (isPortrait) {
         if (!profile.layout_portrait) profile.layout_portrait = {};
         return profile.layout_portrait;
       } else {
@@ -952,18 +977,20 @@
       }
     }
 
-    function setActiveProfileLayout(profile, layout) {
+    function setActiveProfileLayout(profile, layout, targetOrientation = null) {
       if (!profile) return;
-      if (isPortraitOrientation()) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
+      if (isPortrait) {
         profile.layout_portrait = layout;
       } else {
         profile.layout_landscape = layout;
       }
     }
 
-    function getActiveProfileHidden(profile) {
+    function getActiveProfileHidden(profile, targetOrientation = null) {
       if (!profile) return [];
-      if (isPortraitOrientation()) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
+      if (isPortrait) {
         if (!Array.isArray(profile.hidden_portrait)) profile.hidden_portrait = [];
         return profile.hidden_portrait;
       } else {
@@ -972,32 +999,36 @@
       }
     }
 
-    function setActiveProfileHidden(profile, hiddenList) {
+    function setActiveProfileHidden(profile, hiddenList, targetOrientation = null) {
       if (!profile) return;
-      if (isPortraitOrientation()) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
+      if (isPortrait) {
         profile.hidden_portrait = hiddenList;
       } else {
         profile.hidden_landscape = hiddenList;
       }
     }
 
-    function getGridCols() {
-      return isPortraitOrientation() ? 6 : 12;
+    function getGridCols(targetOrientation = null) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
+      return isPortrait ? 6 : 12;
     }
 
-    function getMaxVisibleRows() {
-      return isPortraitOrientation() ? 12 : 6;
+    function getMaxVisibleRows(targetOrientation = null) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
+      return isPortrait ? 12 : 6;
     }
 
-    function getCardSpan(card) {
+    function getCardSpan(card, targetOrientation = null) {
+      const isPortrait = targetOrientation !== null ? targetOrientation : isPortraitOrientation();
       if (card.classList.contains('card-size-banner')) {
-        return { spanCol: isPortraitOrientation() ? 6 : 12, spanRow: 2 };
+        return { spanCol: isPortrait ? 6 : 12, spanRow: 2 };
       }
       const match = card.className.match(/card-size-(\d+)x(\d+)/);
       if (match) {
         let col = parseInt(match[1], 10);
         let row = parseInt(match[2], 10);
-        if (isPortraitOrientation() && col > 6) {
+        if (isPortrait && col > 6) {
           col = 6;
         }
         return { spanCol: col, spanRow: row };
@@ -1588,7 +1619,7 @@
       }
     }
 
-    function persistDashboardLayout() {
+    function persistDashboardLayout(targetOrientation = null) {
       const grid = document.getElementById('grid-board');
       if (!grid) return;
       const cards = Array.from(grid.querySelectorAll('.card'));
@@ -1607,7 +1638,7 @@
         }
       });
 
-      setActiveProfileLayout(current, layout);
+      setActiveProfileLayout(current, layout, targetOrientation);
 
       try {
         if (current.id === DEFAULT_DASHBOARD_PROFILE_ID) {
@@ -2089,7 +2120,7 @@
       const currentOrientation = isPortraitOrientation();
       if (currentOrientation !== lastKnownOrientation) {
         // 1. Guardar el estado de la orientación saliente ANTES de conmutar
-        persistDashboardLayout();
+        persistDashboardLayout(lastKnownOrientation);
 
         // 2. Conmutar orientación
         lastKnownOrientation = currentOrientation;
